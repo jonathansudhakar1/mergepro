@@ -196,7 +196,8 @@ extension TokenizerTests {
     }
     func testCancelledTokenizationIsNotCached() async {
         let tokenizer=CodeTokenizer()
-        let task=Task { await tokenizer.tokenize(Self.typeScript(lines:400,seed:3),path:"a.ts") }
+        let source=Self.typeScript(lines:400,seed:3)
+        let task=Task { [tokenizer] in await tokenizer.tokenize(source,path:"a.ts") }
         task.cancel()
         let result=await task.value
         XCTAssertEqual(result.engine,.plainText)

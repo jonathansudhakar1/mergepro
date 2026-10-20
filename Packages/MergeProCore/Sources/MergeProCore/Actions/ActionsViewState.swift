@@ -21,14 +21,20 @@ public struct ActionsFilter:Codable,Equatable,Sendable {
         (repositoryKey.map { repository.key == $0 } ?? (repositoryID.isEmpty || repository.key.repositoryID==repositoryID))
     }
     public func matches(_ run:WorkflowRun,catalog:ActionsCatalog?=nil) -> Bool {
-        (query.isEmpty || [run.name,run.repository.name,run.branch,run.actor,run.headSHA].contains { $0.localizedCaseInsensitiveContains(query) }) &&
-        matches(repository:run.repository) &&
-        (workflow.isEmpty || run.name.localizedCaseInsensitiveContains(workflow) || String(run.workflowID)==workflow) &&
-        (branch.isEmpty || run.branch==branch) && (event.isEmpty || run.event==event) &&
-        (actor.isEmpty || run.actor.localizedCaseInsensitiveContains(actor)) &&
-        (status.isEmpty || run.status==status || run.conclusion==status) &&
-        (environment.isEmpty || catalog?.deployments.contains { $0.environment==environment && $0.sha==run.headSHA } == true) &&
-        (after.map { run.createdAt >= $0 } ?? true) && (before.map { run.createdAt <= $0 } ?? true)
+        // Separate statements keep type-checking fast on every supported compiler.
+        guard query.isEmpty || [run.name,run.repository.name,run.branch,run.actor,run.headSHA].contains(where:{ $0.localizedCaseInsensitiveContains(query) }) else { return false }
+        guard matches(repository:run.repository) else { return false }
+        guard workflow.isEmpty || run.name.localizedCaseInsensitiveContains(workflow) || String(run.workflowID)==workflow else { return false }
+        guard branch.isEmpty || run.branch==branch, event.isEmpty || run.event==event else { return false }
+        guard actor.isEmpty || run.actor.localizedCaseInsensitiveContains(actor) else { return false }
+        guard status.isEmpty || run.status==status || run.conclusion==status else { return false }
+        if !environment.isEmpty {
+            let deployed=catalog?.deployments.contains(where:{ $0.environment==environment && $0.sha==run.headSHA }) ?? false
+            guard deployed else { return false }
+        }
+        if let after,run.createdAt < after { return false }
+        if let before,run.createdAt > before { return false }
+        return true
     }
 }
 public struct ActionsSavedView:Codable,Equatable,Identifiable,Sendable {
