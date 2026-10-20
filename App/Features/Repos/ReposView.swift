@@ -117,6 +117,20 @@ struct ReposView:View {
         .scrollIndicators(.hidden)
         .fixedSize(horizontal:false,vertical:true).workspaceGlass(radius:16).padding(.horizontal,24).padding(.bottom,14)
     }
+    private func catalogRow(_ repository:RepoCatalogEntry) -> some View {
+        VStack(alignment:.leading,spacing:4) {
+            HStack { if repository.pinned { Image(systemName:"pin.fill").foregroundStyle(DesignTokens.violet).accessibilityLabel("Pinned") };Text(repository.repository.name).font(.headline).lineLimit(2) }
+            Text(Self.summary(repository)).font(.caption).foregroundStyle(.secondary)
+            HStack(spacing:7) { PRStatusLabel(value:ProviderStateText.checks(repository.defaultCI)).help("Default branch checks");Text(Self.openPRText(repository.openPRs)+" · ★ \(repository.stars)").foregroundStyle(.secondary) }.font(.caption)
+            if let pushed=repository.pushedAt { Text("Pushed "+pushed.formatted(date:.abbreviated,time:.omitted)).font(.caption).foregroundStyle(.secondary) }
+            if let release=repository.latestRelease { Text("Release "+release).font(.caption) }
+        }
+    }
+    static func summary(_ repository:RepoCatalogEntry) -> String {
+        let visibility=repository.repository.isPrivate ? "Private" : "Public"
+        let language=repository.language ?? "No language"
+        return "\(repository.accountLogin) · \(visibility) · \(language)"
+    }
     @ViewBuilder private var catalog:some View {
         if model.entries.isEmpty && (!model.treeMode || model.tree.roots.isEmpty) { ContentUnavailableView("No Accessible Repositories",systemImage:"shippingbox",description:Text("Connect an account or refresh its repository access in Setup.")) }
         else if model.treeMode ? model.tree.visibleRoots.isEmpty : model.visible.isEmpty { ContentUnavailableView("No Matching Repositories",systemImage:"magnifyingglass",description:Text("Adjust your search or filters to see more repositories.")) }
@@ -124,13 +138,7 @@ struct ReposView:View {
         else {
             List(selection:Binding(get:{ model.selected },set:{ if let key=$0 { model.select(key) } })) {
                 ForEach(model.visible) { repository in
-                    VStack(alignment:.leading,spacing:4) {
-                        HStack { if repository.pinned { Image(systemName:"pin.fill").foregroundStyle(DesignTokens.violet).accessibilityLabel("Pinned") };Text(repository.repository.name).font(.headline).lineLimit(2) }
-                        Text(repository.accountLogin+" · "+(repository.repository.isPrivate ? "Private" : "Public")+" · "+(repository.language ?? "No language")).font(.caption).foregroundStyle(.secondary)
-                        HStack(spacing:7) { PRStatusLabel(value:ProviderStateText.checks(repository.defaultCI)).help("Default branch checks");Text(Self.openPRText(repository.openPRs)+" · ★ \(repository.stars)").foregroundStyle(.secondary) }.font(.caption)
-                        if let pushed=repository.pushedAt { Text("Pushed "+pushed.formatted(date:.abbreviated,time:.omitted)).font(.caption).foregroundStyle(.secondary) }
-                        if let release=repository.latestRelease { Text("Release "+release).font(.caption) }
-                    }.tag(repository.key).padding(.vertical,4)
+                    catalogRow(repository).tag(repository.key).padding(.vertical,4)
                     .contextMenu { Button(repository.pinned ? "Unpin" : "Pin") { Task { await model.pin(repository) } };Button("Open on GitHub") { ExternalLinkPolicy.open(repository.webURL) } }
                     .task(id:repository.key) { await model.enrich(repository) }
                 }

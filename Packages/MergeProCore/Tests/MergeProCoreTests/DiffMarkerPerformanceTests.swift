@@ -6,7 +6,9 @@ final class DiffMarkerPerformanceTests:XCTestCase {
         func run(_ count:Int) async throws -> (Double,Int) {
             let old=(1...count).map { "old\($0)" }.joined(separator:"\n")
             let new=(1...count).map { "new\($0)" }.joined(separator:"\n")
-            let patch="@@ -1,\(count) +1,\(count) @@\n"+old.split(separator:"\n").map { "-"+$0 }.joined(separator:"\n")+"\n"+new.split(separator:"\n").map { "+"+$0 }.joined(separator:"\n")
+            let removed:String=old.split(separator:"\n").map { "-"+$0 }.joined(separator:"\n")
+            let added:String=new.split(separator:"\n").map { "+"+$0 }.joined(separator:"\n")
+            let patch="@@ -1,\(count) +1,\(count) @@\n"+removed+"\n"+added
             let file=DiffFile(path:"new",previousPath:"old",status:.renamed,patch:patch)
             let doc=DiffDocument(baseSHA:"b",headSHA:"h",files:[file],expectedFiles:1)
             let context=try DiffContext(document:doc,file:file,before:.init(sha:"b",text:old),after:.init(sha:"h",text:new))
