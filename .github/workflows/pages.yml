@@ -1,9 +1,10 @@
 name: Website
 
 on:
+  # Every push to main redeploys, so a commit made on github.com (which triggers GitHub's own Pages build of the
+  # repository root) never leaves that build live. The custom domain is set in Settings › Pages; website/CNAME keeps it.
   push:
     branches: [main]
-    paths: ['website/**', '.github/workflows/pages.yml']
   workflow_dispatch:
 
 permissions:
