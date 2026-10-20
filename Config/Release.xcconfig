@@ -1,0 +1,14 @@
+// Release: what scripts/build-local.sh signs by default. Same app settings as Debug, without the debugger entitlement.
+CODE_SIGN_IDENTITY = -
+#include? "Signing.xcconfig.local"
+MACOSX_DEPLOYMENT_TARGET = 26.0
+SWIFT_VERSION = 6.0
+PRODUCT_BUNDLE_IDENTIFIER = app.mergepro.mac
+CODE_SIGN_ENTITLEMENTS = Config/MergePro.entitlements
+ENABLE_APP_SANDBOX = YES
+ENABLE_HARDENED_RUNTIME = YES
+// Xcode otherwise injects com.apple.security.get-task-allow, which lets any process attach a debugger to the signed app.
+CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO
+
+MERGEPRO_GITHUB_CLIENT_ID =
+#include? "GitHub.xcconfig.local"

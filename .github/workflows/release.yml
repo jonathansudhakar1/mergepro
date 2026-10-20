@@ -1,0 +1,118 @@
+name: Release
+
+# Push a tag such as v1.2.0 to test, archive, upload to App Store Connect and publish a notarized build on GitHub
+# Releases. See RELEASING.md for the one-time setup (secrets, variables and the App Store Connect app record).
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, for example v1.2.0
+        required: true
+      upload_to_app_store:
+        description: Upload the build to App Store Connect
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
+  release:
+    name: Build, sign and publish
+    needs: test
+    runs-on: macos-26
+    timeout-minutes: 120
+    environment: release
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - name: Select the newest Xcode
+        run: scripts/ci-select-xcode.sh
+      - name: Check configuration
+        env:
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          MERGEPRO_GITHUB_CLIENT_ID: ${{ vars.MERGEPRO_GITHUB_CLIENT_ID }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          missing=()
+          for name in APPLE_TEAM_ID MERGEPRO_GITHUB_CLIENT_ID ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY; do
+            [[ -n "${!name}" ]] || missing+=("$name")
+          done
+          if (( ${#missing[@]} )); then echo "::error::Missing release configuration: ${missing[*]}. See RELEASING.md."; exit 1; fi
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Tag $TAG is not vMAJOR.MINOR.PATCH"; exit 1; }
+      - name: Install signing credentials
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          DEVELOPER_ID_P12_BASE64: ${{ secrets.DEVELOPER_ID_CERTIFICATE_P12_BASE64 }}
+          DEVELOPER_ID_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+        run: |
+          key="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          printf '%s\n' "$ASC_PRIVATE_KEY" > "$key"; chmod 600 "$key"
+          echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
+          # Optional: a Developer ID Application certificate, when cloud-managed signing isn't available to the API key.
+          if [[ -n "$DEVELOPER_ID_P12_BASE64" ]]; then
+            keychain="$RUNNER_TEMP/signing.keychain-db"; password=$(uuidgen)
+            security create-keychain -p "$password" "$keychain"
+            security set-keychain-settings -lut 3600 "$keychain"
+            security unlock-keychain -p "$password" "$keychain"
+            echo "$DEVELOPER_ID_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/developer-id.p12"
+            security import "$RUNNER_TEMP/developer-id.p12" -k "$keychain" -P "$DEVELOPER_ID_P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/xcodebuild
+            security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain" > /dev/null
+            security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+            rm "$RUNNER_TEMP/developer-id.p12"
+          fi
+      - name: Archive, export, upload and notarize
+        env:
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          MERGEPRO_GITHUB_CLIENT_ID: ${{ vars.MERGEPRO_GITHUB_CLIENT_ID }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          UPLOAD_TO_APP_STORE: ${{ github.event_name == 'push' || inputs.upload_to_app_store }}
+        run: |
+          export VERSION="${TAG#v}"
+          # Run numbers only grow; the offset keeps room for builds uploaded by hand.
+          export BUILD_NUMBER=$(( 1000 + GITHUB_RUN_NUMBER ))
+          scripts/release-build.sh
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${TAG#v}"
+          notes="Signed and notarized build for macOS 26 or later on Apple silicon. Unzip and move MergePro to Applications."
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" ".build/release/MergePro-$version.zip" ".build/release/MergePro-$version.zip.sha256" --clobber
+          else
+            gh release create "$TAG" ".build/release/MergePro-$version.zip" ".build/release/MergePro-$version.zip.sha256" \
+              --title "MergePro $version" --notes "$notes" --generate-notes --verify-tag
+          fi
+      - name: Upload build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-logs
+          path: |
+            ~/Library/Logs/DiagnosticReports
+            .build/release/*.plist
+          if-no-files-found: ignore
+      - name: Remove signing credentials
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP"/AuthKey_*.p8 Config/GitHub.xcconfig.local
+          security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2> /dev/null || true

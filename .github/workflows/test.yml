@@ -1,0 +1,46 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['website/**', '**.md']
+  pull_request:
+    paths-ignore: ['website/**', '**.md']
+  workflow_call:
+  workflow_dispatch:
+
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_call' }}
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify
+    # MergePro needs Xcode 27 and the macOS 26 SDK.
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select the newest Xcode
+        run: scripts/ci-select-xcode.sh
+      # Package tests, unsigned Debug builds of both apps, MergeProAppTests (hosted by the app, isolated from any real
+      # store, Keychain or network) and an unsigned Release build.
+      - name: Verify
+        run: scripts/verify.sh
+      - name: Upload app test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MergeProAppTests-xcresult
+          path: .build/verify/MergeProAppTests.xcresult
+          if-no-files-found: ignore
+      - name: Upload format report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swift-format-lint
+          path: .build/swift-format-lint.txt
+          if-no-files-found: ignore

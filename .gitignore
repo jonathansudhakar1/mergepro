@@ -1,0 +1,6 @@
+.build/
+Config/Signing.xcconfig.local
+*.xcuserstate
+xcuserdata/
+.DS_Store
+Config/GitHub.xcconfig.local

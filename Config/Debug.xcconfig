@@ -1,0 +1,12 @@
+// Fresh clones sign to run locally; Config/Signing.xcconfig.local (not committed) sets the real identity and team.
+CODE_SIGN_IDENTITY = -
+#include? "Signing.xcconfig.local"
+MACOSX_DEPLOYMENT_TARGET = 26.0
+SWIFT_VERSION = 6.0
+PRODUCT_BUNDLE_IDENTIFIER = app.mergepro.mac.debug
+CODE_SIGN_ENTITLEMENTS = Config/MergePro.entitlements
+ENABLE_APP_SANDBOX = YES
+ENABLE_HARDENED_RUNTIME = YES
+
+MERGEPRO_GITHUB_CLIENT_ID =
+#include? "GitHub.xcconfig.local"

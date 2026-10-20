@@ -1,0 +1,1087 @@
+[
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "LICENSE",
+    "path": "Vendor/typescript/LICENSE",
+    "sha256": "49bf33cf78ef5897e4e161ce1517df7de1ae5042a65b6bcfd44401e0fc606559",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "queries/tags.scm",
+    "path": "Vendor/typescript/queries/tags.scm",
+    "sha256": "b391288bcc71b513a5df7c9bb232d8bc7418d7e274b125aa0aa4bdd6121a0338",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "queries/locals.scm",
+    "path": "Vendor/typescript/queries/locals.scm",
+    "sha256": "c3680f9b56276fb2ccc9f1d5f4d03dbca5d64bdf3e6d52ce5a4ad342cec162d5",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "queries/highlights.scm",
+    "path": "Vendor/typescript/queries/highlights.scm",
+    "sha256": "e0c35adb819127bfd4f853fac5419e7d8ba44760246201d04a4a5ce0228a10c5",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "common/scanner.h",
+    "path": "Vendor/typescript/common/scanner.h",
+    "sha256": "da66ef2bd14a3f7ea743e25ba068c6c9aae2c3509db200ff80c4a0e6116e564c",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "typescript/src/scanner.c",
+    "path": "Vendor/typescript/typescript/src/scanner.c",
+    "sha256": "9125013b42cb888379d9be909f1d73dfb75a37626c2cdbf4122718a2b431a6d3",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "typescript/src/parser.c",
+    "path": "Vendor/typescript/typescript/src/parser.c",
+    "sha256": "74fe453edd70f4eae9af0a1050cbd7943d8971d59165b6aaebbaa0a0b716d1aa",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "typescript/src/tree_sitter/parser.h",
+    "path": "Vendor/typescript/typescript/src/tree_sitter/parser.h",
+    "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "typescript/src/tree_sitter/array.h",
+    "path": "Vendor/typescript/typescript/src/tree_sitter/array.h",
+    "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "typescript/src/tree_sitter/alloc.h",
+    "path": "Vendor/typescript/typescript/src/tree_sitter/alloc.h",
+    "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "tsx/src/scanner.c",
+    "path": "Vendor/typescript/tsx/src/scanner.c",
+    "sha256": "d563cd30b2f39718c9ae4292795c5ce03a2ad01954ba3a86ef84c2781a736673",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "tsx/src/parser.c",
+    "path": "Vendor/typescript/tsx/src/parser.c",
+    "sha256": "1902cb53fa7ff5179df89b2eea863165e84c8cc866226419dc26921d8c055885",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "tsx/src/tree_sitter/parser.h",
+    "path": "Vendor/typescript/tsx/src/tree_sitter/parser.h",
+    "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "tsx/src/tree_sitter/array.h",
+    "path": "Vendor/typescript/tsx/src/tree_sitter/array.h",
+    "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "source": "tsx/src/tree_sitter/alloc.h",
+    "path": "Vendor/typescript/tsx/src/tree_sitter/alloc.h",
+    "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+    "license": "MIT"
+  },
+  {
+    "component": "json",
+    "revision": "ee35a6ebefcef0c5c416c0d1ccec7370cfca5a24",
+    "source": "LICENSE",
+    "path": "Vendor/json/LICENSE",
+    "sha256": "2e0110e07abef7c2548b26ec9d6969775617ca539a0dc8dbeeb14d6452c711d1",
+    "license": "MIT"
+  },
+  {
+    "component": "json",
+    "revision": "ee35a6ebefcef0c5c416c0d1ccec7370cfca5a24",
+    "source": "queries/highlights.scm",
+    "path": "Vendor/json/queries/highlights.scm",
+    "sha256": "0511524465b56aed122580792254e68b6abbbfde7119f1d02b135acbe278233f",
+    "license": "MIT"
+  },
+  {
+    "component": "json",
+    "revision": "ee35a6ebefcef0c5c416c0d1ccec7370cfca5a24",
+    "source": "src/parser.c",
+    "path": "Vendor/json/src/parser.c",
+    "sha256": "e8e1ff5df0d73e3b82574129724e68ef4fa0faf1b8c43dd3f5c1a84839f830ab",
+    "license": "MIT"
+  },
+  {
+    "component": "json",
+    "revision": "ee35a6ebefcef0c5c416c0d1ccec7370cfca5a24",
+    "source": "src/tree_sitter/parser.h",
+    "path": "Vendor/json/src/tree_sitter/parser.h",
+    "sha256": "a1f6ef161fbaf48a0e10fca90ef5290a062462b307b3898aa562993853b9f80a",
+    "license": "MIT"
+  },
+  {
+    "component": "json",
+    "revision": "ee35a6ebefcef0c5c416c0d1ccec7370cfca5a24",
+    "source": "src/tree_sitter/array.h",
+    "path": "Vendor/json/src/tree_sitter/array.h",
+    "sha256": "4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1",
+    "license": "MIT"
+  },
+  {
+    "component": "json",
+    "revision": "ee35a6ebefcef0c5c416c0d1ccec7370cfca5a24",
+    "source": "src/tree_sitter/alloc.h",
+    "path": "Vendor/json/src/tree_sitter/alloc.h",
+    "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+    "license": "MIT"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/unicode_property_data_posix.c",
+    "path": "Vendor/oniguruma/src/unicode_property_data_posix.c",
+    "sha256": "27bf4f37819b67b43d2a223a0a251978335d1c44a0ec02b4f907fba32b002058",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/unicode.c",
+    "path": "Vendor/oniguruma/src/unicode.c",
+    "sha256": "381aacfe8feaf7d307c0a729bbb2a903e706866cb3c99a5422f003ff7fa97dff",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/big5.c",
+    "path": "Vendor/oniguruma/src/big5.c",
+    "sha256": "a1c9632424195311fa77ac84256d6a6520f5467a00df1deeb3346f0d2644149f",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/st.h",
+    "path": "Vendor/oniguruma/src/st.h",
+    "sha256": "5a44a44d08dfa64a571cff168878378c3b4bc630e303c12ba99ac99d353595ef",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/ascii.c",
+    "path": "Vendor/oniguruma/src/ascii.c",
+    "sha256": "f734cc6e17a9c423d15db4509beba03c13d67dc6baf93f43184068a65082ace8",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/unicode_fold2_key.c",
+    "path": "Vendor/oniguruma/src/unicode_fold2_key.c",
+    "sha256": "70b6f9185984408b308bb9d441333c5be95d36853fa60294ec0d08c274d5088c",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/utf32_le.c",
+    "path": "Vendor/oniguruma/src/utf32_le.c",
+    "sha256": "e0aa493bd75bc8580cb9f9daf1c6eda7f248fbc29d64ffcc414350f0e8f76f0b",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_1.c",
+    "path": "Vendor/oniguruma/src/iso8859_1.c",
+    "sha256": "5502a794476910c0c1aed97829baa7481e3d5f6fcb9bbe68952c16788187b84c",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regparse.h",
+    "path": "Vendor/oniguruma/src/regparse.h",
+    "sha256": "a34f5de2e0d8f65923ac4aa93bfabdc93d952d01b8c9f1c489d3cc25e9c040a3",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_11.c",
+    "path": "Vendor/oniguruma/src/iso8859_11.c",
+    "sha256": "51193c21da366f7f88ed8e500accf2a938c6e15d9c3b9d912970066967f29ad8",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/euc_jp.c",
+    "path": "Vendor/oniguruma/src/euc_jp.c",
+    "sha256": "239b94398eda31e64a7085c96f184340be3f85c764ab08cffdc5e82d4f20f097",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_15.c",
+    "path": "Vendor/oniguruma/src/iso8859_15.c",
+    "sha256": "9b3e2d2516bdf266ed40461c040db495762a04810687528bbbdb85e4435665a5",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_5.c",
+    "path": "Vendor/oniguruma/src/iso8859_5.c",
+    "sha256": "41df6d443d1516dca6c18e42af8bfef1689f307315fa46b85110f234e1decca6",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/unicode_fold3_key.c",
+    "path": "Vendor/oniguruma/src/unicode_fold3_key.c",
+    "sha256": "1e026d61dbd1e1300feecfeb5788f62cd2e388cf9a0c3b666e389bc3cf449369",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/unicode_fold1_key.c",
+    "path": "Vendor/oniguruma/src/unicode_fold1_key.c",
+    "sha256": "1a965892c78598ed0d7c7adad0021dc774d6278c727692b8b2300804de70f043",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/unicode_wb_data.c",
+    "path": "Vendor/oniguruma/src/unicode_wb_data.c",
+    "sha256": "9530ddf3208658a05bf33d36249bc6b9d8e500f54cfa2c8552762d42314244ba",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regexec.c",
+    "path": "Vendor/oniguruma/src/regexec.c",
+    "sha256": "51d9456a6b8fc4330b4f5030642265fd7e12524f05223b446b3444bd3fecf03c",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regint.h",
+    "path": "Vendor/oniguruma/src/regint.h",
+    "sha256": "676be021dafaf99eaab375b283fb42dc59a31a33d68a6d42dbb15d08defbfd3b",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regenc.h",
+    "path": "Vendor/oniguruma/src/regenc.h",
+    "sha256": "da808283c9d13aa641a3507d86098273afeb723da9ab2eadae176a388dec4564",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_2.c",
+    "path": "Vendor/oniguruma/src/iso8859_2.c",
+    "sha256": "394d0b706b1be6de42918f9461828035c1a3ab9233dc436272ed8fb5034a38cc",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/utf8.c",
+    "path": "Vendor/oniguruma/src/utf8.c",
+    "sha256": "8927e4b2e64fd188592a95ecf56f2d6c7bb0bcb5721b6d2fd446c20c10a7ddf4",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regext.c",
+    "path": "Vendor/oniguruma/src/regext.c",
+    "sha256": "53683bb1c4d1b787856cce013cc01fa54b917997e96d4471b1c74915bf0b7c00",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_8.c",
+    "path": "Vendor/oniguruma/src/iso8859_8.c",
+    "sha256": "a127aff89565bdfdc75094ad8dbe436bc071ea6fc29282b1a20a188b0a8a730d",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regcomp.c",
+    "path": "Vendor/oniguruma/src/regcomp.c",
+    "sha256": "0f22d86a07412093ce12df15d0b88db02fa21bf409d623738102c805b2580a49",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/unicode_egcb_data.c",
+    "path": "Vendor/oniguruma/src/unicode_egcb_data.c",
+    "sha256": "21663445ace4f64775506f3fc53332a96e1b2b9f509b63eeb5462913daeb6d73",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/koi8_r.c",
+    "path": "Vendor/oniguruma/src/koi8_r.c",
+    "sha256": "dfaf7d0bd8b680e8fe4e85ab71deaf27a63b781dd4abcb484931a8a362926a19",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regtrav.c",
+    "path": "Vendor/oniguruma/src/regtrav.c",
+    "sha256": "bb70c4886681a3c17d312f3e23a17f75a613bb8dfc90bfcbb562a71809159a0d",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/utf32_be.c",
+    "path": "Vendor/oniguruma/src/utf32_be.c",
+    "sha256": "3e07ba968d71b5695b429f6d9dbee179db26a24c2e1f44fc938f6147b09af94d",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regsyntax.c",
+    "path": "Vendor/oniguruma/src/regsyntax.c",
+    "sha256": "11e750804c89ff3a4524c70c4bec8caa77da04c12c161385a6d701460456277c",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_6.c",
+    "path": "Vendor/oniguruma/src/iso8859_6.c",
+    "sha256": "b904d04267b21a4775cf97bb5746c09f2bf8987df562f95be5785351db7427d9",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/euc_jp_prop.c",
+    "path": "Vendor/oniguruma/src/euc_jp_prop.c",
+    "sha256": "264e7be695f6abff9fa9e01864fdaf4de3d2524249d4dfad3688b312b28362fb",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regversion.c",
+    "path": "Vendor/oniguruma/src/regversion.c",
+    "sha256": "f2a0cc84446e64d202bd9627f4c9924c4d338f0c2ed9fc642a9caefe2757301d",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/unicode_property_data.c",
+    "path": "Vendor/oniguruma/src/unicode_property_data.c",
+    "sha256": "6f69e9852bf746acfc3847c9789225d4ba1f085f1852ca00fcab7fa912982f52",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_16.c",
+    "path": "Vendor/oniguruma/src/iso8859_16.c",
+    "sha256": "a2aa13344c1e2da01dd4295d9bb9aaff642857ab5d6fc9724ce501540a96fe2f",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/st.c",
+    "path": "Vendor/oniguruma/src/st.c",
+    "sha256": "c3e73faab1ef6dc0a8524dde9b71c9a7eedc78edd70232c794ca936b0d83ca27",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/oniggnu.h",
+    "path": "Vendor/oniguruma/src/oniggnu.h",
+    "sha256": "fdb9bfc28287f7573a5ccad2ba45c7759aa2cbc11c57b05b86908809e1ac5f9a",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/onigposix.h",
+    "path": "Vendor/oniguruma/src/onigposix.h",
+    "sha256": "a4002b01d62f5c91d851190b9225737ad059a85cfa2a04ca6d1d4ff67f4a08de",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/euc_kr.c",
+    "path": "Vendor/oniguruma/src/euc_kr.c",
+    "sha256": "e00e279fd2eb8ca712aa497ebd597d59a58263eafc758ac9d2fd7b864b46cb22",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/utf16_le.c",
+    "path": "Vendor/oniguruma/src/utf16_le.c",
+    "sha256": "7420d3f24620f50489e6b335885f2ca59f004a8862e8e87db506d269d773155c",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_13.c",
+    "path": "Vendor/oniguruma/src/iso8859_13.c",
+    "sha256": "4e6ae959854e31ef609e2eccd99bd2f20583d70552790032138532fefadfcccf",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/oniguruma.h",
+    "path": "Vendor/oniguruma/src/oniguruma.h",
+    "sha256": "bceb20b139315fbe2fb02e58f3b499107d5d4c2dc9953c677c332ccb1cb305ef",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_9.c",
+    "path": "Vendor/oniguruma/src/iso8859_9.c",
+    "sha256": "92072e3802041eb1ba138e79b458084391705f1cba27272d365c74656a6f1b1a",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_3.c",
+    "path": "Vendor/oniguruma/src/iso8859_3.c",
+    "sha256": "28bcf8b89d67e826ca45410d9e160645af277aad059118fd66ec9385ea254482",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_7.c",
+    "path": "Vendor/oniguruma/src/iso8859_7.c",
+    "sha256": "6d952dcd5fdc3fb69f5b58e44fbcf6d66589af7607dba65bb1c5b9b7cf6450d3",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regparse.c",
+    "path": "Vendor/oniguruma/src/regparse.c",
+    "sha256": "f4b5ef44a888c7150a304d27aef2ffe85d4f8fb2cee220240644be4c62a905d3",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/onig_init.c",
+    "path": "Vendor/oniguruma/src/onig_init.c",
+    "sha256": "89f37f5b5f5961493bec99aacf1d828f1dd7d70830eed2aaff86247f4d4a4ce3",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/euc_tw.c",
+    "path": "Vendor/oniguruma/src/euc_tw.c",
+    "sha256": "ea95ea5bc4b399164d8700830371efde8b458e1fee0bb67d86bf0dff20f939de",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/cp1251.c",
+    "path": "Vendor/oniguruma/src/cp1251.c",
+    "sha256": "93fed3c57fddfcdb8fa9bac6f17369b5b83eea2116d1ac4fcd378168602f6d47",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/sjis.c",
+    "path": "Vendor/oniguruma/src/sjis.c",
+    "sha256": "bfe3420942bcdcd31142763310acc9d0acb2ab8020bd6f1395e57e86900b578e",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regenc.c",
+    "path": "Vendor/oniguruma/src/regenc.c",
+    "sha256": "cc33829f2a4279c96ca96d97c6d29d9f6ac65dc7ea0c5494f3b34bc43566585e",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/sjis_prop.c",
+    "path": "Vendor/oniguruma/src/sjis_prop.c",
+    "sha256": "a4435b5693578749d15c237f5a66c5aff5dbe1bb295b0670f233007a8ec3c768",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/gb18030.c",
+    "path": "Vendor/oniguruma/src/gb18030.c",
+    "sha256": "4cc1b23f96320b3b2400e5d16832d952dbdb24bd761b52c75bd2ff0d7c260175",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/regerror.c",
+    "path": "Vendor/oniguruma/src/regerror.c",
+    "sha256": "eced9d8be1c24c88dbb490668eadac75903e4bdce5f89fda6815f5c4f1ddccc0",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/unicode_unfold_key.c",
+    "path": "Vendor/oniguruma/src/unicode_unfold_key.c",
+    "sha256": "521fc37c8626e811c3c8042b848c4289f775dbae58b8422dfc5ad1447e2e98a9",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_10.c",
+    "path": "Vendor/oniguruma/src/iso8859_10.c",
+    "sha256": "f0a1cb8e2ec648d7d33fb47b8834c6f9d4c958f89a8c0f2a4a686873d1c6d3f9",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/reggnu.c",
+    "path": "Vendor/oniguruma/src/reggnu.c",
+    "sha256": "18bad41679c188eaa4a0f436fab2bec726076f1e8a6225536fc08fe69d91dd5d",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_14.c",
+    "path": "Vendor/oniguruma/src/iso8859_14.c",
+    "sha256": "2fe72a025c89b3d5ed5fece798a3c00c5e7c008e7265b541fad6e15ec81cbfac",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/utf16_be.c",
+    "path": "Vendor/oniguruma/src/utf16_be.c",
+    "sha256": "2f5690e7ebdd6cddebe53e9a5479fd5c4b4b1bd1f40321e20a83f6114e2632ac",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/iso8859_4.c",
+    "path": "Vendor/oniguruma/src/iso8859_4.c",
+    "sha256": "98cf5fc6f68a3af2d077a9eb5e61f68d622833e1312a71dd5be3d573d588155e",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/unicode_fold_data.c",
+    "path": "Vendor/oniguruma/src/unicode_fold_data.c",
+    "sha256": "690b14e8f84ff1345ec38657ab41a0c630dea37b99fb39519d9789ddf2558a55",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "COPYING",
+    "path": "Vendor/oniguruma/COPYING",
+    "sha256": "70ba5469ea0bab6e18a32d7009068f996503168d27be57747e08da34337ff26f",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "vscode-textmate",
+    "revision": "25b68dad91920b1ed79d357534b8c4582f62d80d",
+    "source": "package/release/main.js",
+    "path": "Sources/MergeProRendering/Resources/vscode-textmate.js",
+    "sha256": "9da91ca33178e8d68ac5b9ea5733258275fe2f1924db02930ef9cf7e0d850e0f",
+    "license": "MIT",
+    "npmIntegrity": "sha512-n2uGbUcrjhUEBH16uGA0TvUfhWwliFZ1e3+pTjrkim1Mt7ydB41lV08aUvsi70OlzDWp6X7Bx3w/x3fAXIsN0Q=="
+  },
+  {
+    "component": "vscode-textmate",
+    "revision": "25b68dad91920b1ed79d357534b8c4582f62d80d",
+    "source": "package/LICENSE.md",
+    "path": "Sources/MergeProRendering/Resources/TextMate-LICENSE.md",
+    "sha256": "b5cb7ff7859e7d282d98fc43ab081b0dda5dc659dc3385cf65740c759a7e6a6c",
+    "license": "MIT",
+    "npmIntegrity": "sha512-n2uGbUcrjhUEBH16uGA0TvUfhWwliFZ1e3+pTjrkim1Mt7ydB41lV08aUvsi70OlzDWp6X7Bx3w/x3fAXIsN0Q=="
+  },
+  {
+    "component": "swift",
+    "source": "queries/tags.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/swift/queries/tags.scm",
+    "sha256": "6d3884e3f785d621128356a23ac81dfc438d9a853b8ee24b8070dc2caaf631ca",
+    "revision": "31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5",
+    "license": "MIT"
+  },
+  {
+    "component": "swift",
+    "source": "queries/outline.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/swift/queries/outline.scm",
+    "sha256": "8646875169da813e8e273deb1e4a84627a11317c07cdad9dd6594279c4b73edd",
+    "revision": "31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5",
+    "license": "MIT"
+  },
+  {
+    "component": "swift",
+    "source": "queries/locals.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/swift/queries/locals.scm",
+    "sha256": "430a7d71c30212e1e0e21eb1b3ed71959fb71bf74a6fea27a0efbf491ebda1c7",
+    "revision": "31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5",
+    "license": "MIT"
+  },
+  {
+    "component": "swift",
+    "source": "queries/indents.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/swift/queries/indents.scm",
+    "sha256": "8c025f8b671167e87f371ef230cd68c953361c5a6f735cbb89985f791ffa7da0",
+    "revision": "31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5",
+    "license": "MIT"
+  },
+  {
+    "component": "swift",
+    "source": "queries/highlights.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/swift/queries/highlights.scm",
+    "sha256": "b0bbeb918904b252e8bd361f4afb4756647232391110a67deecbf7227464aff8",
+    "revision": "31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5",
+    "license": "MIT"
+  },
+  {
+    "component": "swift",
+    "source": "queries/folds.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/swift/queries/folds.scm",
+    "sha256": "4f00b0b392dce70a0127b67d1c7858f1074768125f3c1702b22acd036e5c9ba0",
+    "revision": "31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5",
+    "license": "MIT"
+  },
+  {
+    "component": "swift",
+    "source": "queries/textobjects.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/swift/queries/textobjects.scm",
+    "sha256": "a8086f55963e0c79c91ded41c5dacc8da8ec8753f05b4db3ea70ce56e4281fa4",
+    "revision": "31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5",
+    "license": "MIT"
+  },
+  {
+    "component": "swift",
+    "source": "queries/injections.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/swift/queries/injections.scm",
+    "sha256": "fd541e467fd2667ed7cfdf604b0f3b3d1ac2632791972840eaedd0b99a581e58",
+    "revision": "31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5",
+    "license": "MIT"
+  },
+  {
+    "component": "javascript",
+    "source": "queries/tags.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/javascript/queries/tags.scm",
+    "sha256": "6ef988cce5a428a15b5460e3ee96f1478705f965fc6e848a91a18bfa6c6f0212",
+    "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+    "license": "MIT"
+  },
+  {
+    "component": "javascript",
+    "source": "queries/highlights-params.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/javascript/queries/highlights-params.scm",
+    "sha256": "bbe7a58cacfb1c954cb0eab44779fd80421ed59b762b975723447207635de50d",
+    "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+    "license": "MIT"
+  },
+  {
+    "component": "javascript",
+    "source": "queries/locals.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/javascript/queries/locals.scm",
+    "sha256": "c1dd2cfa1400d397fa974208fc9edfe817be4a3c8b42bb99af5c8d193b1bb753",
+    "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+    "license": "MIT"
+  },
+  {
+    "component": "javascript",
+    "source": "queries/highlights.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/javascript/queries/highlights.scm",
+    "sha256": "d3630ae6dc9b2b27b230b5f8bb92b05cd491fb12bff353dae62a0a6d780461ee",
+    "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+    "license": "MIT"
+  },
+  {
+    "component": "javascript",
+    "source": "queries/highlights-jsx.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/javascript/queries/highlights-jsx.scm",
+    "sha256": "0cad1712acaf40804bc5dc7c8476858752c1f549cdf7d8c63c747317be0f8fa6",
+    "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+    "license": "MIT"
+  },
+  {
+    "component": "javascript",
+    "source": "queries/injections.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/javascript/queries/injections.scm",
+    "sha256": "bea345407ce1f24bccf2b3c1a128acc14e19301327074285368586e793dcb86d",
+    "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "source": "queries/tags.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/typescript/queries/tags.scm",
+    "sha256": "b391288bcc71b513a5df7c9bb232d8bc7418d7e274b125aa0aa4bdd6121a0338",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "source": "queries/locals.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/typescript/queries/locals.scm",
+    "sha256": "c3680f9b56276fb2ccc9f1d5f4d03dbca5d64bdf3e6d52ce5a4ad342cec162d5",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "license": "MIT"
+  },
+  {
+    "component": "typescript",
+    "source": "queries/highlights.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/typescript/queries/highlights.scm",
+    "sha256": "e0c35adb819127bfd4f853fac5419e7d8ba44760246201d04a4a5ce0228a10c5",
+    "revision": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+    "license": "MIT"
+  },
+  {
+    "component": "python",
+    "source": "queries/tags.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/python/queries/tags.scm",
+    "sha256": "d0f3e577878167bfabc30e526e497bce58d1699b9bcabf8ab3a50698efb5ca3e",
+    "revision": "293fdc02038ee2bf0e2e206711b69c90ac0d413f",
+    "license": "MIT"
+  },
+  {
+    "component": "python",
+    "source": "queries/highlights.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/python/queries/highlights.scm",
+    "sha256": "a6708f209381618e2b398972c8f1ccd892f0c064eab35a2a3f911c3e22e79a7e",
+    "revision": "293fdc02038ee2bf0e2e206711b69c90ac0d413f",
+    "license": "MIT"
+  },
+  {
+    "component": "json",
+    "source": "queries/highlights.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/json/queries/highlights.scm",
+    "sha256": "0511524465b56aed122580792254e68b6abbbfde7119f1d02b135acbe278233f",
+    "revision": "ee35a6ebefcef0c5c416c0d1ccec7370cfca5a24",
+    "license": "MIT"
+  },
+  {
+    "component": "yaml",
+    "source": "queries/highlights.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/yaml/queries/highlights.scm",
+    "sha256": "2fbfbbd5ca0928d0a7e09e59f8f2964b14a328a7ee0ce799270d9013dcce49a0",
+    "revision": "7708026449bed86239b1cd5bce6e3c34dbca6415",
+    "license": "MIT"
+  },
+  {
+    "component": "bash",
+    "source": "queries/highlights.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/bash/queries/highlights.scm",
+    "sha256": "b74220d954f485b7626d2b2b61f37b522e12eb1830803e388e57dd797dc99f11",
+    "revision": "a06c2e4415e9bc0346c6b86d401879ffb44058f7",
+    "license": "MIT"
+  },
+  {
+    "component": "markdown",
+    "source": "tree-sitter-markdown-inline/queries/highlights.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/markdown/tree-sitter-markdown-inline/queries/highlights.scm",
+    "sha256": "9a88072f0ce54972c32fe7952ccb2d29254b6a7228bda1c7babc18df15cba797",
+    "revision": "f969cd3ae3f9fbd4e43205431d0ae286014c05b5",
+    "license": "MIT"
+  },
+  {
+    "component": "markdown",
+    "source": "tree-sitter-markdown-inline/queries/injections.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/markdown/tree-sitter-markdown-inline/queries/injections.scm",
+    "sha256": "97bf17b9a973db8ee6868f543dd1eabdd81f19b8751a4fcf92db45f74462f4c5",
+    "revision": "f969cd3ae3f9fbd4e43205431d0ae286014c05b5",
+    "license": "MIT"
+  },
+  {
+    "component": "markdown",
+    "source": "tree-sitter-markdown/queries/highlights.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/markdown/tree-sitter-markdown/queries/highlights.scm",
+    "sha256": "2eb06e766ccd672d49599d14f398f07f4f5f7f2208262993d3cd9207c1078e2f",
+    "revision": "f969cd3ae3f9fbd4e43205431d0ae286014c05b5",
+    "license": "MIT"
+  },
+  {
+    "component": "markdown",
+    "source": "tree-sitter-markdown/queries/injections.scm",
+    "path": "Sources/MergeProRendering/Resources/Queries/markdown/tree-sitter-markdown/queries/injections.scm",
+    "sha256": "64b1a6006b40176d8db986cc41350e4f9b292fd06bfedb0abfcdb1fb989aca3e",
+    "revision": "f969cd3ae3f9fbd4e43205431d0ae286014c05b5",
+    "license": "MIT"
+  },
+  {
+    "component": "javascript",
+    "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+    "source": "src/scanner.c",
+    "path": "Vendor/javascript/src/scanner.c",
+    "sha256": "b3d3f64284d97bf80749c026862427782cf7ecc0b7dc094e6698ab311c9a42c7",
+    "license": "MIT"
+  },
+  {
+    "component": "javascript",
+    "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+    "source": "src/parser.c",
+    "path": "Vendor/javascript/src/parser.c",
+    "sha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
+    "license": "MIT"
+  },
+  {
+    "component": "javascript",
+    "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+    "source": "src/tree_sitter/parser.h",
+    "path": "Vendor/javascript/src/tree_sitter/parser.h",
+    "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+    "license": "MIT"
+  },
+  {
+    "component": "javascript",
+    "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+    "source": "src/tree_sitter/array.h",
+    "path": "Vendor/javascript/src/tree_sitter/array.h",
+    "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+    "license": "MIT"
+  },
+  {
+    "component": "javascript",
+    "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+    "source": "src/tree_sitter/alloc.h",
+    "path": "Vendor/javascript/src/tree_sitter/alloc.h",
+    "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+    "license": "MIT"
+  },
+  {
+    "component": "python",
+    "revision": "293fdc02038ee2bf0e2e206711b69c90ac0d413f",
+    "source": "src/scanner.c",
+    "path": "Vendor/python/src/scanner.c",
+    "sha256": "6db82134ac2d4c90a1a1475487a625cface02662ebda9b7478cad9c7147e9afe",
+    "license": "MIT"
+  },
+  {
+    "component": "python",
+    "revision": "293fdc02038ee2bf0e2e206711b69c90ac0d413f",
+    "source": "src/parser.c",
+    "path": "Vendor/python/src/parser.c",
+    "sha256": "a895f10b3cf7b2608f3283b43cd5cfed70971c7ee4a0136abbaaccbc4a7a25e0",
+    "license": "MIT"
+  },
+  {
+    "component": "python",
+    "revision": "293fdc02038ee2bf0e2e206711b69c90ac0d413f",
+    "source": "src/tree_sitter/parser.h",
+    "path": "Vendor/python/src/tree_sitter/parser.h",
+    "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+    "license": "MIT"
+  },
+  {
+    "component": "python",
+    "revision": "293fdc02038ee2bf0e2e206711b69c90ac0d413f",
+    "source": "src/tree_sitter/array.h",
+    "path": "Vendor/python/src/tree_sitter/array.h",
+    "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+    "license": "MIT"
+  },
+  {
+    "component": "python",
+    "revision": "293fdc02038ee2bf0e2e206711b69c90ac0d413f",
+    "source": "src/tree_sitter/alloc.h",
+    "path": "Vendor/python/src/tree_sitter/alloc.h",
+    "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+    "license": "MIT"
+  },
+  {
+    "component": "yaml",
+    "revision": "7708026449bed86239b1cd5bce6e3c34dbca6415",
+    "source": "src/scanner.c",
+    "path": "Vendor/yaml/src/scanner.c",
+    "sha256": "9cd962f7c7541247cfc7ebf661abaa5d9b642d27de16575c87093496557aae59",
+    "license": "MIT"
+  },
+  {
+    "component": "yaml",
+    "revision": "7708026449bed86239b1cd5bce6e3c34dbca6415",
+    "source": "src/schema.json.c",
+    "path": "Vendor/yaml/src/schema.json.c",
+    "sha256": "3a18e4406aa8cdaea2806483e11c50e1a392fd72cf8f54ab7f189b3728836949",
+    "license": "MIT"
+  },
+  {
+    "component": "yaml",
+    "revision": "7708026449bed86239b1cd5bce6e3c34dbca6415",
+    "source": "src/schema.core.c",
+    "path": "Vendor/yaml/src/schema.core.c",
+    "sha256": "91e56c3f3ae6fad1803b739ce4eb4568a782a9aec710f733db2f3e38d407a4d5",
+    "license": "MIT"
+  },
+  {
+    "component": "yaml",
+    "revision": "7708026449bed86239b1cd5bce6e3c34dbca6415",
+    "source": "src/schema.legacy.c",
+    "path": "Vendor/yaml/src/schema.legacy.c",
+    "sha256": "4f7ca12361e848214beceaa95ae615048317039ea4736c6eec956e3e8da4694c",
+    "license": "MIT"
+  },
+  {
+    "component": "yaml",
+    "revision": "7708026449bed86239b1cd5bce6e3c34dbca6415",
+    "source": "src/parser.c",
+    "path": "Vendor/yaml/src/parser.c",
+    "sha256": "8a3baaab33fb63cf9a89f97ec61dbb3ab0d4ef69be9f0f229092c79d129617c9",
+    "license": "MIT"
+  },
+  {
+    "component": "yaml",
+    "revision": "7708026449bed86239b1cd5bce6e3c34dbca6415",
+    "source": "src/tree_sitter/parser.h",
+    "path": "Vendor/yaml/src/tree_sitter/parser.h",
+    "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+    "license": "MIT"
+  },
+  {
+    "component": "yaml",
+    "revision": "7708026449bed86239b1cd5bce6e3c34dbca6415",
+    "source": "src/tree_sitter/array.h",
+    "path": "Vendor/yaml/src/tree_sitter/array.h",
+    "sha256": "5bdf6ed1a78e3409fd443e085ca967a64c188a5d082aaf7f819bccd53a471c94",
+    "license": "MIT"
+  },
+  {
+    "component": "yaml",
+    "revision": "7708026449bed86239b1cd5bce6e3c34dbca6415",
+    "source": "src/tree_sitter/alloc.h",
+    "path": "Vendor/yaml/src/tree_sitter/alloc.h",
+    "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+    "license": "MIT"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "COPYING",
+    "path": "Sources/MergeProRendering/Resources/Notices/oniguruma-LICENSE",
+    "sha256": "70ba5469ea0bab6e18a32d7009068f996503168d27be57747e08da34337ff26f",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "swift-tree-sitter",
+    "revision": "08ef81eb8620617b55b08868126707ad72bf754f",
+    "source": "LICENSE",
+    "path": "Sources/MergeProRendering/Resources/Notices/swift-tree-sitter-LICENSE",
+    "sha256": "792197b8debcdecb17f429bab3a43a5911364e2a6e8e7c0f7faf02032212fb5f",
+    "license": "BSD-3-Clause"
+  },
+  {
+    "component": "tree-sitter",
+    "revision": "da6fe9beb4f7f67beb75914ca8e0d48ae48d6406",
+    "source": "LICENSE",
+    "path": "Sources/MergeProRendering/Resources/Notices/tree-sitter-LICENSE",
+    "sha256": "5f9cf9fb6acb1972b35ae29119ce563bb60ec097656bc4b69b9bac2d04c7a147",
+    "license": "MIT"
+  },
+  {
+    "component": "oniguruma",
+    "revision": "4ef89209a239c1aea328cf13c05a2807e5c146d1",
+    "source": "src/oniguruma.h",
+    "path": "Vendor/oniguruma/include/oniguruma.h",
+    "sha256": "bceb20b139315fbe2fb02e58f3b499107d5d4c2dc9953c677c332ccb1cb305ef",
+    "license": "BSD-2-Clause"
+  },
+  {
+    "component": "swift-markdown",
+    "revision": "7d9a5ce307528578dfa777d505496bd5f544ad94",
+    "version": "0.7.3",
+    "source": "LICENSE.txt",
+    "path": "Sources/MergeProRendering/Resources/Notices/swift-markdown-LICENSE.txt",
+    "sha256": "167beb36f181bd163c93c6feb45c68e5f9462fe1af55b278f7bfd1df20e673a3",
+    "license": "Apache-2.0 WITH Swift-exception"
+  },
+  {
+    "component": "swift-markdown",
+    "revision": "7d9a5ce307528578dfa777d505496bd5f544ad94",
+    "version": "0.7.3",
+    "source": "NOTICE.txt",
+    "path": "Sources/MergeProRendering/Resources/Notices/swift-markdown-NOTICE.txt",
+    "sha256": "ee7da43afcac4a52196a2141024573ec2ceb84b14e74dfed38522d94586fbc52",
+    "license": "Apache-2.0 WITH Swift-exception"
+  },
+  {
+    "component": "swift-cmark",
+    "revision": "08ddb528923cc1a6527e02b7a1aee9e516ca749a",
+    "version": "0.9.0",
+    "source": "COPYING",
+    "path": "Sources/MergeProRendering/Resources/Notices/swift-cmark-COPYING",
+    "sha256": "c22e885f33b821bddb24cf007145e5540655b6c0f403e49e6c76a93c28e6d9a9",
+    "license": "BSD-2-Clause AND MIT (see COPYING)"
+  }
+]

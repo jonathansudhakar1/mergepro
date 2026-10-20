@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MergePro: GitHub pull requests, native on your Mac</title>
+  <meta name="description" content="MergePro is a free, open-source, native macOS app for working through GitHub pull requests across several accounts and repositories. Board, reviews, merges, Actions, repositories and local Git. No backend, no tracking.">
+  <link rel="canonical" href="https://mergepro.app/">
+  <meta name="theme-color" content="#06070d" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f6f7fc" media="(prefers-color-scheme: light)">
+  <meta name="color-scheme" content="dark light">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MergePro">
+  <meta property="og:title" content="MergePro: GitHub pull requests, native on your Mac">
+  <meta property="og:description" content="Review, merge and ship across all your GitHub accounts from one fast, private, native macOS app. Free and open source.">
+  <meta property="og:url" content="https://mergepro.app/">
+  <meta property="og:image" content="https://mergepro.app/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The MergePro app icon on a cobalt-to-violet gradient with the tagline: GitHub pull requests, native on your Mac.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MergePro: GitHub pull requests, native on your Mac">
+  <meta name="twitter:description" content="Review, merge and ship across all your GitHub accounts from one fast, private, native macOS app. Free and open source.">
+  <meta name="twitter:image" content="https://mergepro.app/assets/og.png">
+  <meta name="twitter:image:alt" content="The MergePro app icon on a cobalt-to-violet gradient.">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="/assets/img/favicon-64.png">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script src="/assets/js/site.js" defer></script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "MergePro",
+    "description": "A native macOS app for working through GitHub pull requests across several accounts and repositories.",
+    "url": "https://mergepro.app/",
+    "image": "https://mergepro.app/assets/og.png",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "macOS 26 or later",
+    "softwareRequirements": "Mac with Apple silicon",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "license": "https://www.apache.org/licenses/LICENSE-2.0",
+    "downloadUrl": "https://github.com/jonathansudhakar1/mergepro/releases",
+    "sameAs": ["https://github.com/jonathansudhakar1/mergepro"],
+    "author": { "@type": "Person", "name": "Jonathan Sudhakar" },
+    "copyrightYear": 2026
+  }
+  </script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- Icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-pr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M6 7.5v9M18 16.5V9a3 3 0 0 0-3-3h-4"/><path d="m13 3-3 3 3 3"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z" fill="currentColor"/></symbol>
+    <symbol id="i-repo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H19v16H7.5A2.5 2.5 0 0 0 5 20.5z"/><path d="M5 20.5A2.5 2.5 0 0 0 7.5 23H19v-5"/><path d="M9 6h6"/></symbol>
+    <symbol id="i-laptop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="11" rx="2"/><path d="M2 19h20"/><path d="m8.5 8 2 1.5-2 1.5M12.5 11h3"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h5l1.5 3h5L16 13h5"/><path d="M5.5 5h13L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5z"/></symbol>
+    <symbol id="i-board" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M15 3v18"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M6.5 12h11M10 19h4"/></symbol>
+    <symbol id="i-review" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12.5h5"/></symbol>
+    <symbol id="i-merge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M6 7.5v9M6 7.5c0 3 3 4.5 9.5 4.5"/></symbol>
+    <symbol id="i-stack" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 4.5-9 4.5-9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></symbol>
+    <symbol id="i-branch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="7" r="2.5"/><path d="M6 7.5v9M18 9.5c0 4-6 3-12 7"/></symbol>
+    <symbol id="i-menubar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="4" rx="1.5"/><rect x="10" y="10" width="11" height="11" rx="2.5"/><path d="M13 14h5M13 17.5h3"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+    <symbol id="i-eyeoff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 5.1A10 10 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-2.6 3.5M6.6 6.6C3.9 8.4 2.5 12 2.5 12S6 19 12 19a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2M3 3l18 18"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 5.5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+    <symbol id="i-cloudoff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10.5a4 4 0 0 0 1.3-7.8M15.6 6.3A6 6 0 0 0 6.2 10 4 4 0 0 0 7 18"/><path d="M3 3l18 18"/></symbol>
+    <symbol id="i-device" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 12h1.5M10.5 12H12M14 12h1.5M17 12h0"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-checkc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9.5"/></symbol>
+    <symbol id="i-xc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></symbol>
+    <symbol id="i-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="12" r="8.5" opacity=".25"/><path d="M12 3.5a8.5 8.5 0 0 1 8.5 8.5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5a10.5 10.5 0 0 0-3.3 20.5c.5.1.7-.2.7-.5v-1.9c-2.9.6-3.5-1.3-3.5-1.3-.5-1.2-1.2-1.5-1.2-1.5-1-.7.1-.6.1-.6 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.5 1.1 3.1.9.1-.7.4-1.1.7-1.4-2.3-.3-4.8-1.2-4.8-5.2 0-1.1.4-2.1 1.1-2.8-.1-.3-.5-1.4.1-2.8 0 0 .9-.3 2.9 1.1a10 10 0 0 1 5.2 0c2-1.4 2.9-1.1 2.9-1.1.6 1.4.2 2.5.1 2.8.7.8 1.1 1.7 1.1 2.8 0 4-2.5 4.9-4.8 5.2.4.3.7 1 .7 2v2.9c0 .3.2.6.7.5A10.5 10.5 0 0 0 12 1.5z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="13" rx="2.5"/><path d="M8 20.5h8M12 16.5v4M12 6.5v6M9.3 9.8 12 12.5l2.7-2.7"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 21h10M4 7h16"/><path d="m4 7-2.5 6a3 3 0 0 0 5 0zM20 7l-2.5 6a3 3 0 0 0 5 0z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></symbol>
+  </defs>
+</svg>
+
+<div class="bg" aria-hidden="true">
+  <div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+  <div class="grain"></div>
+</div>
+
+<header class="nav" id="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="/" aria-label="MergePro home">
+      <img src="/assets/img/favicon-64.png" width="30" height="30" alt="">
+      <span>MergePro</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Open menu">
+      <svg width="20" height="20" aria-hidden="true"><use href="#i-menu"/></svg>
+    </button>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#privacy">Privacy</a></li>
+      <li><a href="#keyboard">Keyboard</a></li>
+      <li><a href="#open-source">Open source</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a class="btn btn-ghost btn-small nav-cta" href="https://github.com/jonathansudhakar1/mergepro">
+      <svg width="16" height="16" aria-hidden="true"><use href="#i-github"/></svg> GitHub
+    </a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container">
+      <picture>
+        <source srcset="/assets/img/icon-512.webp" type="image/webp">
+        <img class="hero-icon" src="/assets/img/icon-256.png" width="112" height="112" alt="MergePro app icon">
+      </picture>
+      <a class="eyebrow" href="#open-source" style="text-decoration:none"><span class="pill">FREE</span> Native for macOS 26 &middot; Open source</a>
+      <h1 id="hero-title">Every pull request. <span class="grad-text" style="display:inline-block">One native Mac app.</span></h1>
+      <p class="lede">MergePro brings your GitHub reviews, merges, Actions runs and local clones across every account into one fast SwiftUI app. It talks straight to GitHub. Nothing in between.</p>
+
+      <div class="cta-row">
+        <!--
+          App Store button. Its URL is set in ONE place: APP_STORE_URL at the top of /assets/js/site.js.
+          Until the listing is live, every [data-app-store] link falls back to GitHub Releases.
+        -->
+        <a class="btn btn-store" data-app-store href="https://github.com/jonathansudhakar1/mergepro/releases">
+          <svg width="26" height="26" aria-hidden="true"><use href="#i-download"/></svg>
+          <span class="lines"><small data-app-store-kicker>Coming soon to the</small><strong>Mac App Store</strong></span>
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/jonathansudhakar1/mergepro">
+          <svg class="star" width="18" height="18" aria-hidden="true"><use href="#i-star"/></svg>
+          Star on GitHub
+        </a>
+      </div>
+      <p class="fine">Free. Requires macOS 26 or later on a Mac with Apple silicon.</p>
+
+      <!-- Animated, stylized illustration of the app -->
+      <div class="mock-stage" id="mock-stage" role="img" aria-label="Illustration of the MergePro window: a sidebar with Pull Requests, Actions, Repositories, Local and Activity Inbox, and a pull request board with Draft, Open, Approved and Merged columns. A pull request's checks finish, it gets approved and moves to Merged. Floating panels show a code diff and a checks list.">
+        <div class="mock" aria-hidden="true">
+          <div class="mock-glow"></div>
+          <div class="win">
+            <aside class="w-side">
+              <div class="traffic"><i></i><i></i><i></i></div>
+              <div class="w-item active"><svg><use href="#i-pr"/></svg>Pull Requests<span class="n">14</span></div>
+              <div class="w-item"><svg><use href="#i-play"/></svg>Actions<span class="live"></span></div>
+              <div class="w-item"><svg><use href="#i-repo"/></svg>Repositories</div>
+              <div class="w-item"><svg><use href="#i-laptop"/></svg>Local</div>
+              <div class="w-item"><svg><use href="#i-inbox"/></svg>Activity Inbox<span class="badge">3</span></div>
+              <div class="w-sec">Views</div>
+              <div class="w-item"><span class="dot" style="background:#f5b642"></span>Needs my review<span class="n">3</span></div>
+              <div class="w-item"><span class="dot" style="background:#4f63fc"></span>My PRs<span class="n">5</span></div>
+              <div class="w-item"><span class="dot" style="background:#6792fb"></span>AI-authored<span class="n">2</span></div>
+              <div class="w-item"><span class="dot" style="background:#3fcf7f"></span>Ready to merge<span class="n">2</span></div>
+              <div class="w-item"><span class="dot" style="background:#ff6b6b"></span>Failing checks<span class="n">1</span></div>
+              <div class="w-item"><span class="dot" style="background:#8e93ad"></span>Stale<span class="n">4</span></div>
+              <div class="w-sec">Accounts</div>
+              <div class="w-item"><span class="dot" style="background:linear-gradient(135deg,#6792fb,#9a64f9)"></span>work</div>
+              <div class="w-item"><span class="dot" style="background:linear-gradient(135deg,#3fcf7f,#6792fb)"></span>personal</div>
+            </aside>
+            <div class="w-main">
+              <div class="w-bar">
+                <div class="w-title"><b>All PRs</b><span>12 repositories &middot; 2 accounts</span></div>
+                <div class="seg"><span class="on">Board</span><span>List</span></div>
+                <div class="search"><svg width="13" height="13"><use href="#i-filter"/></svg><code><em>is:</em>open <em>repo:</em>acme/*</code></div>
+              </div>
+              <div class="chips">
+                <span class="chip on">All PRs</span><span class="chip">Needs my review</span><span class="chip">My PRs</span><span class="chip">Ready to merge</span><span class="chip">Failing checks</span><span class="chip">Stale</span>
+              </div>
+              <div class="board" id="board">
+                <div class="col" data-col="draft">
+                  <div class="col-h"><i style="background:#8e93ad"></i>Draft<span class="c">2</span></div>
+                  <div class="col-list">
+                    <div class="card"><div class="repo"><span class="av" style="background:linear-gradient(135deg,#f5b642,#ff6b6b)"></span>acme/api &middot; #318</div><div class="t">Spike: streaming responses for exports</div><div class="meta"><span class="st stack"><svg><use href="#i-stack"/></svg>2 of 3</span><span class="size"><span class="p">+212</span> <span class="m">&minus;40</span></span></div></div>
+                    <div class="card"><div class="repo"><span class="av" style="background:linear-gradient(135deg,#6792fb,#3fcf7f)"></span>acme/web &middot; #322</div><div class="t">Try the new onboarding copy</div><div class="meta"><span>2d</span><span class="size"><span class="p">+48</span> <span class="m">&minus;31</span></span></div></div>
+                  </div>
+                </div>
+                <div class="col" data-col="open">
+                  <div class="col-h"><i style="background:#4f63fc"></i>Open<span class="c">3</span></div>
+                  <div class="col-list">
+                    <div class="card focus" id="hero-card">
+                      <div class="repo"><span class="av" style="background:linear-gradient(135deg,#9a64f9,#ff7ab2)"></span>acme/sync &middot; #305</div>
+                      <div class="t">Back off on secondary rate limits</div>
+                      <div class="meta"><span class="st run" data-state><svg class="spin"><use href="#i-spin"/></svg>Checks running</span><span class="size"><span class="p">+86</span> <span class="m">&minus;12</span></span></div>
+                      <div class="progress"><i></i></div>
+                    </div>
+                    <div class="card"><div class="repo"><span class="av" style="background:linear-gradient(135deg,#3fcf7f,#6bdfff)"></span>acme/ios &middot; #311</div><div class="t">Fix flaky checkout UI test</div><div class="meta"><span class="st fail"><svg><use href="#i-xc"/></svg>1 failing</span><span class="size"><span class="p">+9</span> <span class="m">&minus;3</span></span></div></div>
+                    <div class="card"><div class="repo"><span class="av" style="background:linear-gradient(135deg,#6792fb,#4f63fc)"></span>acme/web &middot; #299</div><div class="t">Bump dependencies and regenerate lockfile</div><div class="meta"><span class="st ai">AI-authored</span><span class="st pass"><svg><use href="#i-checkc"/></svg>Passing</span></div></div>
+                  </div>
+                </div>
+                <div class="col" data-col="approved">
+                  <div class="col-h"><i style="background:#3fcf7f"></i>Approved<span class="c">1</span></div>
+                  <div class="col-list">
+                    <div class="card"><div class="repo"><span class="av" style="background:linear-gradient(135deg,#ff6b6b,#9a64f9)"></span>acme/api &middot; #290</div><div class="t">Paginate repository search results</div><div class="meta"><span class="st pass"><svg><use href="#i-checkc"/></svg>Passing</span><span class="st appr"><svg><use href="#i-check"/></svg>2 approvals</span></div></div>
+                  </div>
+                </div>
+                <div class="col" data-col="merged">
+                  <div class="col-h"><i style="background:#9a64f9"></i>Merged<span class="c">2</span></div>
+                  <div class="col-list">
+                    <div class="card"><div class="repo"><span class="av" style="background:linear-gradient(135deg,#f5b642,#3fcf7f)"></span>acme/web &middot; #284</div><div class="t">Cache avatars on disk</div><div class="meta"><span class="st merged"><svg><use href="#i-merge"/></svg>Merged</span><span>1h</span></div></div>
+                    <div class="card"><div class="repo"><span class="av" style="background:linear-gradient(135deg,#6bdfff,#4f63fc)"></span>acme/docs &middot; #281</div><div class="t">Document device flow sign-in</div><div class="meta"><span class="st merged"><svg><use href="#i-merge"/></svg>Merged</span><span>3h</span></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="float f-checks">
+            <div class="f-h"><svg width="14" height="14"><use href="#i-play"/></svg><b>#305</b> Checks <span style="margin-left:auto" id="checks-sum">2 of 4</span></div>
+            <div class="chk"><svg class="ok"><use href="#i-checkc"/></svg>lint<span class="d">0:41</span></div>
+            <div class="chk"><svg class="ok"><use href="#i-checkc"/></svg>build (macOS)<span class="d">3:12</span></div>
+            <div class="chk" data-check><svg class="run spin"><use href="#i-spin"/></svg>test (unit)<span class="d">running</span></div>
+            <div class="chk" data-check><svg class="run spin"><use href="#i-spin"/></svg>test (integration)<span class="d">running</span></div>
+          </div>
+
+          <div class="float f-diff">
+            <div class="f-h"><b>Sources/Sync/RateLimit.swift</b><span class="tabs"><span class="on">Unified</span><span>Split</span></span></div>
+            <pre class="diff" id="diff"><span class="l hunk"><span class="ln"></span><span class="g"></span><span class="c">@@ -41,7 +41,11 @@ struct RetryPolicy</span></span><span class="l"><span class="ln">41</span><span class="g"> </span><span class="c">  <span class="k">func</span> <span class="fn">delay</span>(after response: <span class="ty">HTTPURLResponse</span>) -&gt; <span class="ty">Duration</span> {</span></span><span class="l del"><span class="ln">42</span><span class="g">-</span><span class="c">    <span class="k">return</span> .<span class="fn">seconds</span>(<span class="nu">1</span>)</span></span><span class="l add"><span class="ln">42</span><span class="g">+</span><span class="c">    <span class="cm">// Honor Retry-After on secondary limits</span></span></span><span class="l add"><span class="ln">43</span><span class="g">+</span><span class="c">    <span class="k">if let</span> s = response.<span class="fn">value</span>(forHTTPHeaderField: <span class="s">"Retry-After"</span>),</span></span><span class="l add"><span class="ln">44</span><span class="g">+</span><span class="c">       <span class="k">let</span> n = <span class="ty">Int</span>(s) { <span class="k">return</span> .<span class="fn">seconds</span>(n) }</span></span><span class="l add"><span class="ln">45</span><span class="g">+</span><span class="c">    <span class="k">return</span> .<span class="fn">seconds</span>(<span class="fn">min</span>(<span class="nu">60</span>, base * attempt))</span></span><span class="l"><span class="ln">46</span><span class="g"> </span><span class="c">  }</span></span></pre>
+            <div class="thread"><b>You</b><span class="draft">Pending</span><br>Nice. Should we cap the jitter too?</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats" role="list">
+        <div class="stat" role="listitem"><b data-count="0">0</b><span>MergePro servers</span></div>
+        <div class="stat" role="listitem"><b data-count="0">0</b><span>analytics or trackers</span></div>
+        <div class="stat" role="listitem"><b data-count="6">6</b><span>built-in saved views</span></div>
+        <div class="stat" role="listitem"><b data-count="100" data-suffix="%">100%</b><span>native SwiftUI</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURES ============ -->
+  <section class="section" id="features" aria-labelledby="features-title">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker">Everything in one window</span>
+        <h2 id="features-title">Built for people who live in pull requests.</h2>
+        <p>Board, review, merge, ship. MergePro covers the whole loop for every repository you work on, across all of your GitHub accounts.</p>
+      </div>
+
+      <div class="features">
+        <article class="feature glass reveal">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-board"/></svg></div>
+          <h3>Board and list, every account</h3>
+          <p>See pull requests from several GitHub accounts and repositories at once, on a board with Draft, Open, Approved and Merged columns or in a sortable list. Group into lanes by organization, repository or author.</p>
+        </article>
+        <article class="feature glass reveal" style="--d:.06s">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-filter"/></svg></div>
+          <h3>Saved views</h3>
+          <p>Start with built-in views and make your own with a compact filter language.</p>
+          <div class="tags"><span>Needs my review</span><span>My PRs</span><span>Ready to merge</span><span>Failing checks</span><span>Stale</span><span>AI-authored</span></div>
+        </article>
+        <article class="feature glass reveal" style="--d:.12s">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-review"/></svg></div>
+          <h3>Reviews with drafts and rich diffs</h3>
+          <p>Syntax-highlighted diffs in split or unified layout, inline threads, files marked as viewed and pending review drafts that wait until you are ready to submit.</p>
+        </article>
+        <article class="feature glass reveal">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-merge"/></svg></div>
+          <h3>Merge with one popup</h3>
+          <p>Choose the merge method, use the merge queue or auto-merge where the repository supports them, and merge knowing it is guarded by the head commit you reviewed.</p>
+        </article>
+        <article class="feature glass reveal" style="--d:.06s">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-stack"/></svg></div>
+          <h3>Stacked pull requests</h3>
+          <p>A stack sidebar shows where a pull request sits in its chain, and a stack can be merged in order, one verified step at a time.</p>
+        </article>
+        <article class="feature glass reveal" style="--d:.12s">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-play"/></svg></div>
+          <h3>GitHub Actions</h3>
+          <p>Follow workflow runs and their logs, start workflows from saved presets, and review pending deployments without leaving the app.</p>
+        </article>
+        <article class="feature glass reveal">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-repo"/></svg></div>
+          <h3>Repository browser</h3>
+          <p>Browse code, branches, history, releases and labels for any repository you can access, and open a new pull request from a branch.</p>
+        </article>
+        <article class="feature glass reveal" style="--d:.06s">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-branch"/></svg></div>
+          <h3>Local Git clones</h3>
+          <p>Work in the folders you choose: review changes, stage individual hunks, commit, switch branches, stash, manage worktrees and resolve conflicts.</p>
+        </article>
+        <article class="feature glass reveal" style="--d:.12s">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-bell"/></svg></div>
+          <h3>Menu bar and activity inbox</h3>
+          <p>A menu bar review queue shows what needs you, your open PRs and running workflows. The activity inbox and optional notifications keep you current.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SPOTLIGHTS ============ -->
+  <section class="section" aria-label="Merging and the menu bar" style="padding-top:20px">
+    <div class="container">
+      <div class="spot">
+        <div class="spot-copy reveal">
+          <span class="kicker">Merge without surprises</span>
+          <h2>Merge exactly what you reviewed.</h2>
+          <p>One options popup gathers everything that matters before a merge. MergePro sends the head commit you saw as the expected head, so GitHub refuses the merge if someone pushed in the meantime.</p>
+          <ul class="checks-list">
+            <li><svg aria-hidden="true"><use href="#i-checkc"/></svg>Merge, squash or rebase, as the repository allows</li>
+            <li><svg aria-hidden="true"><use href="#i-checkc"/></svg>Aware of merge queues and auto-merge</li>
+            <li><svg aria-hidden="true"><use href="#i-checkc"/></svg>Stacks merge in order, each step checked</li>
+          </ul>
+        </div>
+        <div class="glass panel reveal" style="--d:.1s" role="img" aria-label="Illustration of the merge options popup: squash and merge selected, all checks passing, two approvals, expected head commit shown, and a Squash and merge button.">
+          <div aria-hidden="true">
+            <div class="panel-title"><svg width="20" height="20" style="color:var(--violet)"><use href="#i-merge"/></svg>Merge #290<small>acme/api</small></div>
+            <div class="methods"><span>Merge</span><span class="on">Squash</span><span>Rebase</span></div>
+            <div class="rows">
+              <div><svg class="ok"><use href="#i-checkc"/></svg><span>All required checks passed</span><span>8/8</span></div>
+              <div><svg class="ok"><use href="#i-checkc"/></svg><span>Approved</span><span>2 reviews</span></div>
+              <div><svg class="ok"><use href="#i-lock"/></svg><span>Expected head</span><span>a1c9f3e</span></div>
+              <div><svg style="color:var(--sky)"><use href="#i-review"/></svg><span>Commit message</span><span>GitHub default</span></div>
+            </div>
+            <div class="go"><span>Cancel</span><span class="primary">Squash and merge</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spot flip">
+        <div class="spot-copy reveal">
+          <span class="kicker">Always one click away</span>
+          <h2>Your review queue lives in the menu bar.</h2>
+          <p>See what needs you, your own pull requests and running workflows from any app, then approve or jump straight into the full window. A system-wide shortcut opens it from anywhere.</p>
+          <ul class="checks-list">
+            <li><svg aria-hidden="true"><use href="#i-checkc"/></svg>Needs me, My PRs and running workflow counts</li>
+            <li><svg aria-hidden="true"><use href="#i-checkc"/></svg>Quick approve from the queue</li>
+            <li><svg aria-hidden="true"><use href="#i-checkc"/></svg>Workflow presets one click away</li>
+          </ul>
+        </div>
+        <div class="menubar reveal" style="--d:.1s" role="img" aria-label="Illustration of the MergePro menu bar popover with counts for Needs me, My PRs and Running, and a list of pull requests with Approve buttons.">
+          <div aria-hidden="true">
+            <div class="menubar-strip"><span>Wi-Fi</span><span class="me"><svg width="14" height="14"><use href="#i-pr"/></svg>3</span><span>Tue 9:41</span></div>
+            <div class="glass popover">
+              <div class="tiles">
+                <div class="tile o"><b>3</b><span>Needs me</span></div>
+                <div class="tile c"><b>5</b><span>My PRs</span></div>
+                <div class="tile g"><b>2</b><span>Running</span></div>
+              </div>
+              <div class="qrow"><span class="av" style="background:linear-gradient(135deg,#9a64f9,#ff7ab2)"></span><div><b>Back off on secondary rate limits</b><small>acme/sync &middot; #305</small></div><span class="ap">Approve</span></div>
+              <div class="qrow"><span class="av" style="background:linear-gradient(135deg,#3fcf7f,#6bdfff)"></span><div><b>Fix flaky checkout UI test</b><small>acme/ios &middot; #311</small></div><span class="ap">Approve</span></div>
+              <div class="qrow"><span class="av" style="background:linear-gradient(135deg,#f5b642,#ff6b6b)"></span><div><b>Spike: streaming responses</b><small>acme/api &middot; #318</small></div><span class="ap">Approve</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRIVACY ============ -->
+  <section class="section" id="privacy" aria-labelledby="privacy-title">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker">Privacy by design</span>
+        <h2 id="privacy-title">Your Mac. GitHub. <span class="grad-text">Nothing in between.</span></h2>
+        <p>There is no MergePro account and no MergePro server. The app talks to GitHub directly and keeps everything else on your Mac.</p>
+      </div>
+      <div class="privacy-grid">
+        <div class="glass flow reveal" role="img" aria-label="Diagram: your Mac connects directly to GitHub over HTTPS. A crossed-out MergePro server shows there is no server in between. Tokens stay in the Keychain and data in a local SQLite database.">
+          <div class="flow-row" aria-hidden="true">
+            <div class="node"><img src="/assets/img/favicon-64.png" width="40" height="40" alt="">Your Mac<small>MergePro</small></div>
+            <div class="wire"><span class="wire-label">HTTPS</span></div>
+            <div class="node"><svg><use href="#i-github"/></svg>GitHub<small>API</small></div>
+          </div>
+          <div class="ghost-row" aria-hidden="true"><span class="x"></span><div class="node ghost"><svg><use href="#i-cloudoff"/></svg><s>MergePro server</s><small>doesn&rsquo;t exist</small></div><span class="x"></span></div>
+          <div class="local-store" aria-hidden="true">
+            <span><svg><use href="#i-lock"/></svg>Tokens in Keychain</span>
+            <span><svg><use href="#i-db"/></svg>Local SQLite</span>
+            <span><svg><use href="#i-folder"/></svg>Folders you choose</span>
+          </div>
+        </div>
+        <div class="p-list">
+          <div class="glass p-item reveal"><div class="f-icon"><svg aria-hidden="true"><use href="#i-cloudoff"/></svg></div><div><h3>No backend, no account</h3><p>MergePro has no servers. Requests go from your Mac to GitHub.</p></div></div>
+          <div class="glass p-item reveal" style="--d:.05s"><div class="f-icon"><svg aria-hidden="true"><use href="#i-lock"/></svg></div><div><h3>Tokens in the Keychain</h3><p>You sign in with GitHub's device flow. The token is stored in your macOS Keychain.</p></div></div>
+          <div class="glass p-item reveal" style="--d:.1s"><div class="f-icon"><svg aria-hidden="true"><use href="#i-eyeoff"/></svg></div><div><h3>No analytics or telemetry</h3><p>No tracking SDKs, no usage pings, no ads. Cached data lives in a local SQLite database.</p></div></div>
+          <div class="glass p-item reveal" style="--d:.15s"><div class="f-icon"><svg aria-hidden="true"><use href="#i-shield"/></svg></div><div><h3>Sandboxed</h3><p>The app runs in the macOS App Sandbox and only opens folders you select.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ KEYBOARD ============ -->
+  <section class="section" id="keyboard" aria-labelledby="keyboard-title">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker">Keyboard first</span>
+        <h2 id="keyboard-title">Fly through the queue without touching the mouse.</h2>
+        <p>Single-key actions on the board, a command palette, and system-wide shortcuts you can change in Settings. Try pressing the keys below.</p>
+      </div>
+      <div class="kb-hero reveal" aria-hidden="true">
+        <span class="cap" data-key="j">J</span><span class="cap" data-key="k">K</span><span class="cap" data-key="a">A</span><span class="cap" data-key="m">M</span>
+      </div>
+      <div class="glass kb reveal">
+        <h3 class="sr-only">Keyboard shortcuts</h3>
+        <div class="kb-grid">
+          <div class="kb-row">Next / previous pull request<span class="keys"><kbd class="cap" data-key="j">J</kbd><kbd class="cap" data-key="k">K</kbd></span></div>
+          <div class="kb-row">Command palette<span class="keys"><kbd class="cap">&#8984;</kbd><kbd class="cap" data-key="k">K</kbd></span></div>
+          <div class="kb-row">Approve<span class="keys"><kbd class="cap" data-key="a">A</kbd></span></div>
+          <div class="kb-row">Merge<span class="keys"><kbd class="cap" data-key="m">M</kbd></span></div>
+          <div class="kb-row">Request changes<span class="keys"><kbd class="cap" data-key="r">R</kbd></span></div>
+          <div class="kb-row">Comment<span class="keys"><kbd class="cap" data-key="c">C</kbd></span></div>
+          <div class="kb-row">Select or deselect<span class="keys"><kbd class="cap" data-key="x">X</kbd></span></div>
+          <div class="kb-row">Open pull request<span class="keys"><kbd class="cap" data-key="enter">Return</kbd></span></div>
+          <div class="kb-row">Board / List<span class="keys"><kbd class="cap">&#8984;</kbd><kbd class="cap" data-key="1">1</kbd><kbd class="cap" data-key="2">2</kbd></span></div>
+          <div class="kb-row">Jump to file<span class="keys"><kbd class="cap">&#8984;</kbd><kbd class="cap" data-key="p">P</kbd></span></div>
+          <div class="kb-row">Next unviewed file<span class="keys"><kbd class="cap" data-key="n">N</kbd></span></div>
+          <div class="kb-row">All shortcuts<span class="keys"><kbd class="cap" data-key="?">?</kbd></span></div>
+        </div>
+        <p class="kb-note">Menu bar popover and command palette from any app: <kbd>&#8963;&#8997;G</kbd> and <kbd>&#8963;&#8984;K</kbd> by default.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ OPEN SOURCE ============ -->
+  <section class="section" id="open-source" aria-labelledby="oss-title">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker">Open source</span>
+        <h2 id="oss-title">Read every line. Build it yourself.</h2>
+        <p>MergePro is open source under the Apache License 2.0. Audit how it handles your data, file issues, or send a pull request.</p>
+      </div>
+      <div class="oss">
+        <div class="glass oss-card reveal">
+          <div class="repo-line"><svg width="22" height="22" aria-hidden="true"><use href="#i-github"/></svg>jonathansudhakar1/mergepro</div>
+          <span class="license"><svg width="15" height="15" aria-hidden="true"><use href="#i-scale"/></svg>Apache-2.0</span>
+          <h3>Contributions welcome</h3>
+          <p>The app is SwiftUI with a Swift package core: a GitHub adapter, SQLite stores, a poll coordinator, merge policy and a local Git runner. Bug reports, ideas and fixes are all appreciated.</p>
+          <div class="row">
+            <a class="btn btn-grad btn-small" href="https://github.com/jonathansudhakar1/mergepro"><svg width="16" height="16" aria-hidden="true"><use href="#i-star"/></svg>Star the repo</a>
+            <a class="btn btn-ghost btn-small" href="https://github.com/jonathansudhakar1/mergepro/issues">Open an issue</a>
+            <a class="btn btn-ghost btn-small" href="https://github.com/jonathansudhakar1/mergepro/releases">Releases</a>
+          </div>
+        </div>
+        <div class="glass term reveal" style="--d:.1s">
+          <div class="term-bar"><div class="traffic" aria-hidden="true"><i></i><i></i><i></i></div>Terminal &mdash; build from source</div>
+          <pre id="term" aria-label="Build steps: clone the repository, run xcodegen generate, then scripts/verify.sh"><span class="pr">$</span> git clone https://github.com/jonathansudhakar1/mergepro
+<span class="pr">$</span> cd mergepro
+<span class="pr">$</span> xcodegen generate
+<span class="pr">$</span> scripts/verify.sh
+<span class="dim">Requires Xcode 27 with the macOS 26 SDK.</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="section" id="faq" aria-labelledby="faq-title">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker">FAQ</span>
+        <h2 id="faq-title">Questions, answered.</h2>
+      </div>
+      <div class="faq">
+        <details class="glass reveal">
+          <summary>What do I need to run MergePro?</summary>
+          <div class="a"><p>A Mac with Apple silicon running macOS 26 or later, and a GitHub account.</p></div>
+        </details>
+        <details class="glass reveal">
+          <summary>How much does it cost?</summary>
+          <div class="a"><p>Nothing. MergePro is free, with no subscription, no in-app purchases and no ads. The source code is available under the Apache License 2.0.</p></div>
+        </details>
+        <details class="glass reveal">
+          <summary>How does signing in work?</summary>
+          <div class="a"><p>MergePro uses GitHub's OAuth device flow. The app shows a short code, you enter it on github.com and approve access there. Your password never passes through MergePro. The resulting token is stored in your macOS Keychain.</p><p>You can add several accounts. Removing an account deletes its Keychain item and cached data; GitHub keeps the authorization until you revoke it in your <a href="https://github.com/settings/applications">GitHub application settings</a>.</p></div>
+        </details>
+        <details class="glass reveal">
+          <summary>Does it work with GitHub Enterprise Server?</summary>
+          <div class="a"><p>Not today. MergePro currently works with accounts on github.com. GitHub Enterprise Server hosts are not supported yet.</p></div>
+        </details>
+        <details class="glass reveal">
+          <summary>Where is my data stored?</summary>
+          <div class="a"><p>On your Mac. Access tokens are kept in the macOS Keychain, and pull request and repository data is cached in a local SQLite database inside the app's sandbox container. There is no MergePro server, and the app contains no analytics or telemetry. Read the <a href="/privacy.html">privacy policy</a> for details.</p></div>
+        </details>
+        <details class="glass reveal">
+          <summary>Can MergePro change things on GitHub?</summary>
+          <div class="a"><p>Yes, when you ask it to: for example submitting reviews, merging, editing labels or approving deployments. Writes happen only through explicit commands, and the affected item is refreshed from GitHub afterwards.</p></div>
+        </details>
+        <details class="glass reveal">
+          <summary>Where can I download it?</summary>
+          <div class="a"><p>MergePro is coming soon to the Mac App Store. Builds will also be published on <a href="https://github.com/jonathansudhakar1/mergepro/releases">GitHub Releases</a>, and you can build it from source today.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="section" aria-labelledby="final-title" style="padding-top:20px">
+    <div class="container">
+      <div class="glass final reveal">
+        <picture>
+          <source srcset="/assets/img/icon-512.webp" type="image/webp">
+          <img src="/assets/img/icon-256.png" width="96" height="96" alt="">
+        </picture>
+        <h2 id="final-title">Pull requests, <span class="grad-text">at home on your Mac.</span></h2>
+        <p>Free, private and open source. Made for macOS 26.</p>
+        <div class="cta-row">
+          <a class="btn btn-store" data-app-store href="https://github.com/jonathansudhakar1/mergepro/releases">
+            <svg width="26" height="26" aria-hidden="true"><use href="#i-download"/></svg>
+            <span class="lines"><small data-app-store-kicker>Coming soon to the</small><strong>Mac App Store</strong></span>
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/jonathansudhakar1/mergepro">
+            <svg width="18" height="18" aria-hidden="true"><use href="#i-github"/></svg>
+            View on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <a class="brand" href="/"><img src="/assets/img/favicon-64.png" width="28" height="28" alt=""><span>MergePro</span></a>
+    <nav aria-label="Footer">
+      <ul>
+        <li><a href="/privacy.html">Privacy</a></li>
+        <li><a href="/terms.html">Terms</a></li>
+        <li><a href="https://github.com/jonathansudhakar1/mergepro/blob/main/LICENSE">License</a></li>
+        <li><a href="https://github.com/jonathansudhakar1/mergepro">GitHub</a></li>
+        <li><a href="https://github.com/jonathansudhakar1/mergepro/releases">Releases</a></li>
+      </ul>
+    </nav>
+    <div class="legal">
+      <span>&copy; 2026 Jonathan Sudhakar. Released under the Apache License 2.0.</span>
+      <span>MergePro is not affiliated with GitHub, Inc.</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

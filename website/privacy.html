@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Privacy Policy · MergePro</title>
+  <meta name="description" content="MergePro collects no personal data. No accounts, no analytics, no tracking. Read how the app and this website handle your information.">
+  <link rel="canonical" href="https://mergepro.app/privacy.html">
+  <meta name="theme-color" content="#06070d" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f6f7fc" media="(prefers-color-scheme: light)">
+  <meta name="color-scheme" content="dark light">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="MergePro">
+  <meta property="og:title" content="MergePro Privacy Policy">
+  <meta property="og:description" content="MergePro collects no personal data. No accounts, no analytics, no tracking.">
+  <meta property="og:url" content="https://mergepro.app/privacy.html">
+  <meta property="og:image" content="https://mergepro.app/assets/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="/assets/img/favicon-64.png">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script src="/assets/js/site.js" defer></script>
+</head>
+<body>
+<!--
+  NOTE TO MAINTAINER: This Privacy Policy is a template written in plain English. It has not been reviewed by a
+  lawyer. Have it reviewed by a qualified attorney before relying on it, and update it whenever the app's data
+  handling changes.
+-->
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="bg" aria-hidden="true">
+  <div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+  <div class="grain"></div>
+</div>
+
+<header class="nav" id="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="/" aria-label="MergePro home">
+      <img src="/assets/img/favicon-64.png" width="30" height="30" alt="">
+      <span>MergePro</span>
+    </a>
+    <ul class="nav-links nav-simple">
+      <li><a href="/">Home</a></li>
+      <li><a href="/terms.html">Terms</a></li>
+    </ul>
+  </div>
+</header>
+
+<main id="main" class="doc">
+  <div class="container">
+    <article class="glass doc-card">
+      <h1>Privacy Policy</h1>
+      <p class="meta">Effective date: October 20, 2026</p>
+
+      <div class="summary">
+        <strong>The short version:</strong> MergePro does not collect personal data. There is no MergePro account,
+        no MergePro server, and no analytics, telemetry, advertising or tracking. The app talks directly to GitHub
+        and keeps your data on your Mac. This website uses no cookies and no analytics.
+      </div>
+
+      <nav class="toc" aria-label="Contents">
+        <b>Contents</b>
+        <ol>
+          <li><a href="#who">Who we are</a></li>
+          <li><a href="#app">The MergePro app</a></li>
+          <li><a href="#github">GitHub</a></li>
+          <li><a href="#remove">Removing your data</a></li>
+          <li><a href="#website">This website</a></li>
+          <li><a href="#appstore">Mac App Store</a></li>
+          <li><a href="#children">Children</a></li>
+          <li><a href="#changes">Changes</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ol>
+      </nav>
+
+      <h2 id="who">1. Who we are</h2>
+      <p>MergePro is an open-source macOS application and this website (mergepro.app), both made by Jonathan
+        Sudhakar (&ldquo;we&rdquo;, &ldquo;us&rdquo;). This policy explains what information the MergePro app (the
+        &ldquo;App&rdquo;) and this website handle, and where it goes. The App&rsquo;s source code is public at
+        <a href="https://github.com/jonathansudhakar1/mergepro">github.com/jonathansudhakar1/mergepro</a>, so you
+        can check these statements yourself.</p>
+
+      <h2 id="app">2. The MergePro app</h2>
+      <h3>We collect no personal data</h3>
+      <p>The App does not send any information to us. We do not operate servers for the App, you do not create an
+        account with us, and the App contains no analytics, telemetry, crash-reporting, advertising or tracking
+        code. We cannot see who uses the App or how.</p>
+      <p>If the App is distributed through the Mac App Store, its App Store privacy label is expected to read
+        <strong>&ldquo;Data Not Collected&rdquo;</strong>.</p>
+
+      <h3>Signing in with GitHub</h3>
+      <p>You connect a GitHub account using GitHub&rsquo;s OAuth device flow: the App shows a code, you enter it on
+        github.com and approve access there. The App never sees your GitHub password. GitHub then issues an access
+        token to the App on your Mac. That token is stored in the macOS Keychain on your device and is sent only to
+        GitHub, to make requests on your behalf.</p>
+
+      <h3>Data the App stores on your Mac</h3>
+      <p>To show your pull requests, reviews, checks, workflow runs, repositories and notifications, the App
+        fetches that information from GitHub and caches it locally on your Mac in a SQLite database inside the
+        App&rsquo;s sandbox container, together with your settings (such as saved views, shortcuts and drafts). This
+        data stays on your Mac. We never receive it.</p>
+
+      <h3>Local Git repositories</h3>
+      <p>The App runs in the macOS App Sandbox. It can only open folders you explicitly select. Git operations
+        (such as viewing changes, staging, committing, branching, stashing or resolving conflicts) run on your Mac,
+        on those folders only. Operations that you start and that need the network, such as fetch, pull or push,
+        connect to the Git remotes configured in that repository, just as Git would from the command line.</p>
+
+      <h3>Notifications</h3>
+      <p>If you turn on notifications, they are generated on your Mac from data the App already fetched from
+        GitHub and delivered through macOS. No notification service of ours is involved.</p>
+
+      <h2 id="github">3. GitHub</h2>
+      <p>The App connects directly to GitHub (github.com and GitHub&rsquo;s API and content hosts). Some downloads
+        that GitHub provides through redirect links, such as GitHub Actions logs, artifacts or release assets, may
+        be served from storage providers GitHub uses. When you use the App, GitHub receives your requests, your
+        access token and technical information such as your IP address, as it would when you use GitHub in a
+        browser. Anything you post or change through the App (for example reviews, comments, labels, merges or
+        deployment approvals) is sent to GitHub and becomes part of your GitHub data.</p>
+      <p>GitHub&rsquo;s handling of that information is governed by the
+        <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub
+        General Privacy Statement</a>, not by this policy. We do not control GitHub and are not affiliated with
+        GitHub, Inc.</p>
+
+      <h2 id="remove">4. Removing your data</h2>
+      <ul>
+        <li><strong>Remove an account:</strong> removing a GitHub account in the App&rsquo;s Settings deletes its
+          Keychain item and its cached data from your Mac.</li>
+        <li><strong>Revoke GitHub access:</strong> GitHub keeps the authorization you granted until you revoke it.
+          You can revoke it any time at
+          <a href="https://github.com/settings/applications">github.com/settings/applications</a> (the App links
+          there after you remove an account).</li>
+        <li><strong>Delete everything:</strong> deleting the App and its container from your Mac removes all locally
+          cached data. Your local Git repositories are your own folders and are not deleted.</li>
+      </ul>
+
+      <h2 id="website">5. This website</h2>
+      <p>mergepro.app is a static website hosted on GitHub Pages. It sets no cookies, uses no analytics or
+        trackers, loads no third-party scripts, fonts or embeds, and has no forms. We do not collect information
+        about visitors.</p>
+      <p>Like any web host, GitHub may log technical information about requests to this site, such as IP addresses,
+        for security and operational purposes. That processing is governed by the
+        <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub
+        General Privacy Statement</a>. Links to other sites (such as GitHub) are governed by those sites&rsquo;
+        policies.</p>
+
+      <h2 id="appstore">6. Mac App Store</h2>
+      <p>If you get MergePro from the Mac App Store, Apple handles the download and any purchase under its own
+        privacy policy. If you have chosen to share analytics with app developers in your Apple settings, Apple may
+        provide us with aggregated, anonymized information such as download counts or crash statistics. This
+        information does not identify you, and we do not combine it with any other data.</p>
+
+      <h2 id="children">7. Children</h2>
+      <p>MergePro is a developer tool and is not directed at children. Because the App and website collect no
+        personal data, we do not knowingly collect personal information from anyone, including children under 13
+        (or the equivalent minimum age in your country). To use GitHub, you must meet GitHub&rsquo;s own age
+        requirements.</p>
+
+      <h2 id="changes">8. Changes to this policy</h2>
+      <p>If the way MergePro handles data changes, we will update this page and its effective date. Material
+        changes will also be noted in the release notes on
+        <a href="https://github.com/jonathansudhakar1/mergepro/releases">GitHub Releases</a>. The history of this
+        page is public in the project&rsquo;s repository.</p>
+
+      <h2 id="contact">9. Contact</h2>
+      <p>Questions about privacy? Please open an issue at
+        <a href="https://github.com/jonathansudhakar1/mergepro/issues">github.com/jonathansudhakar1/mergepro/issues</a>.
+        Please do not include access tokens or other secrets in an issue.</p>
+    </article>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <a class="brand" href="/"><img src="/assets/img/favicon-64.png" width="28" height="28" alt=""><span>MergePro</span></a>
+    <nav aria-label="Footer">
+      <ul>
+        <li><a href="/privacy.html" aria-current="page">Privacy</a></li>
+        <li><a href="/terms.html">Terms</a></li>
+        <li><a href="https://github.com/jonathansudhakar1/mergepro/blob/main/LICENSE">License</a></li>
+        <li><a href="https://github.com/jonathansudhakar1/mergepro">GitHub</a></li>
+        <li><a href="https://github.com/jonathansudhakar1/mergepro/releases">Releases</a></li>
+      </ul>
+    </nav>
+    <div class="legal">
+      <span>&copy; 2026 Jonathan Sudhakar. Released under the Apache License 2.0.</span>
+      <span>MergePro is not affiliated with GitHub, Inc.</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

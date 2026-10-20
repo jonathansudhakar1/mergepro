@@ -1,0 +1,148 @@
+name: MergePro
+options:
+  deploymentTarget:
+    macOS: '26.0'
+  developmentLanguage: en
+  xcodeVersion: '27.0'
+packages:
+  MergeProCore:
+    path: Packages/MergeProCore
+  MergeProRendering:
+    path: Packages/MergeProRendering
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: '6.0'
+    CODE_SIGN_STYLE: Manual
+    MACOSX_DEPLOYMENT_TARGET: '26.0'
+    # Collect user-facing strings into App/Resources/Localizable.xcstrings (English only for now). MergeProFixtures
+    # turns this off and excludes the catalog.
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+targets:
+  MergePro:
+    type: application
+    platform: macOS
+    sources:
+      # Fixture sources (offline data, scripted transports, measurement hooks and the fixture entry point) ship only in MergeProFixtures.
+      - path: App
+        excludes:
+          - "Fixtures/**"
+    dependencies:
+      - package: MergeProCore
+      - package: MergeProRendering
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      Release: Config/Release.xcconfig
+    settings:
+      base:
+        # PRODUCT_BUNDLE_IDENTIFIER comes from Config/Debug.xcconfig (app.mergepro.mac.debug) and Config/Release.xcconfig
+        # (app.mergepro.mac), so development builds keep their own container, database and Keychain items.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Release builds pass the tag's version and the CI run number (see .github/workflows/release.yml).
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Config/MergePro-Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: MergePro
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
+    entitlements:
+      path: Config/MergePro.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.security.files.user-selected.read-write: true
+        com.apple.security.files.bookmarks.app-scope: true
+  MergeProAppTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [Tests/MergeProAppTests]
+    dependencies:
+      - target: MergePro
+      - package: MergeProCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.mergepro.mac.apptests
+        GENERATE_INFOPLIST_FILE: YES
+  MergeProUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources: [Tests/MergeProUITests]
+    dependencies:
+      - target: MergePro
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.mergepro.mac.uitests
+        GENERATE_INFOPLIST_FILE: YES
+  MergeProFixtures:
+    type: application
+    platform: macOS
+    sources:
+      # The shipped entry point is replaced by App/Fixtures/MergeProFixturesApp.swift. The string catalog belongs to
+      # the shipped app only, so a fixtures build never syncs fixture-only strings into it (its UI shows source strings).
+      - path: App
+        excludes:
+          - "MergeProApp.swift"
+          - "Resources/Localizable.xcstrings"
+    dependencies:
+      - package: MergeProCore
+      - package: MergeProRendering
+    configFiles:
+      Debug: Config/Fixtures.xcconfig
+      Release: Config/Fixtures.xcconfig
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.mergepro.mac.fixtures
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_EMIT_LOC_STRINGS: NO
+        INFOPLIST_FILE: Config/MergePro-Fixtures-Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: MergePro Fixtures
+    entitlements:
+      path: Config/MergePro.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.security.files.user-selected.read-write: true
+        com.apple.security.files.bookmarks.app-scope: true
+  MergeProFixtureUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources: [Tests/MergeProUITests]
+    dependencies:
+      - target: MergeProFixtures
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.mergepro.mac.fixtures.uitests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  MergePro:
+    build:
+      targets:
+        MergePro: all
+        MergeProAppTests: [test]
+        MergeProUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets: [MergeProAppTests, MergeProUITests]
+      # MergeProAppTests run inside the shipped app, which detects XCTest and uses AppDependencies.unitTestHost().
+      # Should that detection miss, this keeps the host off the real store (UI-tested apps don't inherit it), and
+      # the host restores no windows from earlier runs.
+      environmentVariables:
+        MERGEPRO_DISABLE_REAL_STORE: "1"
+      commandLineArguments:
+        "-ApplePersistenceIgnoreState YES": true
+  MergeProFixtures:
+    build:
+      targets:
+        MergeProFixtures: all
+        MergeProFixtureUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets: [MergeProFixtureUITests]

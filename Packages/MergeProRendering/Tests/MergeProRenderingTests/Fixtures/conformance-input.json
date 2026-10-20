@@ -1,0 +1,246 @@
+[
+  {
+    "name": "multiline-captures",
+    "grammar": {
+      "scopeName": "source.probe",
+      "patterns": [
+        {
+          "name": "string.test",
+          "contentName": "string.content",
+          "begin": "(\"+)",
+          "end": "\\1",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.begin"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.end"
+            }
+          },
+          "patterns": [
+            {
+              "match": "🐈",
+              "name": "constant.cat"
+            }
+          ]
+        }
+      ],
+      "repository": {}
+    },
+    "source": "\"🐈\né\"\r\n\u0000\n",
+    "dependencies": []
+  },
+  {
+    "name": "begin-while",
+    "grammar": {
+      "scopeName": "source.probe",
+      "patterns": [
+        {
+          "name": "quoted.block",
+          "begin": "^>",
+          "patterns": [
+            {
+              "match": "[0-9]+",
+              "name": "constant.numeric"
+            }
+          ],
+          "while": "^>"
+        }
+      ],
+      "repository": {}
+    },
+    "source": ">1\n>2\nplain\n",
+    "dependencies": []
+  },
+  {
+    "name": "heredoc-backreference",
+    "grammar": {
+      "scopeName": "source.probe",
+      "patterns": [
+        {
+          "name": "string.heredoc",
+          "begin": "<<(\\w+)",
+          "end": "^\\1$",
+          "contentName": "string.content"
+        }
+      ],
+      "repository": {}
+    },
+    "source": "<<END\n🐈\nEND\nafter\n",
+    "dependencies": []
+  },
+  {
+    "name": "retokenized-capture",
+    "grammar": {
+      "scopeName": "source.probe",
+      "patterns": [
+        {
+          "match": "(abc123)",
+          "captures": {
+            "1": {
+              "name": "meta.capture",
+              "patterns": [
+                {
+                  "match": "[a-z]+",
+                  "name": "entity.word"
+                },
+                {
+                  "match": "[0-9]+",
+                  "name": "constant.numeric"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "repository": {}
+    },
+    "source": "abc123\n",
+    "dependencies": []
+  },
+  {
+    "name": "repository-external-self",
+    "grammar": {
+      "scopeName": "source.probe",
+      "patterns": [
+        {
+          "include": "#word"
+        },
+        {
+          "include": "source.external#numbers"
+        },
+        {
+          "begin": "\\(",
+          "end": "\\)",
+          "name": "meta.parens",
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        }
+      ],
+      "repository": {
+        "word": {
+          "match": "[a-z]+",
+          "name": "entity.word"
+        }
+      }
+    },
+    "source": "abc (def 123)\n",
+    "dependencies": [
+      {
+        "scopeName": "source.external",
+        "patterns": [],
+        "repository": {
+          "numbers": {
+            "match": "[0-9]+",
+            "name": "constant.numeric"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "apply-end-last",
+    "grammar": {
+      "scopeName": "source.probe",
+      "patterns": [
+        {
+          "begin": "<",
+          "end": ">",
+          "applyEndPatternLast": true,
+          "name": "meta.outer",
+          "patterns": [
+            {
+              "match": ">x",
+              "name": "constant.inner"
+            }
+          ]
+        }
+      ],
+      "repository": {}
+    },
+    "source": "< >x >\n",
+    "dependencies": []
+  },
+  {
+    "name": "injections",
+    "grammar": {
+      "scopeName": "source.probe",
+      "patterns": [
+        {
+          "match": "[a-z]+",
+          "name": "word"
+        }
+      ],
+      "repository": {},
+      "injections": {
+        "L:source.probe": {
+          "patterns": [
+            {
+              "match": "TODO",
+              "name": "keyword.todo"
+            }
+          ]
+        }
+      }
+    },
+    "source": "TODO abc\n",
+    "dependencies": []
+  },
+  {
+    "name": "zero-width-progress",
+    "grammar": {
+      "scopeName": "source.probe",
+      "patterns": [
+        {
+          "match": "(?=a)",
+          "name": "zero"
+        },
+        {
+          "match": "a",
+          "name": "letter"
+        }
+      ],
+      "repository": {}
+    },
+    "source": "a\n\n",
+    "dependencies": []
+  },
+  {
+    "name": "external-base-include",
+    "grammar": {
+      "scopeName": "source.probe",
+      "patterns": [
+        {
+          "match": "[a-z]+",
+          "name": "entity.word"
+        },
+        {
+          "include": "source.external"
+        }
+      ]
+    },
+    "dependencies": [
+      {
+        "scopeName": "source.external",
+        "patterns": [
+          {
+            "begin": "<",
+            "end": ">",
+            "name": "meta.external",
+            "patterns": [
+              {
+                "include": "$base"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "abc <def <ghi>>\n"
+  }
+]

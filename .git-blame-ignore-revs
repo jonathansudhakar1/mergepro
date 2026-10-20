@@ -1,0 +1,3 @@
+# Commits that only reformat code (for example a future swift-format pass using .swift-format).
+# Add each full commit SHA on its own line with a comment naming it, then run once per clone:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
