@@ -33,14 +33,18 @@ public struct PRRepositoryFreshness: Equatable, Sendable, Identifiable {
       state = .notFetched
     }
   }
+  /// Something the user has to act on (a failed read, revoked access), as opposed to sync still catching up.
+  public var needsAttention: Bool { state == .failed || state == .revoked }
+  /// Sync is still catching up: never read, mid-way through its history, or waiting for its next read.
+  public var isSyncing: Bool { state == .notFetched || state == .partial || state == .stale }
   public var label: String {
     switch state {
     case .fresh: "Current"
-    case .stale: "Stale cached data"
-    case .partial: "Partial provider data"
+    case .stale: "Showing cached data; refresh is queued"
+    case .partial: "Syncing pull request history"
     case .failed: "Refresh failed; cached data"
     case .revoked: "Access revoked"
-    case .notFetched: "Not refreshed yet"
+    case .notFetched: "Syncing for the first time"
     }
   }
 }

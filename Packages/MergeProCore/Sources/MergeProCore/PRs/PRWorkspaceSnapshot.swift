@@ -98,33 +98,39 @@ public struct PRWorkspaceSnapshot: Sendable {
     }
     state.selection.preserve(in: rows)
   }
-  public func freshness(account: AccountScope?, now: Date = Date(), staleAfter: TimeInterval = 300)
+  /// `staleAfter` defaults to `PollCadence.staleAfter` for the repository's account, which stretches with the
+  /// number of repositories it tracks.
+  public func freshness(account: AccountScope?, now: Date = Date(), staleAfter: TimeInterval? = nil)
     -> [PRRepositoryFreshness]
   {
-    tracked.filter { account == nil || $0.account == account }.map { key in
-      freshness(key, now: now, staleAfter: staleAfter)
+    let counts = trackedCounts()
+    return tracked.filter { account == nil || $0.account == account }.map { key in
+      freshness(key, now: now, staleAfter: staleAfter, counts: counts)
     }.sorted {
       ($0.repository.account.host, $0.repository.account.accountID, $0.name)
         < ($1.repository.account.host, $1.repository.account.accountID, $1.name)
     }
   }
   /// One tracked repository's freshness; nil when the repository is not tracked.
-  public func freshness(for repository: RepositoryKey, now: Date = Date(), staleAfter: TimeInterval = 300)
+  public func freshness(for repository: RepositoryKey, now: Date = Date(), staleAfter: TimeInterval? = nil)
     -> PRRepositoryFreshness?
   {
-    tracked.contains(repository) ? freshness(repository, now: now, staleAfter: staleAfter) : nil
+    tracked.contains(repository) ? freshness(repository, now: now, staleAfter: staleAfter, counts: trackedCounts()) : nil
   }
   /// Every tracked repository's freshness by key, for per-card lookups.
-  public func freshnessByRepository(now: Date = Date(), staleAfter: TimeInterval = 300)
+  public func freshnessByRepository(now: Date = Date(), staleAfter: TimeInterval? = nil)
     -> [RepositoryKey: PRRepositoryFreshness]
   {
-    Dictionary(uniqueKeysWithValues: tracked.map { ($0, freshness($0, now: now, staleAfter: staleAfter)) })
+    let counts = trackedCounts()
+    return Dictionary(uniqueKeysWithValues: tracked.map { ($0, freshness($0, now: now, staleAfter: staleAfter, counts: counts)) })
   }
-  private func freshness(_ key: RepositoryKey, now: Date, staleAfter: TimeInterval)
+  private func trackedCounts() -> [AccountScope: Int] { tracked.reduce(into: [:]) { $0[$1.account, default: 0] += 1 } }
+  private func freshness(_ key: RepositoryKey, now: Date, staleAfter: TimeInterval?, counts: [AccountScope: Int])
     -> PRRepositoryFreshness
   {
-    PRRepositoryFreshness(
+    let threshold = staleAfter ?? PollCadence.staleAfter(repositories: counts[key.account] ?? 1)
+    return PRRepositoryFreshness(
       repository: key, name: names[key] ?? key.repositoryID, status: inventory[key],
-      revoked: revoked.contains(key.account), now: now, staleAfter: staleAfter)
+      revoked: revoked.contains(key.account), now: now, staleAfter: threshold)
   }
 }

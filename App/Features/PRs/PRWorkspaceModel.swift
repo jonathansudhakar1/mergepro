@@ -314,7 +314,7 @@ final class PRWorkspaceModel {
     freshnessByRepository = cache.freshnessByRepository()
   }
   private var freshnessLabels: [RepositoryKey: String] {
-    Dictionary(repositoryFreshness.filter { $0.state != .fresh }.map { ($0.repository, $0.label) }, uniquingKeysWith: { first, _ in first })
+    Dictionary(repositoryFreshness.filter(\.needsAttention).map { ($0.repository, $0.label) }, uniquingKeysWith: { first, _ in first })
   }
   /// Display eligibility for the current cards or table rows: the action account's evaluation, as `mergeEligibility`
   /// gives menus and keys. Merge evidence ages out after `MergePolicy.maximumAge`, so this is evaluated again the
@@ -458,9 +458,13 @@ final class PRWorkspaceModel {
     }
     let evidence = repositoryFreshness
     guard !evidence.isEmpty else { return "Choose tracked repositories in Setup." }
-    let affected = evidence.filter { $0.state != .fresh }
+    let affected = evidence.filter(\.needsAttention)
     if !affected.isEmpty {
       return affected.map { "\($0.name): \($0.label)" }.joined(separator: " · ")
+    }
+    let syncing = evidence.filter(\.isSyncing).count
+    if syncing > 0 {
+      return "Syncing \(syncing) of \(evidence.count) repositories. Pull requests appear as each one finishes."
     }
     guard let oldest = evidence.compactMap(\.lastSuccessAt).min() else {
       return "Inventory has not refreshed yet."

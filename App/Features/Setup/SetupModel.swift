@@ -237,6 +237,8 @@ final class SetupModel {
     }
     private var pollingIsActive: Bool { visibleActionViews > 0 || destination == .actions }
     private var pollingSleepsSlowly = false
+    /// The last cycle left due work behind: the loop starts the next one right away until the backlog clears.
+    private(set) var pollBacklogged = false
     /// Navigation only wakes a loop waiting on the slow cadence. An in-flight refresh is never cancelled (that surfaced a
     /// spurious failure) and the loop re-reads its cadence before every sleep, so other changes need no restart.
     private func restartPolling() {
@@ -251,8 +253,8 @@ final class SetupModel {
                     await self.refreshActivity(reason:self.pollingIsActive ? .activeRun : .scheduled)
                     guard !Task.isCancelled else { return }
                     let active = self.pollingIsActive
-                    self.pollingSleepsSlowly = !active
-                    do { try await Task.sleep(for:.seconds(active ? 15 : 60)) } catch { return }
+                    self.pollingSleepsSlowly = !active && !self.pollBacklogged
+                    do { try await Task.sleep(for:.seconds(self.pollBacklogged ? 1 : active ? 15 : 60)) } catch { return }
                     self.pollingSleepsSlowly = false
                 }
         }
@@ -273,6 +275,7 @@ final class SetupModel {
         pollStatus = "Refreshing repositories…"
         do {
             let cycle = try await storage.refreshActivity(sink:notificationSink,reason:reason)
+            pollBacklogged = cycle.backlogged
             // Only what the cycle committed is re-read: new events, changed PR rows and statuses, changed Actions data.
             if cycle.changes.map({ $0.events > 0 }) ?? true || !inboxLoaded { await reloadActivity() }
             switch await storage.snapshotRefresh(after:cycle.changes) {
@@ -282,9 +285,11 @@ final class SetupModel {
             }
             // Cycle-complete signal (repository tabs, Actions) before the slower feature-cache pass.
             pollRevision = UUID()
-            let failed = prs.cache.freshness(account:nil).filter { $0.state != .fresh }.count
+            let freshness = prs.cache.freshness(account:nil)
+            let failed = freshness.filter(\.needsAttention).count, syncing = freshness.filter(\.isSyncing).count
             pollStatus = failed > 0
                 ? "Refresh finished · \(failed) \(failed == 1 ? "repository needs" : "repositories need") attention"
+                : syncing > 0 ? "Syncing \(freshness.count - syncing) of \(freshness.count) repositories…"
                 : "Last checked " + Date().formatted(date:.omitted,time:.shortened)
             schedulePrefetch()
             await refreshFeatureCaches(changed:cycle.changes?.repositories(feature:GitHubActionsFetcher().featureID))

@@ -221,7 +221,7 @@ struct PRCardView: View, Equatable {
     }
   }
   @ViewBuilder private var footer: some View {
-    if let freshness, freshness.state != .fresh {
+    if let freshness, freshness.needsAttention {
       Label { Text(freshness.label).foregroundStyle(.secondary) } icon: { Image(systemName: "exclamationmark.circle").foregroundStyle(.orange) }
         .font(.caption2)
       if let at = freshness.lastSuccessAt {

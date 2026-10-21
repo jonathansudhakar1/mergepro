@@ -26,9 +26,12 @@ enum GitHubPRInventoryPayload {
       }
       """
   }
-  static var inventoryQuery: String { inventoryQuery(first: 100, openVolatile: false) }
-  /// Incremental head reads are small; continuation and full walks use 100-node pages.
+  static var inventoryQuery: String { inventoryQuery(first: walkPageSize, openVolatile: false) }
+  /// Incremental head reads are small.
   static let incrementalPageSize = 25
+  /// History walks and sweeps read 25 PRs a page: every PR carries five nested connections, and on busy
+  /// repositories a 100-PR page outlasts GitHub's 10 s GraphQL timeout (502) while 50 lands close to it.
+  static let walkPageSize = 25
   /// Every inventory field of one PR, shared by connection pages and targeted node reads.
   static var nodeFields: String {
     """

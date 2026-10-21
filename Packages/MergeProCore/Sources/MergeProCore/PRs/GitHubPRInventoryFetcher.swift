@@ -795,7 +795,9 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
       snapshots: [
         PollFeatureSnapshot(
           key: statusKey, feature: featureID, payload: try JSONEncoder.stable.encode(status))
-      ], baselinedRepositories: complete ? [repo] : [], baselineEventKeys: silent)
+      ], baselinedRepositories: complete ? [repo] : [], baselineEventKeys: silent,
+      // A walk cut off by its request chunk continues next cycle; failures wait out the poll interval.
+      hasMoreWork: !complete && latestSucceeded && !providerFailed && !membershipFailed && requests >= Self.requestChunk)
   }
   private static let teamTTL: TimeInterval = 300
   private static let evidenceRetry: TimeInterval = 600

@@ -58,10 +58,15 @@ public struct PollFetchResult: Sendable {
     public let responses: [PollResponseCache]
     public let baselinedRepositories: Set<RepositoryKey>
     public let baselineEventKeys: Set<String>
+    /// The fetch stopped at its request chunk with more to read (e.g. a history walk): the scope stays due, so
+    /// the next cycle continues it instead of waiting out the poll interval.
+    public let hasMoreWork: Bool
     public init(events: [ChangeEvent] = [], pullRequests: [PullRequest] = [], snapshots: [PollFeatureSnapshot] = [],
-                responses: [PollResponseCache] = [], baselinedRepositories: Set<RepositoryKey> = [], baselineEventKeys: Set<String> = []) {
+                responses: [PollResponseCache] = [], baselinedRepositories: Set<RepositoryKey> = [], baselineEventKeys: Set<String> = [],
+                hasMoreWork: Bool = false) {
         self.events = events; self.pullRequests = pullRequests; self.snapshots = snapshots
         self.responses = responses; self.baselinedRepositories = baselinedRepositories; self.baselineEventKeys = baselineEventKeys
+        self.hasMoreWork = hasMoreWork
     }
 }
 /// Fetchers perform reads only. Inventory and notification-feed signals are independent features.
@@ -92,6 +97,24 @@ public extension PollFeatureFetcher {
     var usesCachedPullRequests: Bool { true }
 }
 
+/// How often background repositories are read as an account tracks more of them. Requests for one account go
+/// out one at a time (GitHub's guidance), and every tracked repository costs reads, so a fixed cadence that
+/// suits ten repositories exceeds both the serial throughput and the hourly API budget at a few hundred.
+public enum PollCadence {
+    /// Background spacing per tracked repository: about 2,000 reads an hour per repository-scoped feature.
+    public static let secondsPerRepository: TimeInterval = 1.8
+    /// On-screen repositories and fast cadences (active runs) keep their interval; slower background cadences
+    /// stretch to `secondsPerRepository` for every repository the account tracks.
+    public static func interval(_ base: TimeInterval, repositories: Int, focused: Bool) -> TimeInterval {
+        guard !focused, base >= 60 else { return base }
+        return max(base, Double(repositories) * secondsPerRepository)
+    }
+    /// A repository counts as behind only after missing about three background reads.
+    public static func staleAfter(repositories: Int) -> TimeInterval {
+        max(300, 3 * interval(60, repositories: repositories, focused: false))
+    }
+}
+
 /// One instance for the entire app. Unstructured fetch tasks report values through a generation
 /// gate, so an uncooperative task cannot hold cycle closure hostage after the monotonic deadline.
 public actor PollCoordinator {
@@ -110,6 +133,8 @@ public actor PollCoordinator {
         let fetcher: any PollFeatureFetcher
         let requireTracked: Bool
         let focused: Bool
+        /// Repositories the account polls this cycle, for `PollCadence`.
+        let accountRepositories: Int
     }
     private var workOrder: [AccountScope:[String]] = [:]
     private var unfinishedRetries: [AccountScope:Set<String>] = [:]
@@ -126,6 +151,7 @@ public actor PollCoordinator {
         let waiter: CheckedContinuation<UUID,Error>
         var accepting = true
         var changes = PollCycleChanges()
+        var backlogged = false
     }
     private struct Pending { var request: PollRequest; var waiters: [CheckedContinuation<UUID,Error>] }
     private var active: Active?
@@ -134,6 +160,13 @@ public actor PollCoordinator {
     private var followUpWaiters: [UUID:[CheckedContinuation<UUID,Error>]] = [:]
     /// What recently closed cycles committed, so callers refresh only changed state (bounded, newest kept).
     private var closedChanges: [(id: UUID, changes: PollCycleChanges)] = []
+    /// Recently closed cycles that left due work behind (their deadline cut work off, or a fetch had more to read).
+    private var backloggedCycles: [UUID] = []
+    /// Whether the closed cycle `id` left due work behind, so the caller can start the next cycle right away.
+    public func backlogged(_ id: UUID) -> Bool { backloggedCycles.contains(id) }
+    /// Consecutive `hasMoreWork` results per poll key; past `continuationLimit` the scope waits out its interval.
+    private var continuations: [String:Int] = [:]
+    static let continuationLimit = 30
     /// What the closed cycle `id` committed; nil once it is no longer among the recent cycles.
     public func changes(for id: UUID) -> PollCycleChanges? { closedChanges.last { $0.id == id }?.changes }
     /// Cycle-scoped reads of account-wide rows that only this cycle's work rewrites: repository metadata
@@ -197,9 +230,9 @@ public actor PollCoordinator {
                     let prefix = "\(scope.account.host):\(scope.account.accountID):\(index)"
                     let eligible = fetcher.allowsVisibleUntrackedReads ? scope.repositories : scope.repositories.subtracting(normalized.visibleRepositories)
                     guard !eligible.isEmpty else { return [] }
-                    if fetcher.fetchScope == .account { return [Work(id:prefix,scope:PollScope(account:scope.account,repositories:eligible),fetcher:fetcher,requireTracked:true,focused:legacyFocus || !focus.isDisjoint(with:eligible))] }
+                    if fetcher.fetchScope == .account { return [Work(id:prefix,scope:PollScope(account:scope.account,repositories:eligible),fetcher:fetcher,requireTracked:true,focused:legacyFocus || !focus.isDisjoint(with:eligible),accountRepositories:scope.repositories.count)] }
                     return eligible.map {
-                        Work(id:prefix + ":" + $0.repositoryID,scope:PollScope(account:scope.account,repositories:[$0]),fetcher:fetcher,requireTracked:!normalized.visibleRepositories.contains($0),focused:legacyFocus || focus.contains($0))
+                        Work(id:prefix + ":" + $0.repositoryID,scope:PollScope(account:scope.account,repositories:[$0]),fetcher:fetcher,requireTracked:!normalized.visibleRepositories.contains($0),focused:legacyFocus || focus.contains($0),accountRepositories:scope.repositories.count)
                     }
                 }
             }
@@ -224,7 +257,7 @@ public actor PollCoordinator {
                 let task = Task.detached { [self] in
                     for item in ordered {
                         guard !Task.isCancelled else { return }
-                        await execute(id:id,workID:item.id,scope:item.scope,fetcher:item.fetcher,deadline:deadline,requireTracked:item.requireTracked,focused:item.focused)
+                        await execute(id:id,workID:item.id,scope:item.scope,fetcher:item.fetcher,deadline:deadline,requireTracked:item.requireTracked,focused:item.focused,accountRepositories:item.accountRepositories)
                     }
                 }
                 active?.tasks.append(task)
@@ -238,13 +271,15 @@ public actor PollCoordinator {
             if work.isEmpty { Task { await finish(id) } }
         } catch { waiter.resume(throwing:error) }
     }
-    private func execute(id: UUID, workID: String, scope: PollScope, fetcher: any PollFeatureFetcher, deadline: ContinuousClock.Instant, requireTracked:Bool, focused:Bool = false) async {
+    private func execute(id: UUID, workID: String, scope: PollScope, fetcher: any PollFeatureFetcher, deadline: ContinuousClock.Instant, requireTracked:Bool, focused:Bool = false, accountRepositories:Int = 1) async {
         var operation: AccountOperation?
         let pollKey = fetcher.featureID + (fetcher.fetchScope == .repository ? ":" + (scope.repositories.first?.repositoryID ?? "") : "")
         do {
             guard active?.id == id, active?.accepting == true, ContinuousClock.now < deadline else { return }
             let reason = active?.request.reason ?? .scheduled
-            let interval = fetcher.fetchScope == .repository ? fetcher.pollInterval(for:reason,repository:scope.repositories.first,focused:focused) : fetcher.pollInterval(for:reason)
+            let interval = fetcher.fetchScope == .repository
+                ? fetcher.pollInterval(for:reason,repository:scope.repositories.first,focused:focused).map { PollCadence.interval($0,repositories:accountRepositories,focused:focused) }
+                : fetcher.pollInterval(for:reason)
             if let interval, !(await budget.beginPoll(account:scope.account,feature:pollKey,interval:interval,force:reason == .manual)) {
                 await settled(id,workID:workID,error:nil); return
             }
@@ -270,7 +305,10 @@ public actor PollCoordinator {
                 committed = applied.value.withLock { $0 }
             } else { committed = try store.apply(result,context:context,deadline:deadline,requireTracked:false) }
             if active?.id == id { active?.changes.formUnion(committed) }
-            if let interval {
+            let continuing = result.hasMoreWork && continuations[pollKey, default:0] < Self.continuationLimit
+            continuations[pollKey] = result.hasMoreWork ? continuations[pollKey, default:0] + 1 : nil
+            if continuing { active?.backlogged = true }
+            else if let interval {
                 await budget.completePoll(account:scope.account,feature:pollKey,interval:interval)
             }
             await settled(id,workID:workID,error:nil)
@@ -330,6 +368,7 @@ public actor PollCoordinator {
     }
     private func expire(_ id: UUID) async {
         guard let current = active, current.id == id, current.accepting else { return }
+        if !current.remaining.isEmpty { active?.backlogged = true }
         for workID in current.started {
             // Always rotating cutoff work can phase-lock it at the same deadline; always
             // retaining it can starve healthy followers. Alternate one retry with tail rotation.
@@ -351,6 +390,7 @@ public actor PollCoordinator {
             if let policyProvider { policy = try await policyProvider() }
             let summary = try store.close(id,at:Date(),policy:policy,suppress:current.request.reason == .actionReconciliation)
             closedChanges.append((id,active?.changes ?? current.changes)); if closedChanges.count > 8 { closedChanges.removeFirst() }
+            if active?.backlogged == true { backloggedCycles.append(id); if backloggedCycles.count > 8 { backloggedCycles.removeFirst() } }
             // Delivery failure is durable and normal; never retry or discard committed inbox rows.
             do { try await publisher.publish(summary) } catch {
                 Log.notifications.info("Cycle notification delivery failed; the inbox keeps its rows: \(Log.kind(error), privacy: .public)")

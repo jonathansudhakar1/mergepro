@@ -555,7 +555,9 @@ final class InventoryWatermarkTests: XCTestCase {
         let failed = try await cycle(fetcher,transport,store)
         XCTAssertFalse(failed.status.complete); XCTAssertNotNil(failed.status.failureMessage)
         XCTAssertEqual(try checkpoint(failed.status).watermark,try checkpoint(resumed.status).watermark)
-        let recovered = try await cycle(fetcher,transport,store)
+        // Recovery re-walks from the newest page; at 25 PRs a page that can take a second chunk.
+        var recovered = try await cycle(fetcher,transport,store)
+        if !recovered.status.complete { recovered = try await cycle(fetcher,transport,store) }
         XCTAssertTrue(recovered.status.complete)
         XCTAssertEqual(try store.pullRequests(account:account).filter { $0.title.hasPrefix("Again") }.count,50)
     }
@@ -595,14 +597,14 @@ final class InventoryWatermarkTests: XCTestCase {
         try await synced(transport,fetcher,store)
         await transport.silently(3) { $0.title = "Renamed without bump" }
         var swept = false
-        for _ in 0..<4 {
+        for _ in 0..<12 {
             let value = try await cycle(fetcher,transport,store)
             XCTAssertTrue(value.status.complete,"A sweep never makes current inventory partial")
             if try store.pullRequests(account:account).contains(where:{ $0.title == "Renamed without bump" }) { swept = true }
         }
         XCTAssertTrue(swept)
         let pages = await transport.pages
-        XCTAssertTrue(pages.contains { $0.after != nil && $0.first == 100 })
+        XCTAssertTrue(pages.contains { $0.after != nil && $0.first == GitHubPRInventoryPayload.walkPageSize })
     }
     func testTeamMembershipIsReadOncePerAccountAcrossRepositories() async throws {
         let transport = WatermarkInventoryTransport(count:3,open:[1,2,3])
@@ -633,7 +635,7 @@ final class InventoryWatermarkTests: XCTestCase {
             suppressNotifications:false,cachedResponses:[:])
         let result = try await GitHubPRInventoryFetcher().fetch(context)
         let pages = await transport.pages
-        XCTAssertEqual(pages.map(\.first),[100,100],"Membership changes re-attribute team requests on unchanged PRs: full walk")
+        XCTAssertEqual(pages.map(\.first),Array(repeating:GitHubPRInventoryPayload.walkPageSize,count:6),"Membership changes re-attribute team requests on unchanged PRs: full walk")
         XCTAssertEqual(try checkpoint(JSONDecoder().decode(PRInventoryStatus.self,from:result.snapshots[0].payload)).teamIDs,["NEWTEAM"])
     }
     func testLabelColorsAreNormalizedAndOldCheckpointsWithoutColorsDecode() async throws {
@@ -666,7 +668,7 @@ final class InventoryWatermarkTests: XCTestCase {
         let fetcher = GitHubPRInventoryFetcher(), store = try store()
         func withEvidence() throws -> Int { try store.pullRequests(account:account).filter { $0.state == .open && $0.metadata?.mergeEvidence != nil }.count }
         var cycles = 0
-        while try withEvidence() < 10, cycles < 14 {
+        while try withEvidence() < 10, cycles < 18 {
             await transport.reset()
             try await cycle(fetcher,transport,store,baseline:cycles == 0)
             let reads = await transport.evidenceReads.count
@@ -674,7 +676,8 @@ final class InventoryWatermarkTests: XCTestCase {
             cycles += 1
         }
         XCTAssertEqual(try withEvidence(),10,"Cached open PRs without evidence are read, not only this cycle's head rows")
-        XCTAssertLessThanOrEqual(cycles,10,"One complete read fits each quiet cycle's eight-request chunk")
+        // The 300-PR initial walk takes two chunks of 25-PR pages; then one complete read fits each quiet cycle.
+        XCTAssertLessThanOrEqual(cycles,12,"One complete read fits each quiet cycle's eight-request chunk")
         // A push to main resolves every conflict without bumping updatedAt; the open alias invalidates carried evidence.
         for id in 1...10 { await transport.silently(id) { $0.mergeable = "MERGEABLE" } }
         var ready = Set<String>(); cycles = 0

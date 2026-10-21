@@ -33,13 +33,14 @@ struct PRWorkspaceView: View {
       HStack(spacing: 12) {
         Button { diagnosticsPresented = true } label: {
           HStack(spacing: 7) {
-            if setup.isRefreshing {
+            if freshnessNeedsAttention {
+              Image(systemName: "exclamationmark.circle.fill").foregroundStyle(Color.orange)
+            } else if setup.isRefreshing || syncingCount > 0 {
               ProgressView().controlSize(.small)
             } else {
-              Image(systemName: freshnessNeedsAttention ? "exclamationmark.circle.fill" : "info.circle")
-                .foregroundStyle(freshnessNeedsAttention ? Color.orange : DesignTokens.cobalt)
+              Image(systemName: "info.circle").foregroundStyle(DesignTokens.cobalt)
             }
-            Text(setup.isRefreshing ? "Refreshing repositories…" : freshnessSummary).lineLimit(1)
+            Text(freshnessNeedsAttention || syncingCount > 0 || !setup.isRefreshing ? freshnessSummary : "Refreshing repositories…").lineLimit(1)
             Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
           }
           .font(.callout)
@@ -160,15 +161,20 @@ struct PRWorkspaceView: View {
     workspace.revoked.filter { workspace.state.accountFilter == nil || $0 == workspace.state.accountFilter }.count
   }
   private var freshnessNeedsAttention: Bool {
-    scopedRevokedCount > 0 || workspace.repositoryFreshness.contains { $0.state != .fresh }
+    scopedRevokedCount > 0 || workspace.repositoryFreshness.contains(where: \.needsAttention)
   }
+  /// Repositories still catching up (first sync, a history walk, a queued read): progress, not a problem.
+  private var syncingCount: Int { workspace.repositoryFreshness.filter(\.isSyncing).count }
   private var freshnessSummary: String {
     if scopedRevokedCount > 0 { return "Reconnect \(scopedRevokedCount) \(scopedRevokedCount == 1 ? "account" : "accounts")" }
     let repositories = workspace.repositoryFreshness
     guard !repositories.isEmpty else { return "Choose tracked repositories in Setup" }
-    let affected = repositories.filter { $0.state != .fresh }.count
+    let affected = repositories.filter(\.needsAttention).count
     if affected > 0 {
       return repositories.count == 1 ? "Repository needs attention" : "\(affected) of \(repositories.count) repositories need attention"
+    }
+    if syncingCount > 0 {
+      return repositories.count == 1 ? "Syncing repository…" : "Syncing · \(repositories.count - syncingCount) of \(repositories.count) repositories ready"
     }
     return "\(repositories.count) \(repositories.count == 1 ? "repository" : "repositories") current"
   }
@@ -179,14 +185,15 @@ struct PRWorkspaceView: View {
         if setup.isRefreshing { ProgressView("Refreshing repositories…").controlSize(.small) }
         if let status = setup.pollStatus { Text(status).font(.callout).foregroundStyle(.secondary) }
         Text(workspace.freshness).font(.callout).textSelection(.enabled)
-        ForEach(workspace.repositoryFreshness) { repository in
+        // Problems first, then repositories still syncing, then current ones.
+        ForEach(workspace.repositoryFreshness.sorted { ($0.needsAttention ? 0 : $0.isSyncing ? 1 : 2) < ($1.needsAttention ? 0 : $1.isSyncing ? 1 : 2) }) { repository in
           VStack(alignment: .leading, spacing: 5) {
             Text(repository.name).font(.callout.weight(.semibold))
             Label {
               Text(repository.label).foregroundStyle(.secondary)
             } icon: {
-              Image(systemName: repository.state == .fresh ? "checkmark.circle" : "exclamationmark.circle")
-                .foregroundStyle(repository.state == .fresh ? Color.secondary : Color.orange)
+              Image(systemName: repository.needsAttention ? "exclamationmark.circle" : repository.isSyncing ? "arrow.triangle.2.circlepath" : "checkmark.circle")
+                .foregroundStyle(repository.needsAttention ? Color.orange : Color.secondary)
             }
             if let message = repository.message { Text(message).foregroundStyle(.secondary).textSelection(.enabled) }
             if let at = repository.lastSuccessAt {

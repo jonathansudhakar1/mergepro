@@ -58,8 +58,9 @@ actor SetupStorage {
     func registerVisibleActions(_ id:UUID,repository:RepositoryKey?) { visibleActionRepositories[id] = repository }
     /// Marks repositories as on screen for polling cadence only (no untracked reads); an empty set unregisters.
     func registerFocusedRepositories(_ id:UUID,repositories:Set<RepositoryKey>) { focusedRepositoryViews[id] = repositories.isEmpty ? nil : repositories }
-    /// Runs one poll cycle. `changes` is what it committed (nil when unknown), so callers refresh only changed state.
-    func refreshActivity(sink: any NotificationSink, reason: PollRequest.Reason = .manual) async throws -> (id: UUID, changes: PollCycleChanges?) {
+    /// Runs one poll cycle. `changes` is what it committed (nil when unknown), so callers refresh only changed state;
+    /// `backlogged` is true when it left due work behind (initial sync of many repositories, a long history walk).
+    func refreshActivity(sink: any NotificationSink, reason: PollRequest.Reason = .manual) async throws -> (id: UUID, changes: PollCycleChanges?, backlogged: Bool) {
         let database = try stores().0
         try await prepareFixtures()
         if reason == .manual { try dependencies.fixtures?.manualRefresh(database) }
@@ -87,7 +88,7 @@ actor SetupStorage {
             return try await self.notificationPolicy()
         }
         let id = try await coordinator.refresh(PollRequest(scopes:scopes,reason:reason,visibleRepositories:visible,focusedRepositories:focused))
-        return (id,dependencies.reportsCycleChanges ? await coordinator.changes(for:id) : nil)
+        return (id,dependencies.reportsCycleChanges ? await coordinator.changes(for:id) : nil,await coordinator.backlogged(id))
     }
     /// What the workspace must re-read after a cycle: nothing, these repositories' rows (statuses and account
     /// metadata are always re-read; an empty set reads no PR rows), or every tracked repository.
