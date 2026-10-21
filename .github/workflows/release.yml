@@ -66,7 +66,10 @@ jobs:
           key="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
           printf '%s\n' "$ASC_PRIVATE_KEY" > "$key"; chmod 600 "$key"
           echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
-          # Optional: a Developer ID Application certificate, when cloud-managed signing isn't available to the API key.
+          # The Developer ID Application certificate: team API keys can't use cloud-managed Developer ID signing.
+          if [[ -z "$DEVELOPER_ID_P12_BASE64" ]]; then
+            echo "::error::Missing DEVELOPER_ID_CERTIFICATE_P12_BASE64. The GitHub download needs a Developer ID certificate; see RELEASING.md."; exit 1
+          fi
           if [[ -n "$DEVELOPER_ID_P12_BASE64" ]]; then
             keychain="$RUNNER_TEMP/signing.keychain-db"; password=$(uuidgen)
             security create-keychain -p "$password" "$keychain"

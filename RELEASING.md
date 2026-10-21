@@ -41,8 +41,11 @@ MergePro only uses the public client ID; never create or store a client secret.
    Under App Privacy choose **Data Not Collected**, and use `https://mergepro.app/privacy.html` as the privacy policy URL.
 3. In App Store Connect › Users and Access › Integrations, create a **Team** API key with the **Admin** role (needed for
    cloud-managed signing certificates) and download its `.p8` file. Note the key ID and the issuer ID.
-4. If cloud-managed Developer ID signing isn't available to the key, export a *Developer ID Application* certificate
-   with its private key as a `.p12` from Keychain Access and add the two optional secrets below.
+4. Create a *Developer ID Application* certificate. Team API keys can't use cloud-managed Developer ID signing
+   (the export fails with "Cloud signing permission error"), so the workflow needs the certificate itself. As the
+   Account Holder: Xcode › Settings › Accounts › your team › Manage Certificates › + › Developer ID Application.
+   Then in Keychain Access › My Certificates, right-click "Developer ID Application: …", choose Export, save a `.p12`
+   with a password, and add the two secrets below.
 
 ### Repository settings
 
@@ -55,8 +58,8 @@ Create an environment named `release` (Settings › Environments) and add these 
 | Secret | `APP_STORE_CONNECT_KEY_ID` | API key ID |
 | Secret | `APP_STORE_CONNECT_ISSUER_ID` | API issuer ID |
 | Secret | `APP_STORE_CONNECT_PRIVATE_KEY` | Full contents of `AuthKey_<id>.p8` |
-| Secret (optional) | `DEVELOPER_ID_CERTIFICATE_P12_BASE64` | `base64 -i DeveloperID.p12` |
-| Secret (optional) | `DEVELOPER_ID_CERTIFICATE_PASSWORD` | The `.p12` export password |
+| Secret | `DEVELOPER_ID_CERTIFICATE_P12_BASE64` | `base64 -i DeveloperID.p12 \| pbcopy`, then paste |
+| Secret | `DEVELOPER_ID_CERTIFICATE_PASSWORD` | The `.p12` export password |
 
 Adding required reviewers to the `release` environment makes every release wait for your approval.
 
