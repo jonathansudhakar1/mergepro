@@ -64,11 +64,18 @@ struct AppShell<Chrome: ViewModifier & Sendable>: View {
                     Label(model.snapshots.isEmpty ? "No accounts connected" : "\(model.snapshots.count) \(model.snapshots.count == 1 ? "account" : "accounts") connected", systemImage: "person.crop.circle")
                         .font(DesignTokens.captionFont.weight(.medium))
                         .foregroundStyle(.secondary)
-                    Picker("Account scope",selection:Binding<AccountScope?>(get:{ model.prs.state.accountFilter },set:{ model.prs.state.accountFilter = $0 })) {
-                        Text("All accounts").tag(AccountScope?.none)
-                        ForEach(model.snapshots.compactMap(\.account),id:\.scope) { account in Text("\(account.login) · \(account.scope.host)").tag(Optional(account.scope)) }
-                    }.labelsHidden().frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("prAccountScope")
-                    .help("Accounts shown in workspaces")
+                    if model.snapshots.isEmpty {
+                        // Nothing to scope yet; point to Setup instead of an empty account picker.
+                        Button("Connect a GitHub account") { model.destination = .setup }
+                            .buttonStyle(.link).font(DesignTokens.captionFont)
+                            .accessibilityIdentifier("sidebarConnectAccount")
+                    } else {
+                        Picker("Account scope",selection:Binding<AccountScope?>(get:{ model.prs.state.accountFilter },set:{ model.prs.state.accountFilter = $0 })) {
+                            Text("All accounts").tag(AccountScope?.none)
+                            ForEach(model.snapshots.compactMap(\.account),id:\.scope) { account in Text("\(account.login) · \(account.scope.host)").tag(Optional(account.scope)) }
+                        }.labelsHidden().frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("prAccountScope")
+                        .help("Accounts shown in workspaces")
+                    }
                     if model.snapshots.count > 1 {
                         Picker("Action account",selection:Binding<AccountScope?>(get:{ model.activeAccount },set:{ if let value = $0 { Task { await model.selectAccount(value) } } })) {
                             ForEach(model.snapshots.compactMap(\.account),id:\.scope) { account in Text("Act as \(account.login)").tag(Optional(account.scope)) }
@@ -89,9 +96,6 @@ struct AppShell<Chrome: ViewModifier & Sendable>: View {
                         }
                         .accessibilityIdentifier("sidebarSettings")
                         Spacer(minLength: 0)
-                        if model.snapshots.isEmpty {
-                            Text("Sync not configured").font(DesignTokens.captionFont).foregroundStyle(.secondary)
-                        }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
