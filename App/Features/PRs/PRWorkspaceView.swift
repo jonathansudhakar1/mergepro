@@ -169,7 +169,11 @@ struct PRWorkspaceView: View {
     if scopedRevokedCount > 0 { return "Reconnect \(scopedRevokedCount) \(scopedRevokedCount == 1 ? "account" : "accounts")" }
     let repositories = workspace.repositoryFreshness
     guard !repositories.isEmpty else { return "Choose tracked repositories in Setup" }
-    let affected = repositories.filter(\.needsAttention).count
+    let failing = repositories.filter(\.needsAttention), affected = failing.count
+    // A quota pause fails every repository at once and clears by itself at the reset: say so instead of listing them.
+    if affected > 1, failing.allSatisfy({ ($0.message ?? "").localizedCaseInsensitiveContains("API budget is paused") || ($0.message ?? "").localizedCaseInsensitiveContains("rate limit") }) {
+      return "Paused by GitHub's API limit · showing cached PRs"
+    }
     if affected > 0 {
       return repositories.count == 1 ? "Repository needs attention" : "\(affected) of \(repositories.count) repositories need attention"
     }
@@ -182,8 +186,12 @@ struct PRWorkspaceView: View {
     ScrollView {
       VStack(alignment: .leading, spacing: 16) {
         Label("Repository status", systemImage: "arrow.triangle.2.circlepath").font(.headline)
-        if setup.isRefreshing { ProgressView("Refreshing repositories…").controlSize(.small) }
-        if let status = setup.pollStatus { Text(status).font(.callout).foregroundStyle(.secondary) }
+        if let status = setup.pollStatus {
+          HStack(spacing: 6) {
+            if setup.isRefreshing { ProgressView().controlSize(.small) }
+            Text(status).font(.callout).foregroundStyle(.secondary)
+          }
+        } else if setup.isRefreshing { ProgressView("Refreshing repositories…").controlSize(.small) }
         Text(workspace.freshness).font(.callout).textSelection(.enabled)
         // Problems first, then repositories still syncing, then current ones.
         ForEach(workspace.repositoryFreshness.sorted { ($0.needsAttention ? 0 : $0.isSyncing ? 1 : 2) < ($1.needsAttention ? 0 : $1.isSyncing ? 1 : 2) }) { repository in

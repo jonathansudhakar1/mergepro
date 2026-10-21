@@ -17,6 +17,8 @@ public actor RateBudget {
     private var lastCost: [Key:Int] = [:]
     /// When the last background request of each account/resource was scheduled, for `quotaSpacing`.
     private var lastQuotaStart: [Key:ContinuousClock.Instant] = [:]
+    /// Earliest start of the next background GraphQL read: each one rests as long as the last one took.
+    private var graphQLRest: [AccountScope:ContinuousClock.Instant] = [:]
     private struct PollKey: Hashable { let account: AccountScope; let feature: String }
     private var lastPoll: [PollKey:ContinuousClock.Instant] = [:]
     private var nextProviderPoll: [PollKey:ContinuousClock.Instant] = [:]
@@ -113,14 +115,18 @@ public actor RateBudget {
         if interactiveRead { start = instant }
         else if priority == .interactive { start = max(instant,lastWrite[account].map { $0.advanced(by:minimumSpacing) } ?? instant) }
         else {
+            // Quota spacing counts from the last read that actually went out, and never extends `nextRequest`:
+            // a waiter cancelled with its cycle must not push later reads out (spacing of a nearly spent quota
+            // would otherwise compound across cycles and outlast the reset).
             let key = Key(account:account,resource:resource)
             let quotaDue = lastQuotaStart[key].map { $0.advanced(by:quotaSpacing(key)) } ?? instant
-            start = max(instant,nextRequest[account] ?? instant,quotaDue); nextRequest[account] = start.advanced(by:backgroundSpacing)
-            lastQuotaStart[key] = start
+            let paced = max(instant,nextRequest[account] ?? instant); nextRequest[account] = paced.advanced(by:backgroundSpacing)
+            start = max(paced,quotaDue,resource == .graphql ? graphQLRest[account] ?? instant : instant)
         }
         if start > instant { try await pace(account:account, until:start) }
         try Task.checkCancellation()
         try checkBackoff(account:account)
+        if priority == .background && !interactiveRead { lastQuotaStart[Key(account:account,resource:resource)] = .now }
     }
     /// Queued requests only check quota during pacing; charge the newest observed quota at the send.
     func checkQuota(account:AccountScope,resource:Resource,priority:Priority,cost:Int,reserve:Bool) throws {
@@ -145,6 +151,13 @@ public actor RateBudget {
         guard window > 0, window <= 3700, spendable > 0 else { return .zero }
         let seconds = window * Double(max(1,lastCost[key] ?? 1)) / Double(spendable)
         return .milliseconds(Int(min(60,seconds) * 1000))
+    }
+    /// GitHub's secondary limit allows about a minute of GraphQL server time per minute. History pages take
+    /// seconds each, so back-to-back background reads hit it and pause the account; resting as long as each read
+    /// took keeps background GraphQL to about half of wall time. Interactive reads never wait for it.
+    func recordBackgroundGraphQL(account: AccountScope, took duration: Duration) {
+        guard pacesQuota else { return }
+        graphQLRest[account] = ContinuousClock.now.advanced(by:min(duration,.seconds(30)))
     }
     func checkBackoff(account: AccountScope) throws {
         if let until = notBefore[account], until > Date() { throw GitHubFailure.rateLimited(until:until) }
@@ -273,7 +286,9 @@ public struct BudgetedGitHubTransport: GitHubTransport {
             try await budget.checkQuota(account:account,resource:resource,priority:priority,cost:resource == .graphql ? 100 : 1,reserve:true)
             try await beforeSend?()
             if userInitiated && !readMethod { await budget.recordWrite(account:account) }
+            let sentAt = ContinuousClock.now
             let response = try await base.send(request)
+            if resource == .graphql && priority == .background { await budget.recordBackgroundGraphQL(account:account,took:sentAt.duration(to:.now)) }
             // Observe before honoring cancellation: a 429/secondary limit that arrives as a cycle is
             // cancelled must still pause this account.
             await budget.observe(response,account:account,resource:resource)

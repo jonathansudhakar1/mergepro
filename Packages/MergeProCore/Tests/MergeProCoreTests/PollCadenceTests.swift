@@ -134,3 +134,42 @@ final class QuotaPacingTests: XCTestCase {
         XCTAssertEqual(rest, .zero)
     }
 }
+
+final class QuotaPacingCancellationTests: XCTestCase {
+    func testCancelledWaitersDoNotPushLaterReadsPastTheReset() async throws {
+        let account = AccountScope(host: "github.com", accountID: "1")
+        let budget = RateBudget(minimumSpacing: .zero, interactiveReserve: 100)
+        func graphQL(remaining: Int, resetIn: TimeInterval) -> GitHubResponse {
+            let reset = ISO8601DateFormatter().string(from: Date().addingTimeInterval(resetIn))
+            return GitHubResponse(status: 200, headers: [:], data: Data(#"{"data":{"rateLimit":{"cost":1,"remaining":\#(remaining),"resetAt":"\#(reset)"}}}"#.utf8))
+        }
+        // A nearly spent quota spaces reads a minute apart; one read goes out, then cycles queue and are cancelled.
+        await budget.observeGraphQL(graphQL(remaining: 103, resetIn: 3600), account: account)
+        try await budget.acquire(account: account, resource: .graphql, priority: .background, reservingQuota: false)
+        for _ in 0..<5 {
+            let waiter = Task { try await budget.acquire(account: account, resource: .graphql, priority: .background, reservingQuota: false) }
+            try await Task.sleep(for: .milliseconds(20)); waiter.cancel(); _ = try? await waiter.value
+        }
+        // The quota resets: the next read goes out promptly instead of waiting out five minutes of stale reservations.
+        await budget.observeGraphQL(graphQL(remaining: 5000, resetIn: 3600), account: account)
+        let started = ContinuousClock.now
+        try await budget.acquire(account: account, resource: .graphql, priority: .background, reservingQuota: false)
+        XCTAssertLessThan(started.duration(to: .now), .seconds(2))
+    }
+}
+
+final class GraphQLRestTests: XCTestCase {
+    func testBackgroundGraphQLRestsAsLongAsTheLastReadTookButInteractiveDoesNot() async throws {
+        let account = AccountScope(host: "github.com", accountID: "1")
+        let budget = RateBudget(minimumSpacing: .zero)
+        await budget.recordBackgroundGraphQL(account: account, took: .milliseconds(400))
+        var started = ContinuousClock.now
+        try await budget.acquire(account: account, resource: .graphql, priority: .interactive, interactiveRead: true)
+        XCTAssertLessThan(started.duration(to: .now), .milliseconds(150), "interactive reads never wait for the rest")
+        try await budget.acquire(account: account, resource: .rest, priority: .background)
+        XCTAssertLessThan(started.duration(to: .now), .milliseconds(150), "REST reads are not GraphQL server time")
+        started = ContinuousClock.now
+        try await budget.acquire(account: account, resource: .graphql, priority: .background)
+        XCTAssertGreaterThanOrEqual(started.duration(to: .now), .milliseconds(250))
+    }
+}

@@ -460,7 +460,12 @@ final class PRWorkspaceModel {
     guard !evidence.isEmpty else { return "Choose tracked repositories in Setup." }
     let affected = evidence.filter(\.needsAttention)
     if !affected.isEmpty {
-      return affected.map { "\($0.name): \($0.label)" }.joined(separator: " · ")
+      // One cause (a rate limit, a network outage) often fails many repositories at once: group by message.
+      let groups = Dictionary(grouping: affected) { $0.message ?? $0.label }
+        .sorted { $0.value.count > $1.value.count }
+      return groups.map { message, repositories in
+        repositories.count == 1 ? "\(repositories[0].name): \(message)" : "\(repositories.count) repositories: \(message)"
+      }.joined(separator: "\n")
     }
     let syncing = evidence.filter(\.isSyncing).count
     if syncing > 0 {
