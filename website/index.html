@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>MergePro: GitHub pull requests, native on your Mac</title>
-  <meta name="description" content="MergePro is a free, open-source, native macOS app for working through GitHub pull requests across several accounts and repositories. Board, reviews, merges, Actions, repositories and local Git. No backend, no tracking.">
+  <meta name="description" content="MergePro is a free, open-source, native macOS app for working through GitHub pull requests across several accounts and repositories. Board, reviews, merges, Actions, repositories and local Git, built directly on the GitHub API.">
   <link rel="canonical" href="https://mergepro.app/">
   <meta name="theme-color" content="#06070d" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#f6f7fc" media="(prefers-color-scheme: light)">
@@ -106,7 +106,7 @@
     </button>
     <ul class="nav-links" id="nav-links">
       <li><a href="#features">Features</a></li>
-      <li><a href="#privacy">Privacy</a></li>
+      <li><a href="#internals">Under the hood</a></li>
       <li><a href="#keyboard">Keyboard</a></li>
       <li><a href="#open-source">Open source</a></li>
       <li><a href="#faq">FAQ</a></li>
@@ -128,7 +128,7 @@
       </picture>
       <a class="eyebrow" href="#open-source" style="text-decoration:none"><span class="pill">FREE</span> Native for macOS 26 &middot; Open source</a>
       <h1 id="hero-title">Every pull request. <span class="grad-text" style="display:inline-block">One native Mac app.</span></h1>
-      <p class="lede">MergePro brings your GitHub reviews, merges, Actions runs and local clones across every account into one fast SwiftUI app. It talks straight to GitHub. Nothing in between.</p>
+      <p class="lede">MergePro brings your GitHub reviews, merges, Actions runs and local clones across every account into one fast, keyboard-driven SwiftUI app. Built directly on the GitHub API and the git you already use.</p>
 
       <div class="cta-row">
         <!--
@@ -233,10 +233,10 @@
       </div>
 
       <div class="stats" role="list">
-        <div class="stat" role="listitem"><b data-count="0">0</b><span>MergePro servers</span></div>
-        <div class="stat" role="listitem"><b data-count="0">0</b><span>analytics or trackers</span></div>
-        <div class="stat" role="listitem"><b data-count="6">6</b><span>built-in saved views</span></div>
-        <div class="stat" role="listitem"><b data-count="100" data-suffix="%">100%</b><span>native SwiftUI</span></div>
+        <div class="stat" role="listitem"><b data-count="5000">5,000</b><span>PRs on one board, tested</span></div>
+        <div class="stat" role="listitem"><b data-count="100" data-suffix="%">100%</b><span>native SwiftUI + AppKit</span></div>
+        <div class="stat" role="listitem"><b data-count="0">0</b><span>Electron or web views</span></div>
+        <div class="stat" role="listitem"><b class="word">Apache-2.0</b><span>open source</span></div>
       </div>
     </div>
   </section>
@@ -360,33 +360,37 @@
     </div>
   </section>
 
-  <!-- ============ PRIVACY ============ -->
-  <section class="section" id="privacy" aria-labelledby="privacy-title">
+  <!-- ============ UNDER THE HOOD ============ -->
+  <section class="section" id="internals" aria-labelledby="internals-title">
     <div class="container">
       <div class="section-head reveal">
-        <span class="kicker">Privacy by design</span>
-        <h2 id="privacy-title">Your Mac. GitHub. <span class="grad-text">Nothing in between.</span></h2>
-        <p>There is no MergePro account and no MergePro server. The app talks to GitHub directly and keeps everything else on your Mac.</p>
+        <span class="kicker">Under the hood</span>
+        <h2 id="internals-title">The GitHub API and real git. <span class="grad-text">Nothing reinvented.</span></h2>
+        <p>MergePro is a native client for api.github.com and the git binary on your machine. State is cached locally, so the board opens instantly and stays responsive with thousands of pull requests.</p>
       </div>
       <div class="privacy-grid">
-        <div class="glass flow reveal" role="img" aria-label="Diagram: your Mac connects directly to GitHub over HTTPS. A crossed-out MergePro server shows there is no server in between. Tokens stay in the Keychain and data in a local SQLite database.">
+        <div class="glass flow reveal" role="img" aria-label="Diagram: MergePro on your Mac talks to the GitHub API over GraphQL and REST, and to your local repositories through the git command line. Tokens are kept in the Keychain and data is cached in SQLite.">
           <div class="flow-row" aria-hidden="true">
-            <div class="node"><img src="/assets/img/favicon-64.png" width="40" height="40" alt="">Your Mac<small>MergePro</small></div>
-            <div class="wire"><span class="wire-label">HTTPS</span></div>
-            <div class="node"><svg><use href="#i-github"/></svg>GitHub<small>API</small></div>
+            <div class="node"><img src="/assets/img/favicon-64.png" width="40" height="40" alt="">MergePro<small>SwiftUI + AppKit</small></div>
+            <div class="wire"><span class="wire-label">GraphQL + REST</span></div>
+            <div class="node"><svg><use href="#i-github"/></svg>GitHub<small>api.github.com</small></div>
           </div>
-          <div class="ghost-row" aria-hidden="true"><span class="x"></span><div class="node ghost"><svg><use href="#i-cloudoff"/></svg><s>MergePro server</s><small>doesn&rsquo;t exist</small></div><span class="x"></span></div>
+          <div class="flow-row" aria-hidden="true">
+            <div class="node"><svg><use href="#i-branch"/></svg>Local tab<small>hunks, stashes, worktrees</small></div>
+            <div class="wire"><span class="wire-label">your git binary</span></div>
+            <div class="node"><svg><use href="#i-folder"/></svg>Your clones<small>folders you pick</small></div>
+          </div>
           <div class="local-store" aria-hidden="true">
-            <span><svg><use href="#i-lock"/></svg>Tokens in Keychain</span>
-            <span><svg><use href="#i-db"/></svg>Local SQLite</span>
-            <span><svg><use href="#i-folder"/></svg>Folders you choose</span>
+            <span><svg><use href="#i-lock"/></svg>Keychain tokens</span>
+            <span><svg><use href="#i-db"/></svg>SQLite cache</span>
+            <span><svg><use href="#i-shield"/></svg>App Sandbox</span>
           </div>
         </div>
         <div class="p-list">
-          <div class="glass p-item reveal"><div class="f-icon"><svg aria-hidden="true"><use href="#i-cloudoff"/></svg></div><div><h3>No backend, no account</h3><p>MergePro has no servers. Requests go from your Mac to GitHub.</p></div></div>
-          <div class="glass p-item reveal" style="--d:.05s"><div class="f-icon"><svg aria-hidden="true"><use href="#i-lock"/></svg></div><div><h3>Tokens in the Keychain</h3><p>You sign in with GitHub's device flow. The token is stored in your macOS Keychain.</p></div></div>
-          <div class="glass p-item reveal" style="--d:.1s"><div class="f-icon"><svg aria-hidden="true"><use href="#i-eyeoff"/></svg></div><div><h3>No analytics or telemetry</h3><p>No tracking SDKs, no usage pings, no ads. Cached data lives in a local SQLite database.</p></div></div>
-          <div class="glass p-item reveal" style="--d:.15s"><div class="f-icon"><svg aria-hidden="true"><use href="#i-shield"/></svg></div><div><h3>Sandboxed</h3><p>The app runs in the macOS App Sandbox and only opens folders you select.</p></div></div>
+          <div class="glass p-item reveal"><div class="f-icon"><svg aria-hidden="true"><use href="#i-github"/></svg></div><div><h3>Easy on your rate limit</h3><p>Conditional requests with ETags, a per-account request budget, and backoff that honors <code>Retry-After</code>. Several accounts poll side by side.</p></div></div>
+          <div class="glass p-item reveal" style="--d:.05s"><div class="f-icon"><svg aria-hidden="true"><use href="#i-lock"/></svg></div><div><h3>Writes pinned to what you saw</h3><p>Merges send the head SHA you reviewed, so GitHub rejects them if someone pushed since. Branch deletes check for open PRs first. Nothing is written without an explicit action.</p></div></div>
+          <div class="glass p-item reveal" style="--d:.1s"><div class="f-icon"><svg aria-hidden="true"><use href="#i-branch"/></svg></div><div><h3>Your git, not a reimplementation</h3><p>Local work runs the git binary you choose. Read-only commands take no index locks, so MergePro never fights your terminal or editor.</p></div></div>
+          <div class="glass p-item reveal" style="--d:.15s"><div class="f-icon"><svg aria-hidden="true"><use href="#i-review"/></svg></div><div><h3>Native code rendering</h3><p>Tree-sitter highlighting on TextKit 2 code views. Diffs with thousands of lines scroll without a web view in sight.</p></div></div>
         </div>
       </div>
     </div>
@@ -430,7 +434,7 @@
       <div class="section-head reveal">
         <span class="kicker">Open source</span>
         <h2 id="oss-title">Read every line. Build it yourself.</h2>
-        <p>MergePro is open source under the Apache License 2.0. Audit how it handles your data, file issues, or send a pull request.</p>
+        <p>MergePro is open source under the Apache License 2.0. Read the code, file issues, or send a pull request.</p>
       </div>
       <div class="oss">
         <div class="glass oss-card reveal">
@@ -482,7 +486,7 @@
         </details>
         <details class="glass reveal">
           <summary>Where is my data stored?</summary>
-          <div class="a"><p>On your Mac. Access tokens are kept in the macOS Keychain, and pull request and repository data is cached in a local SQLite database inside the app's sandbox container. There is no MergePro server, and the app contains no analytics or telemetry. Read the <a href="/privacy.html">privacy policy</a> for details.</p></div>
+          <div class="a"><p>Tokens live in the macOS Keychain; pull request, repository and Actions data is cached in SQLite inside the app's sandbox container. MergePro has no backend and no telemetry. See the <a href="/privacy.html">privacy policy</a>.</p></div>
         </details>
         <details class="glass reveal">
           <summary>Can MergePro change things on GitHub?</summary>
@@ -505,7 +509,7 @@
           <img src="/assets/img/icon-256.png" width="96" height="96" alt="">
         </picture>
         <h2 id="final-title">Pull requests, <span class="grad-text">at home on your Mac.</span></h2>
-        <p>Free, private and open source. Made for macOS 26.</p>
+        <p>Free and open source. Native on macOS 26.</p>
         <div class="cta-row">
           <a class="btn btn-store" data-app-store href="https://github.com/jonathansudhakar1/mergepro/releases">
             <svg width="26" height="26" aria-hidden="true"><use href="#i-download"/></svg>

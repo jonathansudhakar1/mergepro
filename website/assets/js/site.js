@@ -86,7 +86,7 @@ const APP_STORE_URL = null;
       const dur = 1400;
       const step = (t) => {
         const p = Math.min(1, (t - t0) / dur);
-        el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3))) + suffix;
+        el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3))).toLocaleString("en-US") + suffix;
         if (p < 1) requestAnimationFrame(step);
       };
       el.textContent = "0" + suffix;
