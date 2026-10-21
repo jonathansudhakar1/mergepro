@@ -16,7 +16,8 @@ final class FixtureRuntime: FixtureHooks {
         Phase23Fixtures.enabled ? ProcessInfo.processInfo.environment["MERGEPRO_PHASE23_DESTINATION"] : nil
     }
     func seed(_ database: DatabaseStore) throws {
-        if Phase23Fixtures.enabled { try Phase23Fixtures.seed(database) }
+        if ShowcaseFixtures.enabled { try ShowcaseFixtures.seed(database) }
+        else if Phase23Fixtures.enabled { try Phase23Fixtures.seed(database) }
         else if PRPhase1Fixtures.enabled { try PRPhase1Fixtures.seedAccounts(database) } else { try PRNativeFixtures.seed(database) }
     }
     func prepare(database: DatabaseStore, session: GitHubAccountSession, budget: RateBudget) async throws {
@@ -89,7 +90,7 @@ extension SetupStorage {
         let milliseconds = Double(seconds.seconds) * 1000 + Double(seconds.attoseconds) / 1e15
         let status = String(format: "Fixture cache + projection: %.1f ms · %d PRs · API: offline", milliseconds, rows)
         FileHandle.standardError.write(Data("TASK5 \(status)\n".utf8))
-        return status
+        return ShowcaseFixtures.enabled ? nil : status
     }
     func rowsDidReload(_ rows: [PullRequest]) {
         refreshRevision = rows.max { ($0.metadata?.number ?? 0) < ($1.metadata?.number ?? 0) }?.metadata?.comments ?? 0
@@ -106,7 +107,8 @@ extension SetupStorage {
     }
     func willOpen(_ key: ProviderKey) { if PRPhase1Fixtures.enabled { PRPhase1NativeVerification.shared.open(key) } }
     var footer: AnyView? {
-        AnyView(Text("Fixture refresh \(refreshRevision)").font(.caption2).accessibilityIdentifier("fixtureRefreshStatus"))
+        if ShowcaseFixtures.enabled { return nil }
+        return AnyView(Text("Fixture refresh \(refreshRevision)").font(.caption2).accessibilityIdentifier("fixtureRefreshStatus"))
     }
     var probe: AnyView? {
         PRPhase1Fixtures.enabled ? AnyView(PRPhase1WindowProbe(tag:"workspace",generation:projectionRevision)) : nil

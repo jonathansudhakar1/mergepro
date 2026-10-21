@@ -125,7 +125,7 @@ struct PRLabelPicker: View {
                 if loading || busy { ProgressView().controlSize(.small) }
             }
             if presented, let number = actionPR?.metadata?.number {
-                Text("#\(number) · as \(login)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                Text("#\(String(number)) · as \(login)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
             TextField(canManage ? "Filter or create labels" : "Filter labels", text: $search)
                 .textFieldStyle(.roundedBorder)

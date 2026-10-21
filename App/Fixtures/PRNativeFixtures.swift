@@ -98,6 +98,7 @@
       Phase23Fixtures.accounts[0]:GitHubCredential(accessToken:"offline-phase23-99",scopes:["repo","workflow"]),
       Phase23Fixtures.accounts[1]:GitHubCredential(accessToken:"offline-phase23-100",scopes:["repo","workflow"]),
       AccountScope(host:"fixture.invalid",accountID:"fixture-viewer"): GitHubCredential(accessToken:"offline-fixture"),
+      ShowcaseFixtures.account: GitHubCredential(accessToken:"offline-showcase",scopes:["repo","workflow"]),
       PRMergeFixtures.account:GitHubCredential(accessToken:"offline-merge-fixture",scopes:["repo"]),
       PRPhase1Fixtures.accounts[0]:GitHubCredential(accessToken:PRPhase1Fixtures.token(PRPhase1Fixtures.accounts[0]),scopes:["repo","notifications"]),
       PRPhase1Fixtures.accounts[1]:GitHubCredential(accessToken:PRPhase1Fixtures.token(PRPhase1Fixtures.accounts[1]),scopes:["repo","notifications"])
@@ -109,6 +110,10 @@
   struct PRFixtureOfflineTransport: GitHubTransport {
     func send(_ request: URLRequest) async throws -> GitHubResponse {
       if PRMergeFixtures.enabled { return try PRMergeFixtures.response(request) }
+      // Showcase screenshots: provider context reads come back empty instead of failing.
+      if ShowcaseFixtures.enabled, request.httpMethod ?? "GET" == "GET" {
+        return GitHubResponse(status: 200, headers: ["X-RateLimit-Remaining": "4900", "X-RateLimit-Reset": "1893456000"], data: Data("[]".utf8))
+      }
       throw GitHubFailure.resourceDenied
     }
   }

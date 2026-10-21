@@ -162,7 +162,7 @@ struct RunDetailView:View {
                     }
                 }
             }
-            if !run.pullRequestNumbers.isEmpty { Section("Pull requests") { ForEach(run.pullRequestNumbers,id:\.self) { number in if let url=URL(string:"https://github.com/"+run.repository.name+"/pull/\(number)") { Link("Pull request #\(number)",destination:url) } } } }
+            if !run.pullRequestNumbers.isEmpty { Section("Pull requests") { ForEach(run.pullRequestNumbers,id:\.self) { number in if let url=URL(string:"https://github.com/"+run.repository.name+"/pull/\(number)") { Link("Pull request #\(String(number))",destination:url) } } } }
         }.listStyle(.inset).scrollContentBackground(.hidden)
     }
     private var logPanel:some View {

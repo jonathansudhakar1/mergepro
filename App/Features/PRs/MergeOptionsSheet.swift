@@ -107,7 +107,7 @@ struct MergeOptionsSheet:View {
                     .frame(width:40,height:40).background(tint.opacity(0.12),in:RoundedRectangle(cornerRadius:11)).accessibilityHidden(true)
                 VStack(alignment:.leading,spacing:2) {
                     Text(heading).font(.system(.title2,design:.rounded).bold())
-                    if displayed,let selected { Text("\(selected.pr.metadata?.repositoryName ?? "") #\(selected.pr.metadata?.number ?? 0) · \(selected.pr.title)").font(.headline).lineLimit(2) }
+                    if displayed,let selected { Text("\(selected.pr.metadata?.repositoryName ?? "") #\(String(selected.pr.metadata?.number ?? 0)) · \(selected.pr.title)").font(.headline).lineLimit(2) }
                 }
             }
             if displayed,let selected {
@@ -236,10 +236,10 @@ struct MergeOptionsSheet:View {
     }
     private func stackSection(_ stack:PRStack) -> some View {
         VStack(alignment:.leading,spacing:6) {
-            sectionTitle("Native stack #\(stack.number ?? 0) · affected layers",symbol:"square.stack.3d.up")
+            sectionTitle("Native stack #\(String(stack.number ?? 0)) · affected layers",symbol:"square.stack.3d.up")
             ForEach(values,id:\.pr.key) { value in
                 HStack(spacing:6) {
-                    Text("#\(value.pr.metadata?.number ?? 0)").font(.callout.monospacedDigit().weight(.semibold))
+                    Text("#\(String(value.pr.metadata?.number ?? 0))").font(.callout.monospacedDigit().weight(.semibold))
                     Text(value.pr.title).font(.callout).lineLimit(1)
                     Spacer(minLength:8)
                     Text(value.evidence.head.prefix(10)).font(.caption.monospaced()).foregroundStyle(.secondary)
@@ -391,7 +391,7 @@ extension MergeOptionsSheet {
     /// uncertain, rejected or outdated results stay visible with the reconcile controls.
     private func closeIfConfirmed(_ operation:PRWriteOperation,key:ProviderKey,request:UUID) {
         guard operation.state == .confirmed,identity.accepts(key,request:request,available:available) else { return }
-        workspace?.status=(selected.map { "#\($0.pr.metadata?.number ?? 0): " } ?? "")+ProviderStateText.mergeOperation(operation)
+        workspace?.status=(selected.map { "#\(String($0.pr.metadata?.number ?? 0)): " } ?? "")+ProviderStateText.mergeOperation(operation)
         dismiss()
     }
 }

@@ -39,6 +39,13 @@ final class DiffDocumentTests: XCTestCase {
         XCTAssertEqual(edits.new,NSRange(location:9,length:1))
         XCTAssertTrue(DiffWords.onlyWhitespace(old:"a b",new:"a  b"))
     }
+    func testWordChangesSnapToWordsAndSkipUnrelatedLines() {
+        // seconds(1) → seconds(2) highlights the number only; base → base2 highlights the whole identifier.
+        XCTAssertEqual(DiffWords.changedRange(old:"    var base = .seconds(1)",new:"    var base = .seconds(2)").new,NSRange(location:24,length:1))
+        XCTAssertEqual(DiffWords.changedRange(old:"let base = 1",new:"let base2 = 1").new,NSRange(location:4,length:5))
+        // Paired lines that are really different get no word highlight.
+        XCTAssertEqual(DiffWords.changedRange(old:"        return .seconds(1)",new:"        // Honor Retry-After on secondary rate limits.").new.length,0)
+    }
 }
 
 extension DiffDocumentTests {

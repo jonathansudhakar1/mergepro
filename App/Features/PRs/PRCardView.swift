@@ -139,7 +139,7 @@ struct PRCardView: View, Equatable {
   }
   private var header: some View {
     HStack {
-      Text("\(m?.repositoryName ?? pr.key.repositoryID) #\(number)").font(.subheadline.weight(.medium)).lineLimit(1)
+      Text("\(m?.repositoryName ?? pr.key.repositoryID) #\(String(number))").font(.subheadline.weight(.medium)).lineLimit(1)
         .foregroundStyle(.secondary)
       Spacer()
       if isNew {
@@ -202,7 +202,7 @@ struct PRCardView: View, Equatable {
       }.buttonStyle(.plain)
       HStack {
         ForEach(stack.layers.prefix(Self.listedLayers)) { layer in
-          Text("#\(layer.metadata?.number ?? 0) \(ProviderStateText.column(BoardProjection.column(for: layer, showDrafts: true))) · \(ProviderStateText.checks(layer.metadata?.checks).text)")
+          Text("#\(String(layer.metadata?.number ?? 0)) \(ProviderStateText.column(BoardProjection.column(for: layer, showDrafts: true))) · \(ProviderStateText.checks(layer.metadata?.checks).text)")
             .font(.caption2)
         }
         if stack.layers.count > Self.listedLayers { Text("+\(stack.layers.count - Self.listedLayers) more").font(.caption2).foregroundStyle(.secondary) }
@@ -234,7 +234,8 @@ struct PRCardView: View, Equatable {
     }
     let verification = verification(now)
     // A conflict blocker repeats the Conflicts status above; show it once.
-    if compact || !(verification.tone == .failing && conflicts.tone == .failing && verification.text.localizedCaseInsensitiveContains("conflict")) {
+    // Merge readiness only matters while the pull request is open.
+    if pr.state == .open, compact || !(verification.tone == .failing && conflicts.tone == .failing && verification.text.localizedCaseInsensitiveContains("conflict")) {
       PRStatusLabel(value: verification)
     }
   }

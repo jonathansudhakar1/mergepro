@@ -695,7 +695,7 @@ struct PRRevertSheet:View {
     var body:some View {
         VStack(alignment:.leading,spacing:12) {
             Text("Revert pull request").font(.system(.title2,design:.rounded).bold())
-            Text("Opens a new pull request that reverts #\(number) into \(pr.metadata?.baseBranch ?? "its base branch")\(account.login.isEmpty ? "" : ", as \(account.login)").").foregroundStyle(.secondary)
+            Text("Opens a new pull request that reverts #\(String(number)) into \(pr.metadata?.baseBranch ?? "its base branch")\(account.login.isEmpty ? "" : ", as \(account.login)").").foregroundStyle(.secondary)
             TextField("Title",text:$title).textFieldStyle(.roundedBorder).focused($focus,equals:.title).onSubmit { focus = .body }.accessibilityIdentifier("revertTitle")
             TextEditor(text:$text).font(.body).frame(height:140).border(.separator).focused($focus,equals:.body).accessibilityLabel("Revert description").accessibilityIdentifier("revertBody")
             Toggle("Create as draft",isOn:$draft).toggleStyle(.checkbox).accessibilityIdentifier("revertDraft")
@@ -717,7 +717,7 @@ struct PRRevertSheet:View {
             }
         }.padding(20).frame(width:560)
         .task {
-            title="Revert \"\(pr.title)\"";text="Reverts \(pr.metadata?.repositoryName ?? "")#\(number)"
+            title="Revert \"\(pr.title)\"";text="Reverts \(pr.metadata?.repositoryName ?? "")#\(String(number))"
             await readPending()
         }
     }
@@ -730,7 +730,7 @@ struct PRRevertSheet:View {
         busy=true;defer { busy=false }
         do {
             let result=try await account.storage.revertDetailPullRequest(actionPR,title:title,body:text,draft:draft)
-            account.status=result.existing ? "An open revert pull request #\(result.number) already exists; opened it." : "Created revert pull request #\(result.number)."
+            account.status=result.existing ? "An open revert pull request #\(String(result.number)) already exists; opened it." : "Created revert pull request #\(String(result.number))."
             created(result);dismiss()
         } catch {
             unknownOutcome=error as? RepositoryBrowserFailure == .unknownWriteOutcome

@@ -24,7 +24,7 @@ struct StackSidebar:View {
                         Text("\(index+1)").font(.caption.monospacedDigit().weight(.semibold))
                             .frame(width:22,height:22).background(.quaternary,in:Circle()).accessibilityHidden(true)
                         VStack(alignment:.leading,spacing:5) {
-                            Text("#\(layer.metadata?.number ?? 0) \(layer.title)").fontWeight(layer.key == current ? .semibold : .regular).lineLimit(3)
+                            Text("#\(String(layer.metadata?.number ?? 0)) \(layer.title)").fontWeight(layer.key == current ? .semibold : .regular).lineLimit(3)
                             Text("\(PRDetailText.state(layer)) · \(PRStatusSummary.checks(layer.metadata?.checks).text)").font(.caption).foregroundStyle(.secondary)
                             Text(PRStatusSummary.review(layer.metadata?.reviewDecision).text).font(.caption).foregroundStyle(.secondary)
                         }.frame(maxWidth:.infinity,alignment:.leading)

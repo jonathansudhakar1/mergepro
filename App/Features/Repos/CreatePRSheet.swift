@@ -60,14 +60,14 @@ struct CreatePRSheet:View {
                     if let validationMessage,created==nil { WorkspaceNotice(message:validationMessage,symbol:"exclamationmark.triangle",tint:.orange) }
                     if let error { WorkspaceNotice(message:error,symbol:"exclamationmark.circle",tint:.red) }
                     if uncertain { WorkspaceNotice(message:"GitHub may have created this PR. Reconcile checks the existing head/base pair before any further write.",symbol:"exclamationmark.triangle",tint:.orange) }
-                    if let created,created.reviewersPending { WorkspaceNotice(message:"PR #\(created.number) was created. Reviewer requests could not be confirmed; inspect its existing detail before requesting them again.",symbol:"exclamationmark.triangle",tint:.orange) }
+                    if let created,created.reviewersPending { WorkspaceNotice(message:"PR #\(String(created.number)) was created. Reviewer requests could not be confirmed; inspect its existing detail before requesting them again.",symbol:"exclamationmark.triangle",tint:.orange) }
                 }
             }
             HStack {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction).disabled(busy)
                 Spacer()
                 if busy { ProgressView().controlSize(.small) }
-                if let created { Button("Open PR #\(created.number)") { openPR(created.key);dismiss() }.keyboardShortcut(.defaultAction).buttonStyle(.borderedProminent) }
+                if let created { Button("Open PR #\(String(created.number))") { openPR(created.key);dismiss() }.keyboardShortcut(.defaultAction).buttonStyle(.borderedProminent) }
                 else {
                     Button(uncertain ? "Reconcile Creation" : "Create Pull Request") { Task { await create() } }.keyboardShortcut(focus == nil ? .defaultAction : nil).buttonStyle(.borderedProminent).tint(DesignTokens.cobalt).disabled(!canCreate).help("Create (⌘Return)")
                         .background { Button("Create Pull Request") { if canCreate { Task { await create() } } }.keyboardShortcut(.return,modifiers:.command).hidden().accessibilityHidden(true) }

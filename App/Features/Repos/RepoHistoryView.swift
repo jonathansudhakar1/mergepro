@@ -73,7 +73,7 @@ struct RepoHistoryView:View {
                         if let selected {
                             Text(selected.message).font(.headline).textSelection(.enabled)
                             Text(selected.sha).font(.system(.caption,design:.monospaced)).foregroundStyle(.secondary).textSelection(.enabled)
-                            ScrollView(.horizontal) { HStack { if let url=selected.webURL { Button("Open Commit") { ExternalLinkPolicy.open(url) }.buttonStyle(.link).help(url.absoluteString) };ForEach(linked,id:\.key) { pr in Button("Open PR #\(pr.number)") { openPR(pr.key) } } }.fixedSize(horizontal:true,vertical:false).padding(.bottom,2) }.fixedSize(horizontal:false,vertical:true)
+                            ScrollView(.horizontal) { HStack { if let url=selected.webURL { Button("Open Commit") { ExternalLinkPolicy.open(url) }.buttonStyle(.link).help(url.absoluteString) };ForEach(linked,id:\.key) { pr in Button("Open PR #\(String(pr.number))") { openPR(pr.key) } } }.fixedSize(horizontal:true,vertical:false).padding(.bottom,2) }.fixedSize(horizontal:false,vertical:true)
                         }
                         ForEach(files) { file in
                             VStack(alignment:.leading,spacing:6) {

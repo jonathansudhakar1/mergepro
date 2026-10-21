@@ -133,7 +133,7 @@ struct LocalCommandSheet: View {
             Picker("Stash", selection: $input.target) { Text("Select a stash").tag(""); ForEach(presentation.snapshot.stashes, id: \.reference) { stash in Text(stash.reference + " · " + stash.message + " · " + String(stash.head.prefix(8))).tag(stash.reference) } }
             if input.kind == .applyStash { Toggle("Drop this stash after successful apply", isOn: $input.dropStash) }
         case .addWorktree, .checkoutPR:
-            if input.kind == .checkoutPR, let checkout { Text("\(checkout.repositoryName) #\(checkout.number)").font(.headline); Text("Expected head: \(checkout.expectedHeadSHA)").font(.caption.monospaced()); TextField("Remote", text: $input.remote).focused($focus, equals: .remote).onSubmit { focus = .name } }
+            if input.kind == .checkoutPR, let checkout { Text("\(checkout.repositoryName) #\(String(checkout.number))").font(.headline); Text("Expected head: \(checkout.expectedHeadSHA)").font(.caption.monospaced()); TextField("Remote", text: $input.remote).focused($focus, equals: .remote).onSubmit { focus = .name } }
             TextField("Branch name", text: $input.name).focused($focus, equals: .name).onSubmit { focus = .worktreeFolder }
             if input.kind == .addWorktree { Toggle("Create a new branch", isOn: $input.createWorktreeBranch) }
             Button(destinationParent == nil ? "Choose Worktree Parent Folder…" : "Change Parent Folder…") { Task { await chooseDestination() } }

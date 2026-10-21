@@ -78,7 +78,7 @@ struct PRBatchActionSheet:View {
                     if approve {
                         ForEach(Array(commands.enumerated()),id:\.element.key) { index,command in
                             VStack(alignment:.leading) {
-                                Text("\(index+1). \(command.repository) #\(command.number) · \(command.revision.head.prefix(10))")
+                                Text("\(index+1). \(command.repository) #\(String(command.number)) · \(command.revision.head.prefix(10))")
                                 Text(reviewFacts[command.key] ?? "Review facts unavailable").font(.caption)
                                 switch command.intent {
                                 case .review(_,let summary),.submitPending(_,_,let summary):if !summary.isEmpty { Text(summary).font(.callout) }
@@ -90,7 +90,7 @@ struct PRBatchActionSheet:View {
                         ForEach($merges) { $item in
                             VStack(alignment:.leading,spacing:8) {
                                 HStack(alignment:.firstTextBaseline,spacing:8) {
-                                    Text("\(item.selected.pr.metadata?.repositoryName ?? "") #\(item.selected.pr.metadata?.number ?? 0)").font(.headline)
+                                    Text("\(item.selected.pr.metadata?.repositoryName ?? "") #\(String(item.selected.pr.metadata?.number ?? 0))").font(.headline)
                                     Text(item.selected.pr.title).font(.callout).foregroundStyle(.secondary).lineLimit(1)
                                     Spacer(minLength:8)
                                     if item.queueGoverned { WorkspaceStatusBadge(text:"Merge queue",symbol:"list.number",tint:DesignTokens.cobalt) }
@@ -112,7 +112,7 @@ struct PRBatchActionSheet:View {
                                     // Collapsing the editor or closing the sheet cancels a prefill still loading.
                                     .onChangeTask(of:item.expanded) { open in if open { await loadDefaults(key) } }
                                 }
-                                ForEach(item.affected,id:\.pr.key) { value in Text("Affected #\(value.pr.metadata?.number ?? 0) · \(value.evidence.head.prefix(10))").font(.caption).foregroundStyle(.secondary) }
+                                ForEach(item.affected,id:\.pr.key) { value in Text("Affected #\(String(value.pr.metadata?.number ?? 0)) · \(value.evidence.head.prefix(10))").font(.caption).foregroundStyle(.secondary) }
                                 if let stack=item.selected.stack { Text(stack.guardExplanation).font(.caption).foregroundStyle(.secondary) }
                                 if let dependency=item.dependency {
                                     Text("Inferred dependency: "+dependency.parentBranch+". After the lower layer lands, this batch stops for retargeting/restacking and fresh review.").font(.caption)
@@ -143,7 +143,7 @@ struct PRBatchActionSheet:View {
         VStack(alignment:.leading,spacing:4) {
             Label("Skipped",systemImage:"minus.circle").font(.callout.weight(.semibold))
             ForEach(skipped+notReady) { item in
-                Text("\(item.pr.metadata?.repositoryName ?? "") #\(item.pr.metadata?.number ?? 0) · \(item.reason)").font(.caption).foregroundStyle(.secondary)
+                Text("\(item.pr.metadata?.repositoryName ?? "") #\(String(item.pr.metadata?.number ?? 0)) · \(item.reason)").font(.caption).foregroundStyle(.secondary)
             }
         }.frame(maxWidth:.infinity,alignment:.leading).padding(10).workspacePanel(radius:12)
         .accessibilityElement(children:.combine).accessibilityIdentifier("batchSkipped")
@@ -152,7 +152,7 @@ struct PRBatchActionSheet:View {
     private var commonOptions:[MergeMethodOption] {
         MergeMethod.allCases.map { method in
             let blocked=merges.filter { !$0.options.contains { $0.method == method && $0.enabled } }
-            return .init(method:method,enabled:blocked.isEmpty,reason:blocked.isEmpty ? nil : "Not allowed for "+blocked.map { "#\($0.selected.pr.metadata?.number ?? 0)" }.joined(separator:", "))
+            return .init(method:method,enabled:blocked.isEmpty,reason:blocked.isEmpty ? nil : "Not allowed for "+blocked.map { "#\(String($0.selected.pr.metadata?.number ?? 0))" }.joined(separator:", "))
         }
     }
     private var commonMethod:MergeMethod? { let methods=Set(merges.map(\.method));return methods.count == 1 ? methods.first : nil }

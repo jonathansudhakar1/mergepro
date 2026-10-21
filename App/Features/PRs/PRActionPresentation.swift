@@ -88,7 +88,7 @@ extension PRWorkspaceModel {
         if selected.count == 1,let pr=selected.first { requestMerge(pr);return }
         let plan=MergePolicy.batchPlan(selected) { self.mergeEligibility($0) }
         guard !plan.ready.isEmpty else {
-            status="None of the selected pull requests can be merged: "+plan.skipped.map { "#\($0.pr.metadata?.number ?? 0) \($0.reason)" }.joined(separator:" ")
+            status="None of the selected pull requests can be merged: "+plan.skipped.map { "#\(String($0.pr.metadata?.number ?? 0)) \($0.reason)" }.joined(separator:" ")
             announce(status);return
         }
         if plan.ready.count == 1,plan.skipped.isEmpty,let pr=plan.ready.first { requestMerge(pr);return }
@@ -207,7 +207,7 @@ struct PRCloseSheet:View {
         VStack(alignment:.leading,spacing:12) {
             Text("Close pull request?").font(.headline)
             if let command,identity.canDisplay(command.key,available:available) {
-                Text("\(command.repository) #\(command.number) · Action account \(workspace.login(command.key.account))")
+                Text("\(command.repository) #\(String(command.number)) · Action account \(workspace.login(command.key.account))")
                 Text("This closes the PR without merging.")
                 Button("Close pull request",role:.destructive) { Task { await close(command) } }.disabled(busy)
             } else { Text("Reading selected account…") }

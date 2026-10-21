@@ -115,10 +115,19 @@ public struct DiffDocument: Sendable {
 }
 public enum DiffWords {
     public static func onlyWhitespace(old:String,new:String) -> Bool { old.filter { !$0.isWhitespace } == new.filter { !$0.isWhitespace } }
+    /// The changed span of a paired removed/added line, widened to whole words. Lines that share less than about
+    /// half their content are different lines, not edits of each other, and get no word highlight (empty ranges).
     public static func changedRange(old:String,new:String) -> (old:NSRange,new:NSRange) {
         let a=Array(old),b=Array(new);var prefix=0;var suffix=0
         while prefix < min(a.count,b.count) && a[prefix] == b[prefix] { prefix += 1 }
         while suffix < min(a.count,b.count)-prefix && a[a.count-1-suffix] == b[b.count-1-suffix] { suffix += 1 }
+        func word(_ c:Character) -> Bool { c.isLetter || c.isNumber || c == "_" }
+        // Don't start or end a highlight in the middle of an identifier.
+        while prefix > 0 && word(a[prefix-1]) && ((prefix < a.count && word(a[prefix])) || (prefix < b.count && word(b[prefix]))) { prefix -= 1 }
+        while suffix > 0 && word(a[a.count-suffix]) && ((a.count-suffix-1 >= prefix && word(a[a.count-suffix-1])) || (b.count-suffix-1 >= prefix && word(b[b.count-suffix-1]))) { suffix -= 1 }
+        let indent=a.prefix { $0 == " " || $0 == "\t" }.count
+        let shared=max(0,prefix-indent)+suffix,shorter=min(a.count,b.count)-indent
+        guard shorter > 0,Double(shared) >= Double(shorter)*0.5 else { return (NSRange(location:0,length:0),NSRange(location:0,length:0)) }
         func range(_ v:[Character]) -> NSRange { NSRange(location:String(v.prefix(prefix)).utf16.count,length:String(v[prefix..<(v.count-suffix)]).utf16.count) }
         return (range(a),range(b))
     }

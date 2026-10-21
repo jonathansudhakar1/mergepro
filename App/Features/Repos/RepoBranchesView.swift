@@ -47,7 +47,7 @@ struct RepoBranchesView:View {
                                 Button("Browse") { model.changeRef(branch.name);model.section="code" }
                                 Button("Compare") { compareCandidate=branch;Task { await compare(branch) } }
                                 Button("Create PR") { createPR(branch.name) }.disabled(!canCreatePR).help(canCreatePR ? "Create a pull request from this branch" : "Switch the active account to \(model.repository?.accountLogin ?? "this repository's account") to create pull requests")
-                                ForEach(links[branch.name] ?? [],id:\.key) { pr in Button("Open PR #\(pr.number)") { openPR(pr.key) } }
+                                ForEach(links[branch.name] ?? [],id:\.key) { pr in Button("Open PR #\(String(pr.number))") { openPR(pr.key) } }
                                 Spacer()
                                 Button("Delete",role:.destructive) { deleteCandidate=branch }.disabled(branch.protected || branch.name==model.repository?.defaultBranch || busy)
                             }.controlSize(.small).fixedSize(horizontal:true,vertical:false).padding(.vertical,2)

@@ -125,7 +125,7 @@ struct MenuBarView: View {
           open(pr.key)
         } label: {
           MenuItemRow(symbol: DesignTokens.columnIcon(column), tint: DesignTokens.columnColor(column), title: pr.title,
-            subtitle: "\(pr.metadata?.repositoryName ?? pr.key.repositoryID) #\(pr.metadata?.number ?? 0)",
+            subtitle: "\(pr.metadata?.repositoryName ?? pr.key.repositoryID) #\(String(pr.metadata?.number ?? 0))",
             badge: pr.isDraft ? "Draft" : column == .approved ? "Approved" : nil, badgeTint: DesignTokens.columnColor(column))
         }.buttonStyle(MenuRowButtonStyle())
         if showApprove && canApprove(pr) {

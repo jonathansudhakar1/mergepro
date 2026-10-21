@@ -169,7 +169,7 @@ struct PRListDisplayRow: Identifiable {
               (m?.repositoryName ?? pr.key.repositoryID)
                 + (multipleAccounts ? " · " + (logins[pr.key.account] ?? "Account " + pr.key.accountID) : "")
                 + (freshness[pr.key.repository].map { " · " + $0 } ?? "")
-            case .number: "#\(m?.number ?? 0)"
+            case .number: "#\(String(m?.number ?? 0))"
             case .title: pr.title
             case .author: m?.authorLogin ?? "Unknown"
             case .checks: PRStatusSummary.checks(m?.checks).text

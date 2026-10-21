@@ -104,7 +104,7 @@ struct PRSelectionActionBar: View {
     let rows = workspace.commandRows
     let state = workspace.actionState(rows)
     HStack(spacing: 10) {
-      Text(rows.isEmpty ? "No pull request selected" : rows.count == 1 ? "#\(rows[0].metadata?.number ?? 0) selected" : "\(rows.count) selected")
+      Text(rows.isEmpty ? "No pull request selected" : rows.count == 1 ? "#\(String(rows[0].metadata?.number ?? 0)) selected" : "\(rows.count) selected")
         .font(.callout).foregroundStyle(.secondary)
       Spacer(minLength: 8)
       Button("Open") { if let pr = rows.first, rows.count == 1 { open(pr.key) } }.disabled(!state.canOpen)

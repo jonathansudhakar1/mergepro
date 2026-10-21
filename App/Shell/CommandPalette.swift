@@ -111,7 +111,7 @@ struct CommandPalette: View {
       rows.append(Row(id: "view-" + view.id.uuidString, title: view.name, icon: view.icon, priority: 5) { choose(view) })
     }
     for pr in results.prs {
-      rows.append(Row(id: "pr-" + pr.key.routeURL.absoluteString, title: "\(pr.metadata?.repositoryName ?? "") #\(pr.metadata?.number ?? 0) · \(pr.title)",
+      rows.append(Row(id: "pr-" + pr.key.routeURL.absoluteString, title: "\(pr.metadata?.repositoryName ?? "") #\(String(pr.metadata?.number ?? 0)) · \(pr.title)",
         icon: "arrow.triangle.pull", priority: 2) { open(pr.key); dismiss() })
     }
     for entry in results.workflows {
@@ -352,7 +352,7 @@ extension PRCommandTarget {
     // An action sheet already showing is never replaced.
     let sheetFree = !workspace.isPresentingAction
     return PRCommandTarget(
-      subject: single.map { $0.metadata.map { "#\($0.number)" } ?? $0.title } ?? "\(rows.count) pull requests",
+      subject: single.map { $0.metadata.map { "#\(String($0.number))" } ?? $0.title } ?? "\(rows.count) pull requests",
       open: single.map { pr in { open(pr.key) } },
       approve: state.canApprove && !own && sheetFree ? { workspace.requestBatch(approve: true, rows: rows) } : nil,
       requestChanges: state.canRequestChanges && !own && sheetFree ? single.map { pr in { workspace.requestReview(pr, decision: .requestChanges) } } : nil,

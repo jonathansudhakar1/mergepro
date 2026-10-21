@@ -241,6 +241,12 @@ public final class PollCycleStore: NotificationAttemptStore, Sendable {
             })
         }
     }
+    /// Writes one feature snapshot outside a poll cycle (seeded fixtures).
+    public func saveSnapshot(_ snapshot: PollFeatureSnapshot) throws {
+        try database.database.write { db in
+            try db.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?) ON CONFLICT(host,accountID,repositoryID,objectID,feature) DO UPDATE SET json=excluded.json",arguments:[snapshot.key.host,snapshot.key.accountID,snapshot.key.repositoryID,snapshot.key.objectID,snapshot.feature,try JSONEncoder.stable.encode(snapshot)])
+        }
+    }
     public func snapshot(_ key: ProviderKey, feature: String) throws -> PollFeatureSnapshot? {
         try database.database.read { db in
             try Data.fetchOne(db,sql:"SELECT json FROM pollFeatureSnapshots WHERE host=? AND accountID=? AND repositoryID=? AND objectID=? AND feature=?",arguments:[key.host,key.accountID,key.repositoryID,key.objectID,feature]).map { try JSONDecoder().decode(PollFeatureSnapshot.self,from:$0) }

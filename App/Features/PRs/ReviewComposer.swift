@@ -203,10 +203,10 @@ struct ReviewComposer:View {
             let accountLogin=try await storage.actionLogin(chosen.key),policy=try await storage.requireAllFilesViewed()
             guard loadState.accepts(chosen.key,request:request,available:actionAvailable) else { return }
             guard loadState.present(chosen.key,request:request,available:actionAvailable) else { return }
-            pr=chosen;snapshot=detail;draft=saved;summary=saved.summary;commentBody=saved.texts["selection"] ?? "";login=accountLogin;requireViewed=policy;truth=value;references=["#\(m.number)"];saveConflict=false;status=nil;presented=true;busy=false
+            pr=chosen;snapshot=detail;draft=saved;summary=saved.summary;commentBody=saved.texts["selection"] ?? "";login=accountLogin;requireViewed=policy;truth=value;references=["#\(String(m.number))"];saveConflict=false;status=nil;presented=true;busy=false
             if let context=try? await storage.detailSection(chosen,tab:.overview).overview,
                loadState.accepts(chosen.key,request:request,available:actionAvailable) {
-                references=Array(Set(references+context.issues.map { "#\($0.number)" })).sorted()
+                references=Array(Set(references+context.issues.map { "#\(String($0.number))" })).sorted()
             }
         } catch { if loadState.fail(request:request) { busy=false;loadError=error.localizedDescription } }
     }

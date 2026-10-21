@@ -96,7 +96,7 @@ struct PRDetailWindow:View {
         }
         .background { WorkspaceCanvas() }
         .navigationTitle(pr.title)
-        .navigationSubtitle("\(pr.metadata?.repositoryName ?? pr.key.repositoryID) #\(pr.metadata?.number ?? 0)")
+        .navigationSubtitle("\(pr.metadata?.repositoryName ?? pr.key.repositoryID) #\(String(pr.metadata?.number ?? 0))")
         .environment(\.codeAppearance,model.appearance)
     }
     private func loads<V:View>(_ view:V) -> some View {
@@ -127,7 +127,7 @@ struct PRDetailWindow:View {
             if head != nil,old != head { AccessibilityNotification.Announcement("New commits available. Choose Update to review them.").post() }
         }
         .onChange(of:pr.state) { old,new in
-            if new == .merged,old != .merged { AccessibilityNotification.Announcement("Pull request #\(pr.metadata?.number ?? 0) merged").post() }
+            if new == .merged,old != .merged { AccessibilityNotification.Announcement("Pull request #\(String(pr.metadata?.number ?? 0)) merged").post() }
         }
         .task(id:actionAccountIdentity+account.epoch.uuidString+String(model.loading)) {
             guard !model.loading,account.administration == nil,accountAvailable else { return }
@@ -182,7 +182,7 @@ struct PRDetailWindow:View {
                 WorkspaceStatusBadge(text: PRDetailText.state(pr),
                     symbol: pr.isDraft ? "pencil.circle" : pr.state == .merged ? "arrow.triangle.merge" : "arrow.triangle.pull",
                     tint: pr.isDraft ? .secondary : pr.state == .merged ? DesignTokens.violet : pr.state == .closed ? .red : .green)
-                Text("\(pr.metadata?.repositoryName ?? pr.key.repositoryID) #\(pr.metadata?.number ?? 0)").font(.callout.weight(.semibold)).textSelection(.enabled)
+                Text("\(pr.metadata?.repositoryName ?? pr.key.repositoryID) #\(String(pr.metadata?.number ?? 0))").font(.callout.weight(.semibold)).textSelection(.enabled)
                 Label {
                     Text("\(pr.metadata?.headBranch ?? "Unknown") → \(pr.metadata?.baseBranch ?? "Unknown")").font(.system(.callout,design:.monospaced))
                 } icon: { Image(systemName:"arrow.triangle.branch") }
@@ -294,8 +294,8 @@ struct PRDetailWindow:View {
                     overviewSection("Linked issues",symbol:"link") {
                         if context.issues.isEmpty { Text(context.issuesComplete ? "No linked closing issues" : "Linked issues unknown or incomplete").foregroundStyle(.secondary) }
                         ForEach(Array(context.issues.enumerated()),id:\.offset) { _,issue in
-                            Text("#\(issue.number) · \(issue.title) · \(issue.state ?? "Unknown state")")
-                            if let url=issue.url,safeWeb(url) { Button("Open issue #\(issue.number)") { ExternalLinkPolicy.open(url) }.buttonStyle(.link) }
+                            Text("#\(String(issue.number)) · \(issue.title) · \(issue.state ?? "Unknown state")")
+                            if let url=issue.url,safeWeb(url) { Button("Open issue #\(String(issue.number))") { ExternalLinkPolicy.open(url) }.buttonStyle(.link) }
                         }
                         if !context.issuesComplete { Text("Linked closing issues are partial (up to 100).").font(.caption).foregroundStyle(.secondary) }
                     }
@@ -631,7 +631,7 @@ struct PRDetailWindow:View {
     /// newer commits wait for Update, like the header buttons.
     private var commandTarget:PRCommandTarget {
         let reviewable = !model.actionsWaitForUpdate
-        return PRCommandTarget(subject:"#\(pr.metadata?.number ?? 0)",open:nil,
+        return PRCommandTarget(subject:"#\(String(pr.metadata?.number ?? 0))",open:nil,
                         approve:reviewable ? { approving=true } : nil,requestChanges:reviewable ? { model.compose(.requestChanges) } : nil,comment:reviewable ? { model.compose(.comment) } : nil,
                         merge:mergeEnabled ? { model.openMerge(nil) } : nil,
                         labels:{ labelsPresented=true },refresh:{ refreshAll() },

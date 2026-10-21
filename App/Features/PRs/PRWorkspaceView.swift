@@ -122,7 +122,7 @@ struct PRWorkspaceView: View {
       Button("Convert to draft") { workspace.pendingDraftConversion=nil;Task { await workspace.setDraft(pr,true) } }
       Button("Cancel",role:.cancel) { workspace.pendingDraftConversion=nil }
     } message: { pr in Text("\(pr.title) becomes a draft. Reviewers stop being asked to review it, and it leaves the merge queue if it was queued.") }
-    .alert("Can’t merge #\(workspace.blockedMerge?.pr.metadata?.number ?? 0)",isPresented:Binding(get:{ workspace.blockedMerge != nil },set:{ if !$0 { workspace.blockedMerge=nil } })) {
+    .alert("Can’t merge #\(String(workspace.blockedMerge?.pr.metadata?.number ?? 0))",isPresented:Binding(get:{ workspace.blockedMerge != nil },set:{ if !$0 { workspace.blockedMerge=nil } })) {
       if let url=workspace.blockedMerge?.pr.metadata?.webURL { Button("Open on GitHub") { ExternalLinkPolicy.open(url);workspace.blockedMerge=nil } }
       Button("OK",role:.cancel) { workspace.blockedMerge=nil }
     } message: {
@@ -542,7 +542,7 @@ private struct PRCommandTargetPublisher: View {
     let rows = workspace.commandRows
     let state = workspace.actionState(rows)
     let single = rows.count == 1 ? rows.first : nil
-    let subject = single.map { "#\($0.metadata?.number ?? 0)" } ?? (rows.isEmpty ? nil : "\(rows.count) pull requests")
+    let subject = single.map { "#\(String($0.metadata?.number ?? 0))" } ?? (rows.isEmpty ? nil : "\(rows.count) pull requests")
     // While an action sheet is showing, commands that would present another are disabled: replacing it would
     // dismiss a merge or review mid-write.
     let sheetFree = !workspace.isPresentingAction

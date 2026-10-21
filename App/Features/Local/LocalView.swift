@@ -41,7 +41,7 @@ struct LocalView: View {
                     Spacer(minLength: 0)
                 }.padding(.horizontal, 24).padding(.bottom, 12)
                 if let checkout {
-                    WorkspaceNotice(message: "Check out \(checkout.repositoryName) #\(checkout.number): select the corresponding local clone and a new worktree folder. Expected head \(checkout.expectedHeadSHA.prefix(8)).", symbol: "arrow.triangle.pull", tint: DesignTokens.cobalt).padding(.horizontal, 24).padding(.bottom, 10)
+                    WorkspaceNotice(message: "Check out \(checkout.repositoryName) #\(String(checkout.number)): select the corresponding local clone and a new worktree folder. Expected head \(checkout.expectedHeadSHA.prefix(8)).", symbol: "arrow.triangle.pull", tint: DesignTokens.cobalt).padding(.horizontal, 24).padding(.bottom, 10)
                 }
                 if let error = model.error {
                     HStack(alignment: .top) {
