@@ -37,7 +37,7 @@ enum GitHubPRInventoryPayload {
           baseRef { branchProtectionRule { requiredApprovingReviewCount } }
           author { __typename login ... on User { id } ... on Bot { id } } reviewDecision mergeable changedFiles additions deletions
           autoMergeRequest { enabledAt } comments { totalCount }
-          commits(last:1) { nodes { commit { statusCheckRollup { state } } } }
+          commits(last:1) { nodes { commit { message statusCheckRollup { state } } } }
           reviewRequests(first:100) { \(fields("reviewRequests")) \(pageInfo) }
           timelineItems(first:100,itemTypes:[REVIEW_REQUESTED_EVENT,REVIEW_REQUEST_REMOVED_EVENT]) { \(fields("timelineItems")) \(pageInfo) }
           reviews(first:100) { \(fields("reviews")) \(pageInfo) }
@@ -223,6 +223,8 @@ enum GitHubPRInventoryPayload {
     let url: URL
     let title: String
     let bodyText: String?
+    /// The body's end, where agents usually sign their pull requests ("🤖 Generated with …").
+    let bodyTail: String?
     let state: String
     let isDraft: Bool
     let headRefOid: String
@@ -257,13 +259,30 @@ enum GitHubPRInventoryPayload {
         struct Commit: Codable, Sendable {
           struct Rollup: Codable, Sendable { let state: String }
           let statusCheckRollup: Rollup?
+          /// The commit message's `Co-authored-by:` trailers only; the rest of the message is not kept.
+          let coauthors: [String]?
+          enum CodingKeys: String, CodingKey { case statusCheckRollup, message, coauthors }
+          init(from decoder: any Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            statusCheckRollup = try c.decodeIfPresent(Rollup.self, forKey: .statusCheckRollup)
+            if let message = try c.decodeIfPresent(String.self, forKey: .message) {
+              coauthors = AgentClassifier.coauthors(inCommitMessage: message)
+            } else {
+              coauthors = try c.decodeIfPresent([String].self, forKey: .coauthors)
+            }
+          }
+          func encode(to encoder: any Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encodeIfPresent(statusCheckRollup, forKey: .statusCheckRollup)
+            try c.encodeIfPresent(coauthors, forKey: .coauthors)
+          }
         }
         let commit: Commit
       }
       let nodes: [Entry?]
     }
     enum CodingKeys: String, CodingKey {
-      case id, number, url, title, bodyText, state, isDraft, headRefOid, headRefName, headRepository, baseRefOid, baseRefName,
+      case id, number, url, title, bodyText, bodyTail, state, isDraft, headRefOid, headRefName, headRepository, baseRefOid, baseRefName,
         createdAt, updatedAt, mergedAt, author, reviewDecision, mergeable, changedFiles, additions,
         deletions, autoMergeRequest, comments, commits, baseRef, reviewRequests, labels, assignees,
         reviews, timelineItems
@@ -274,7 +293,9 @@ enum GitHubPRInventoryPayload {
       number = try c.decode(Int.self, forKey: .number)
       url = try c.decode(URL.self, forKey: .url)
       title = try c.decode(String.self, forKey: .title)
-      bodyText = try c.decodeIfPresent(String.self, forKey: .bodyText).map { String($0.prefix(600)) }
+      let body = try c.decodeIfPresent(String.self, forKey: .bodyText)
+      bodyText = body.map { String($0.prefix(600)) }
+      bodyTail = try c.decodeIfPresent(String.self, forKey: .bodyTail) ?? body.flatMap { $0.count > 600 ? String($0.suffix(400)) : nil }
       state = try c.decode(String.self, forKey: .state)
       isDraft = try c.decode(Bool.self, forKey: .isDraft)
       headRefOid = try c.decode(String.self, forKey: .headRefOid)
@@ -308,6 +329,7 @@ enum GitHubPRInventoryPayload {
       try c.encodeIfPresent(url, forKey: .url)
       try c.encodeIfPresent(title, forKey: .title)
       try c.encodeIfPresent(bodyText, forKey: .bodyText)
+      try c.encodeIfPresent(bodyTail, forKey: .bodyTail)
       try c.encodeIfPresent(state, forKey: .state)
       try c.encodeIfPresent(isDraft, forKey: .isDraft)
       try c.encodeIfPresent(headRefOid, forKey: .headRefOid)

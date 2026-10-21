@@ -254,8 +254,8 @@
         <article class="feature glass reveal">
           <div class="f-icon"><svg aria-hidden="true"><use href="#i-pr"/></svg></div>
           <h3>Spot what agents wrote</h3>
-          <p>Pull requests from coding agents are recognized by their bot account, branch prefix or labels, and collected in an AI-authored view. Override any login you classify differently.</p>
-          <div class="tags"><span>Copilot</span><span>Codex</span><span>Claude</span><span>Devin</span><span>ai-generated</span></div>
+          <p>Pull requests from coding agents are recognized by their bot account, branch prefix, labels, agent co-author trailers or the signature they leave in the description, and collected in an AI-authored view. Override any login you classify differently.</p>
+          <div class="tags"><span>Copilot</span><span>Codex</span><span>Claude</span><span>Devin</span><span>Cursor</span><span>Jules</span><span>Co-authored-by</span></div>
         </article>
         <article class="feature glass reveal" style="--d:.06s">
           <div class="f-icon"><svg aria-hidden="true"><use href="#i-shield"/></svg></div>
@@ -506,7 +506,7 @@
         </details>
         <details class="glass reveal">
           <summary>How does MergePro know a pull request was written by AI?</summary>
-          <div class="a"><p>It looks at the author and the pull request itself: known agent accounts (such as Copilot, Codex, Claude and Devin), agent branch prefixes like <code>copilot/</code> or <code>claude/</code>, and labels such as <code>ai-generated</code> or <code>agent:claude</code>. Bots that aren&rsquo;t coding agents, like Dependabot, count as automation instead. You can override the classification for any login in Settings.</p></div>
+          <div class="a"><p>It looks at the author and the pull request itself: known agent accounts (such as Copilot, Codex, Claude, Devin, Cursor and Jules), agent branch prefixes like <code>copilot/</code> or <code>claude/</code>, labels such as <code>ai-generated</code> or <code>agent:claude</code>, an agent in the head commit&rsquo;s <code>Co-authored-by:</code> trailers (so pull requests you open from your own account after working with Claude Code or Cursor count too), and signatures like &ldquo;🤖 Generated with&nbsp;&hellip;&rdquo; in the description. You can add your own branch prefixes and labels. Bots that aren&rsquo;t coding agents, like Dependabot, count as automation instead. You can override the classification for any login in Settings.</p></div>
         </details>
         <details class="glass reveal">
           <summary>How much does it cost?</summary>

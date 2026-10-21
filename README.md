@@ -35,9 +35,11 @@ else in a local database on your Mac.
 
 ## Built for an AI-first workflow
 
-- **Spot what agents wrote.** Pull requests from coding agents (Copilot, Codex, Claude, Devin and others) are
-  recognized by bot account, branch prefix (`copilot/`, `claude/`, …) and labels (`ai-generated`, `agent:*`), and
-  gathered in an *AI-authored* view. Override the classification for any login in Settings.
+- **Spot what agents wrote.** Pull requests from coding agents (Copilot, Codex, Claude, Devin, Cursor, Jules) are
+  recognized by bot account, branch prefix (`copilot/`, `claude/`, …), labels (`ai-generated`, `agent:*`), an agent
+  in the head commit's `Co-authored-by:` trailers, or a signature in the description ("🤖 Generated with …"). That
+  catches pull requests you open yourself after working with a local agent, too. They're marked with an AI badge and
+  gathered in an *AI-authored* view; add your own branch prefixes and labels, or override any login, in Settings.
 - **Know where to look.** Each pull request is scanned for changes that deserve a human: sensitive paths (workflows,
   infra, migrations, auth, CODEOWNERS), dependency changes, source without tests, possible credentials and diffs
   larger than the repository's usual size. Optionally require every file to be viewed before approving a risky PR.

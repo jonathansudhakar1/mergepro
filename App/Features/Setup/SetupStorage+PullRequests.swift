@@ -55,6 +55,8 @@ extension SetupStorage {
     func setRequireAllFilesViewed(_ value:Bool) throws { try stores().0.setApplicationSetting(value ? "true" : "false",for:.requireAllFilesViewedBeforeApprove) }
     func classificationRules(account:AccountScope) throws -> [String:AgentClassifier.Classification] { try PRClassificationStore(database:stores().0).rules(account:account) }
     func saveClassificationRules(_ rules:[String:AgentClassifier.Classification],account:AccountScope) throws { try PRClassificationStore(database:stores().0).save(rules,account:account) }
+    func agentPatterns() throws -> AgentPatterns { try PRClassificationStore(database:stores().0).patterns() }
+    func saveAgentPatterns(_ value:AgentPatterns) throws { try PRClassificationStore(database:stores().0).savePatterns(value) }
     /// Merged rows of this repository only. A blocked account contributes no rows, as its session snapshot would.
     func detailBaseline(_ pr:PullRequest) async throws -> RepositorySizeBaseline {
         let available=try await accountSession().authorizationState(for:pr.key.account) == .available

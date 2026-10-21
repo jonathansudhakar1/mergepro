@@ -848,6 +848,7 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
       objectID: "pull-request:" + node.id)
     var m = PRMetadata(number: node.number, webURL: node.url, repositoryName: name)
     m.descriptionPreview = node.bodyText
+    m.bodyTail = node.bodyTail
     m.authorID = node.author?.id
     m.authorLogin = node.author?.login
     m.actorType = node.author?.type
@@ -923,8 +924,9 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
     m.reviewers = Array(Set(m.requests.map(\.name) + reviews.compactMap { $0.author?.login }))
       .sorted()
     m.checks = node.commits?.nodes.first??.commit.statusCheckRollup?.state
+    m.coauthors = node.commits?.nodes.first??.commit.coauthors
     m.partial = partial
-    m.authorClassification = AgentClassifier.classify(login:m.authorLogin,actorType:m.actorType,branch:m.headBranch,labels:m.labels).rawValue
+    m.authorClassification = AgentClassifier.classify(m).rawValue
     let old = cached[key]
     if let prior=old, prior.headRevision.rawValue == node.headRefOid { m.riskFlags=prior.metadata?.riskFlags }
     let state = PullRequest.State(rawValue: node.state.lowercased()) ?? .open

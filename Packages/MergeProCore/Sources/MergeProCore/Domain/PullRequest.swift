@@ -70,6 +70,10 @@ public struct PRMetadata: Equatable, Codable, Sendable {
     public var partial = false
     /// Classification, risk and merge eligibility; absent means unknown.
     public var authorClassification: String?
+    /// Agent-authorship signals: the head commit's `Co-authored-by:` trailers and the end of the body (where agents
+    /// usually sign, e.g. "🤖 Generated with …"); nil when not read.
+    public var coauthors: [String]?
+    public var bodyTail: String?
     public var riskFlags: [String]?
     public var mergeEvidence: MergeEvidence?
     public var nativeStack: PRStack?

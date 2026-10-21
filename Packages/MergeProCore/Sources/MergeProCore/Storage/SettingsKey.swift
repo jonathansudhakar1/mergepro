@@ -12,6 +12,8 @@ public struct SettingsKey: RawRepresentable, Hashable, Sendable, CustomStringCon
     // MARK: Accounts
     /// The public OAuth App client ID used for device-flow sign-in and every provider service.
     public static let githubClientID = SettingsKey(rawValue: "githubClientID")
+    /// The user's extra AI-authorship branch prefixes and labels (`AgentPatterns`), for every account.
+    public static let agentPatterns = SettingsKey(rawValue: "agentPatterns")
     /// Token reference (`AccountSessionStore.tokenReference(for:)`) of the account that reviews, merges and writes.
     public static let activeActionAccount = SettingsKey(rawValue: "activeActionAccount")
 

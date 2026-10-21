@@ -349,7 +349,9 @@ public struct PRDetailService: Sendable {
             var metadata=current.metadata
             let mergedRisks=result.document.missingFileCount == 0 ? risks : Array(Set((metadata?.riskFlags ?? [])+risks)).sorted()
             metadata?.riskFlags=mergedRisks
-            let classification=AgentClassifier.classify(login:metadata?.authorLogin,actorType:metadata?.actorType,branch:metadata?.headBranch ?? "",labels:metadata?.labels ?? []).rawValue
+            // The full body is loaded here; keep its end for agent signatures the inventory preview may have cut.
+            if result.body.count > 600 { metadata?.bodyTail=String(result.body.suffix(400)) }
+            let classification=metadata.map { AgentClassifier.classify($0).rawValue }
             metadata?.authorClassification=classification
             guard metadata != current.metadata else { return }
             guard try db.saveObservedPullRequests([PullRequest(key:current.key,headRevision:current.headRevision,title:current.title,state:current.state,isDraft:current.isDraft,metadata:metadata)],fences:[pr.key:fence]) else { throw CancellationError() }

@@ -27,7 +27,7 @@ struct MergeProSettings: View {
         .onDisappear { model.cancelAuthorization() }
     }
     private static func height(_ tab:SettingsTab) -> CGFloat {
-        switch tab { case .general:440; case .accounts:340; case .notifications:620; case .code:520; case .local:520; case .advanced:340 }
+        switch tab { case .general:440; case .accounts:340; case .notifications:620; case .code:660; case .local:520; case .advanced:340 }
     }
 }
 
