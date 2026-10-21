@@ -25,7 +25,7 @@ struct AppDependencies: Sendable {
     var reportsCycleChanges: Bool
     /// Why this app registers no global shortcuts (shown in Settings); nil registers them.
     var globalHotkeysUnavailable: String?
-    /// The offline fixture app's hooks; nil in the shipped app.
+    /// Offline hooks: the fixture app's, or the shipped app's sample-data mode (`SampleMode`); nil otherwise.
     var fixtures: (any FixtureHooks)?
 
     /// The shipped app. A Debug build launched with `MERGEPRO_UI_TEST_NAMESPACE` (UI tests) uses a disposable store

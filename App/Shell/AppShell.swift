@@ -75,6 +75,13 @@ struct AppShell<Chrome: ViewModifier & Sendable>: View {
                         }.labelsHidden().frame(maxWidth: .infinity, alignment: .leading)
                         .help("Account used for actions such as reviews and merges")
                     }
+                    if SampleMode.isActive {
+                        HStack(spacing: 6) {
+                            Label("Sample data", systemImage: "sparkles").font(DesignTokens.captionFont.weight(.medium)).foregroundStyle(DesignTokens.cobalt)
+                            Spacer(minLength: 0)
+                            Button("Leave") { SampleMode.set(false) }.controlSize(.small).help("Return to your own accounts")
+                        }
+                    }
                     Divider().padding(.vertical, 2)
                     HStack {
                         SettingsLink {

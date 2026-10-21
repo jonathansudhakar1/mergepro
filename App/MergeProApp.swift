@@ -17,7 +17,7 @@ struct MergeProApp: App {
 extension AppDependencies {
     /// This target's dependencies; `SetupStorage()` uses them too. MergeProAppTests run inside this app, which then
     /// uses `unitTestHost()`: never the real store, Keychain or network.
-    static func forThisApp() -> AppDependencies { isUnitTestHost ? .unitTestHost() : .production() }
+    static func forThisApp() -> AppDependencies { isUnitTestHost ? .unitTestHost() : SampleMode.isActive ? .sample() : .production() }
 
     /// XCTest loaded this process to host unit tests. UI tests launch the app without XCTest, so they keep `production()`.
     static let isUnitTestHost = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil

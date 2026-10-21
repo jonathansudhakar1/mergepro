@@ -21,7 +21,7 @@ struct OnboardingView: View {
                             Label("GitHub accounts",systemImage:"person.crop.circle").font(.headline)
                             Spacer()
                             Button("Connect GitHub account") { model.connect() }
-                                .disabled(model.clientID.isEmpty || model.isConnecting || model.isLoading)
+                                .disabled(model.clientID.isEmpty || model.isConnecting || model.isLoading || SampleMode.isActive)
                                 .accessibilityIdentifier("connectGitHub")
                         }
                         if model.snapshots.isEmpty {
@@ -35,7 +35,7 @@ struct OnboardingView: View {
                                         if model.activeAccount == account.scope { Text("Active account").font(.caption).foregroundStyle(.secondary) }
                                         Spacer()
                                         if model.activeAccount != account.scope { Button("Use account") { Task { await model.selectAccount(account.scope) } } }
-                                        Button("Reconnect") { model.connect(replacing:account.scope) }.disabled(model.isConnecting)
+                                        Button("Reconnect") { model.connect(replacing:account.scope) }.disabled(model.isConnecting || SampleMode.isActive)
                                     }
                                 }
                             }
@@ -47,6 +47,7 @@ struct OnboardingView: View {
                         if model.isConnecting { Divider() }
                         AuthorizationPrompt(model:model)
                     }.padding(16).frame(maxWidth:.infinity,alignment:.leading).workspacePanel()
+                    sampleData
                     if let snapshot = model.snapshots.first(where:{ $0.account?.scope == model.activeAccount }), let account = snapshot.account {
                         repositoryScope(snapshot, account:account).id(account.scope)
                     }
@@ -57,6 +58,30 @@ struct OnboardingView: View {
         .background { WorkspaceCanvas() }
         .navigationTitle("MergePro").navigationSubtitle("Setup")
         .onDisappear { model.cancelAuthorization() }
+    }
+    /// Try the app without a GitHub account, or leave the sample data again.
+    @ViewBuilder private var sampleData: some View {
+        if SampleMode.isActive {
+            HStack(alignment:.top,spacing:12) {
+                Image(systemName:"sparkles").font(.title2).foregroundStyle(DesignTokens.cobalt).accessibilityHidden(true)
+                VStack(alignment:.leading,spacing:4) {
+                    Text("You’re exploring sample data").font(.headline)
+                    Text("The repositories, pull requests and people here are made up. Nothing is read from or sent to GitHub. Leave sample data to connect your own accounts; they were never touched.").font(.callout).foregroundStyle(.secondary)
+                }
+                Spacer(minLength:8)
+                Button("Leave Sample Data") { SampleMode.set(false) }.accessibilityIdentifier("leaveSampleData")
+            }.padding(16).frame(maxWidth:.infinity,alignment:.leading).workspacePanel()
+        } else if model.snapshots.isEmpty && !model.isLoading {
+            HStack(alignment:.top,spacing:12) {
+                Image(systemName:"sparkles").font(.title2).foregroundStyle(DesignTokens.cobalt).accessibilityHidden(true)
+                VStack(alignment:.leading,spacing:4) {
+                    Text("Just looking?").font(.headline)
+                    Text("Explore the board, reviews and diffs with made-up repositories and pull requests. Nothing connects to GitHub, and you can leave at any time.").font(.callout).foregroundStyle(.secondary)
+                }
+                Spacer(minLength:8)
+                Button("Explore with Sample Data") { SampleMode.set(true) }.accessibilityIdentifier("exploreSampleData")
+            }.padding(16).frame(maxWidth:.infinity,alignment:.leading).workspacePanel()
+        }
     }
     @ViewBuilder private func repositoryScope(_ snapshot: LocalSnapshot, account: Account) -> some View {
         VStack(alignment:.leading,spacing:12) {
