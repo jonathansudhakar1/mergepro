@@ -150,6 +150,9 @@ public struct GitHubActionsProvider: ActionsProvider {
         var result:[ActionsWorkflow]=[]
         for workflow in workflows {
             let manual:Bool?
+            // GitHub's built-in workflows (Pages, Dependabot, Copilot: `dynamic/…`) have no file to read and
+            // cannot be dispatched; reading one would trip the path check and fail the whole catalog.
+            if !workflow.path.hasPrefix(".github/workflows/") { result.append(.init(id:workflow.id,name:workflow.name,path:workflow.path,state:workflow.state,webURL:workflow.webURL,manualTrigger:false));continue }
             do { _=try await schemaAtRevision(repository:repository,workflow:workflow,ref:ref,sha:sha);manual=true }
             catch ActionsFailure.noManualTrigger { manual=false }
             catch GitHubFailure.resourceDenied { manual=nil }

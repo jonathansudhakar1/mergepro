@@ -44,6 +44,17 @@ final class ActionsStoreTests:XCTestCase {
         let requests=await transport.requests
         XCTAssertEqual(URLComponents(url:requests[2].url!,resolvingAgainstBaseURL:false)?.queryItems?.first?.value,"immutable")
     }
+    func testBuiltInDynamicWorkflowsAreNotDispatchableAndDoNotFailTheCatalog() async throws {
+        // A repository with GitHub Pages lists `dynamic/pages/pages-build-deployment` beside its own workflows.
+        let content=Data("on: workflow_dispatch".utf8).base64EncodedString()
+        let transport=ScriptedTransport(bodies:["{\"id\":1,\"default_branch\":\"main\"}","{\"sha\":\"immutable\"}","{\"encoding\":\"base64\",\"content\":\"\(content)\"}"])
+        let provider=GitHubActionsProvider(client:.init(transport:transport),credential:.init(accessToken:"fixture",scopes:[]))
+        let pages=ActionsWorkflow(id:1,name:"pages-build-deployment",path:"dynamic/pages/pages-build-deployment",state:"active",webURL:nil)
+        let ci=ActionsWorkflow(id:2,name:"CI",path:".github/workflows/ci.yml",state:"active",webURL:nil)
+        let result=try await provider.dispatchCapabilities(repository:repo,workflows:[pages,ci])
+        XCTAssertEqual(result.map(\.manualTrigger),[false,true])
+        let count=await transport.requests.count;XCTAssertEqual(count,3,"No file read for the built-in workflow")
+    }
     func testPollingCommitsChangedActiveRunWithoutTraversingHistoricalPages() async throws {
         let body = #"{"workflow_runs":[{"id":3,"workflow_id":2,"name":"CI","head_branch":"main","head_sha":"abc","event":"push","status":"in_progress","run_attempt":2,"created_at":"2026-01-01T00:00:00Z","updated_at":"2026-01-01T00:00:00Z"}]}"#
         let transport=ScriptedTransport([.init(status:200,headers:["Link":"<https://api.github.com/repos/o/r/actions/runs?page=2>; rel=\"next\""],data:Data(body.utf8))])

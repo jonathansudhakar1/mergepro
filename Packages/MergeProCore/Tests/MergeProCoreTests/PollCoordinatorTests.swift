@@ -272,7 +272,8 @@ final class PollCoordinatorTests: XCTestCase {
         XCTAssertEqual(try store.inbox().count,1)
     }
     func test50RepoWorkloadHonorsInteractiveReserveAndSeparateResources() async throws {
-        let budget = RateBudget(minimumSpacing:.zero,interactiveReserve:100)
+        // Reserve accounting only; quota pacing would spread these 500 reads over the hour (see QuotaPacingTests).
+        let budget = RateBudget(minimumSpacing:.zero,interactiveReserve:100,pacesQuota:false)
         let account = AccountScope(host:"github.com",accountID:"1")
         await budget.observe(GitHubResponse(status:200,headers:["X-RateLimit-Remaining":"600","X-RateLimit-Reset":String(Date().addingTimeInterval(3600).timeIntervalSince1970)]),account:account)
         var accepted = 0

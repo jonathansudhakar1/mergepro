@@ -184,14 +184,14 @@ struct PRCardView: View, Equatable {
       Text(m?.files.map { "\($0) files" } ?? "Files unknown")
       if let additions = m?.additions, let deletions = m?.deletions { Text("+\(additions) −\(deletions)") }
       Spacer()
-      if let date = m?.createdAt { Text(date, style: .relative) }
+      if let date = m?.createdAt { CoarseAge(date: date) }
     }.font(.caption2).foregroundStyle(.secondary)
     HStack {
       Text(m?.comments.map { "\($0) \($0 == 1 ? "comment" : "comments")" } ?? "Comments unknown")
       Spacer()
       if let at = m?.columnChangedAt {
         Text("In column")
-        Text(at, style: .relative)
+        CoarseAge(date: at)
       } else {
         Text("Column age unknown")
       }
@@ -294,5 +294,21 @@ struct PRCardView: View, Equatable {
         .accessibilityIdentifier("mergeDrag-\(number)")
       }
     }
+  }
+}
+
+/// An age such as "4 min", "3 hr, 12 min" or "17 days, 7 hr" that refreshes once a minute. `Text(_:style: .relative)`
+/// ticks every second, which re-renders every card on the board continuously.
+struct CoarseAge: View {
+  let date: Date
+  var body: some View {
+    TimelineView(.everyMinute) { context in Text(Self.text(from: date, to: context.date)) }
+  }
+  static func text(from date: Date, to now: Date) -> String {
+    let minutes = Int(max(0, now.timeIntervalSince(date)) / 60)
+    let days = minutes / 1440, hours = minutes % 1440 / 60, rest = minutes % 60
+    if days > 0 { return hours > 0 ? "\(days) \(days == 1 ? "day" : "days"), \(hours) hr" : "\(days) \(days == 1 ? "day" : "days")" }
+    if hours > 0 { return rest > 0 ? "\(hours) hr, \(rest) min" : "\(hours) hr" }
+    return minutes > 0 ? "\(minutes) min" : "under a minute"
   }
 }

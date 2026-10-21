@@ -105,3 +105,32 @@ final class PollCadenceTests: XCTestCase {
         XCTAssertFalse(doneBacklogged)
     }
 }
+
+final class QuotaPacingTests: XCTestCase {
+    private let account = AccountScope(host: "github.com", accountID: "1")
+    private func graphQL(remaining: Int, cost: Int, resetIn: TimeInterval) -> GitHubResponse {
+        let reset = ISO8601DateFormatter().string(from: Date().addingTimeInterval(resetIn))
+        return GitHubResponse(status: 200, headers: [:], data: Data(#"{"data":{"rateLimit":{"cost":\#(cost),"remaining":\#(remaining),"resetAt":"\#(reset)"}}}"#.utf8))
+    }
+
+    func testBackgroundReadsSpreadTheRemainingQuotaUntilItResets() async {
+        let budget = RateBudget(minimumSpacing: .zero, interactiveReserve: 100)
+        let none = await budget.quotaSpacing(account: account, resource: .graphql)
+        XCTAssertEqual(none, .zero, "No observed quota: no pacing")
+        // 3,600 s to spend 3,700 spendable points at 2 points a query: one query every ~1.95 s.
+        await budget.observeGraphQL(graphQL(remaining: 3800, cost: 2, resetIn: 3600), account: account)
+        let paced = await budget.quotaSpacing(account: account, resource: .graphql)
+        XCTAssertEqual(Double(paced.components.seconds) + Double(paced.components.attoseconds) / 1e18, 1.95, accuracy: 0.05)
+        // Plenty left near the reset: barely paced.
+        await budget.observeGraphQL(graphQL(remaining: 4000, cost: 1, resetIn: 60), account: account)
+        let relaxed = await budget.quotaSpacing(account: account, resource: .graphql)
+        XCTAssertLessThan(relaxed, .milliseconds(50))
+        // A reset beyond GitHub's hourly window is not a real quota; it never stalls reads.
+        await budget.observeGraphQL(graphQL(remaining: 5000, cost: 1, resetIn: 86_400), account: account)
+        let ignored = await budget.quotaSpacing(account: account, resource: .graphql)
+        XCTAssertEqual(ignored, .zero)
+        // REST is paced from its own headers and is unaffected by GraphQL.
+        let rest = await budget.quotaSpacing(account: account, resource: .rest)
+        XCTAssertEqual(rest, .zero)
+    }
+}

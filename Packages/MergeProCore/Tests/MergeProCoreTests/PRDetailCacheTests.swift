@@ -43,7 +43,7 @@ actor DetailCacheTransport:GitHubTransport {
         let transport=DetailCacheTransport()
         let fixture=try makeSessionFixture(account:account,login:"a",tokenReference:"fixture",repositories:[.fixture(.init(account:account,repositoryID:"1"))],transport:transport,credential:.init(accessToken:"fixture"),active:false)
         try fixture.database.savePullRequests(prs)
-        let budget=RateBudget(minimumSpacing:.zero,interactiveReserve:reserve)
+        let budget=RateBudget(minimumSpacing:.zero,interactiveReserve:reserve,pacesQuota:false)
         return Env(directory:fixture.directory,db:fixture.database,cache:fixture.cache,session:fixture.session,transport:transport,budget:budget)
     }
     func service(_ e:Env,_ memory:PRDetailMemoryCache) -> PRDetailService { PRDetailService(session:e.session,budget:e.budget,clientID:"",memory:memory) }

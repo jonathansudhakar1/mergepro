@@ -13,6 +13,10 @@ public actor RateBudget {
     private var lastWrite: [AccountScope:ContinuousClock.Instant] = [:]
     private var interactiveHold: [AccountScope:ContinuousClock.Instant] = [:]
     private var pollIntervals: [AccountScope:TimeInterval] = [:]
+    /// Points the last GraphQL query of each account cost (REST requests cost 1).
+    private var lastCost: [Key:Int] = [:]
+    /// When the last background request of each account/resource was scheduled, for `quotaSpacing`.
+    private var lastQuotaStart: [Key:ContinuousClock.Instant] = [:]
     private struct PollKey: Hashable { let account: AccountScope; let feature: String }
     private var lastPoll: [PollKey:ContinuousClock.Instant] = [:]
     private var nextProviderPoll: [PollKey:ContinuousClock.Instant] = [:]
@@ -34,8 +38,10 @@ public actor RateBudget {
     /// reads (detail, files, checks) stay contiguous; it defaults to min(spacing, 200 ms).
     /// `backgroundReadSpacing` defaults to min(spacing, 250 ms): a cycle's many cheap (often conditional) reads
     /// fit its deadline, while writes keep the full `minimumSpacing`.
-    public init(minimumSpacing: Duration = .seconds(1), backgroundReadSpacing: Duration? = nil, interactiveReserve: Int = 100, interactiveGrace: Duration? = nil) {
-        self.minimumSpacing = max(.zero,minimumSpacing); self.interactiveReserve = max(0,interactiveReserve)
+    /// Whether background reads are spread over the remaining hourly quota (`quotaSpacing`).
+    private let pacesQuota: Bool
+    public init(minimumSpacing: Duration = .seconds(1), backgroundReadSpacing: Duration? = nil, interactiveReserve: Int = 100, interactiveGrace: Duration? = nil, pacesQuota: Bool = true) {
+        self.minimumSpacing = max(.zero,minimumSpacing); self.interactiveReserve = max(0,interactiveReserve); self.pacesQuota = pacesQuota
         backgroundSpacing = max(.zero,backgroundReadSpacing ?? min(max(.zero,minimumSpacing),.milliseconds(250)))
         self.interactiveGrace = max(.zero,interactiveGrace ?? min(max(.zero,minimumSpacing),.milliseconds(200)))
     }
@@ -106,7 +112,12 @@ public actor RateBudget {
         let instant = ContinuousClock.now, start: ContinuousClock.Instant
         if interactiveRead { start = instant }
         else if priority == .interactive { start = max(instant,lastWrite[account].map { $0.advanced(by:minimumSpacing) } ?? instant) }
-        else { start = max(instant,nextRequest[account] ?? instant); nextRequest[account] = start.advanced(by:backgroundSpacing) }
+        else {
+            let key = Key(account:account,resource:resource)
+            let quotaDue = lastQuotaStart[key].map { $0.advanced(by:quotaSpacing(key)) } ?? instant
+            start = max(instant,nextRequest[account] ?? instant,quotaDue); nextRequest[account] = start.advanced(by:backgroundSpacing)
+            lastQuotaStart[key] = start
+        }
         if start > instant { try await pace(account:account, until:start) }
         try Task.checkCancellation()
         try checkBackoff(account:account)
@@ -123,6 +134,17 @@ public actor RateBudget {
                 if reserve { quota.remaining -= cost; quotas[key] = quota }
             }
         }
+    }
+    /// Background reads spread what remains of the hourly quota (above the interactive reserve) evenly until
+    /// it resets, so an account with many repositories syncs steadily instead of exhausting the quota and
+    /// pausing until the reset. Only a reset inside GitHub's one-hour window paces.
+    func quotaSpacing(account: AccountScope, resource: Resource) -> Duration { quotaSpacing(Key(account:account,resource:resource)) }
+    private func quotaSpacing(_ key: Key) -> Duration {
+        guard pacesQuota, let quota = quotas[key] else { return .zero }
+        let window = quota.reset.timeIntervalSinceNow, spendable = quota.remaining - interactiveReserve
+        guard window > 0, window <= 3700, spendable > 0 else { return .zero }
+        let seconds = window * Double(max(1,lastCost[key] ?? 1)) / Double(spendable)
+        return .milliseconds(Int(min(60,seconds) * 1000))
     }
     func checkBackoff(account: AccountScope) throws {
         if let until = notBefore[account], until > Date() { throw GitHubFailure.rateLimited(until:until) }
@@ -157,6 +179,7 @@ public actor RateBudget {
         if let limit = try? JSONDecoder().decode(Envelope.self,from:response.data).data?.rateLimit,
            let reset = GitHubDate.parse(limit.resetAt) {
             quotas[Key(account:account,resource:.graphql)] = Quota(remaining:max(0,limit.remaining),reset:reset)
+            lastCost[Key(account:account,resource:.graphql)] = max(1,limit.cost)
         }
     }
     public func observePollInterval(_ response: GitHubResponse, account: AccountScope, feature: String) {

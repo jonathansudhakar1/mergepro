@@ -75,6 +75,11 @@ struct ActionsView:View {
             if let selectedRun,let updated=model.runs.first(where:{ $0.key==selectedRun.key }) { self.selectedRun=updated }
         }
         .onChange(of:model.state) { _,_ in Task { await model.persist() } }
+        // The page loads only a few repositories live; one picked in the filter is read live right away.
+        .onChange(of:model.state.filter.repositoryKey) { _,key in
+            guard let key,let repository=scoped.first(where:{ $0.key==key }) else { return }
+            Task { await model.refresh(repository:repository) }
+        }
         .sheet(item:$selectedRun,onDismiss:{ Task { await model.load(storage:storage,repositories:scoped) } }) { run in
             RunDetailView(storage:storage,run:run,onOpenAnnotation:onOpenAnnotation,refreshID:refreshID)
                 .frame(minWidth:900,idealWidth:1280,maxWidth:.infinity,minHeight:600,idealHeight:840,maxHeight:.infinity)
@@ -109,7 +114,7 @@ struct ActionsView:View {
         Picker("Actions",selection:$section) {
             Text("Running").tag("running");Text("Recent").tag("recent")
             Text("Workflows").tag("workflows");Text("Deployments").tag("deployments")
-        }.pickerStyle(.segmented).labelsHidden().frame(maxWidth:460,alignment:.leading)
+        }.pickerStyle(.segmented).labelsHidden().fixedSize()
     }
     private var searchControls:some View {
         HStack(spacing:10) {
@@ -350,13 +355,35 @@ struct ActionsWorkflowSelection:Identifiable { let repository:Repository;let wor
                 accountNames=Dictionary(snapshots.compactMap { $0.account.map { ($0.scope,$0.login) } },uniquingKeysWith:{ _,last in last })
                 state=ActionsViewState.aggregate(restored);if !persistsFilter { state.filter = .init() };presentedState=state
             }
+            // Cached catalogs first, for every repository: the background poller keeps their runs current, so the
+            // page fills at once. A live catalog costs several requests, so only the filtered repository (or the
+            // most recently active ones) is read live; picking another repository reads it then (`refresh(repository:)`).
             for repository in repositories {
                 if let cached=await AppLog.value(AppLog.actions,"Cached Actions could not be read",fallback:nil,{ try await service.cachedCatalog(repository:repository.key) }),generation==token { catalogs[repository.key]=cached }
-                do { let catalog=try await service.catalog(repository:repository);guard generation==token,!Task.isCancelled else { return };catalogs[repository.key]=catalog;for section in catalog.unavailableSections.keys.sorted() { errors[repository.name+" · "+section]=catalog.unavailableSections[section] } }
-                catch { guard generation==token else { return };errors[repository.name]="Actions could not refresh. Check account authorization and access." }
+            }
+            for repository in liveTargets(repositories) {
+                guard generation==token,!Task.isCancelled else { return }
+                await refreshLive(repository,service:service,token:token)
             }
             guard generation==token else { return };let restoredPresets=try await service.presets();guard generation==token,!Task.isCancelled else { return };presets=restoredPresets;catalogs=catalogs.filter { entry in repositories.contains { $0.key==entry.key } }
         } catch { if generation==token,!Task.isCancelled { errors["Actions"]=providerErrorMessage(error) } }
+    }
+    /// Repositories read live when the page loads: the filtered one, else the `liveLimit` with the newest cached runs.
+    static let liveLimit=12
+    private func liveTargets(_ repositories:[Repository]) -> [Repository] {
+        let filtered=repositories.filter { state.filter.matches(repository:$0) }
+        if filtered.count<=Self.liveLimit { return filtered }
+        func newest(_ repository:Repository) -> Date { catalogs[repository.key]?.runs.map(\.createdAt).max() ?? .distantPast }
+        return Array(filtered.sorted { newest($0)>newest($1) }.prefix(Self.liveLimit))
+    }
+    private func refreshLive(_ repository:Repository,service:ActionsService,token:UUID) async {
+        do { let catalog=try await service.catalog(repository:repository);guard generation==token,!Task.isCancelled else { return };catalogs[repository.key]=catalog;for section in catalog.unavailableSections.keys.sorted() { errors[repository.name+" · "+section]=catalog.unavailableSections[section] } }
+        catch { guard generation==token else { return };errors[repository.name]="Actions could not refresh. "+providerErrorMessage(error) }
+    }
+    /// Reads one repository live, e.g. after it is picked in the repository filter.
+    func refresh(repository:Repository) async {
+        guard let service else { return };let token=generation;loading=true;defer { if token==generation { loading=false } }
+        await refreshLive(repository,service:service,token:token)
     }
     func refreshCached(repositories:[Repository]) async {
         guard let service else { return };let token=generation

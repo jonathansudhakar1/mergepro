@@ -40,7 +40,8 @@ final class RateBudgetTests:XCTestCase {
 
     func testQueuedBackgroundRequestsHonorQuotaFromPrecedingResponse() async throws {
         let account=AccountScope(host:"github.com",accountID:"quota")
-        let budget=RateBudget(minimumSpacing:.zero,interactiveReserve:2)
+        // Reserve accounting only; quota pacing would space these reads a minute apart (see QuotaPacingTests).
+        let budget=RateBudget(minimumSpacing:.zero,interactiveReserve:2,pacesQuota:false)
         let headers=["X-RateLimit-Remaining":"5","X-RateLimit-Reset":String(Date().addingTimeInterval(3600).timeIntervalSince1970)]
         await budget.observe(GitHubResponse(status:200,headers:headers),account:account)
         let base=await pacingTransport()
