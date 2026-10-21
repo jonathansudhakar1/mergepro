@@ -60,8 +60,10 @@ struct ReviewComposer:View {
     private var content:some View {
         VStack(alignment:.leading,spacing:12) {
             HStack { Text("Review pull request").font(.system(.title2,design:.rounded).bold());Spacer();Button("Close") { dismiss() }.keyboardShortcut(.cancelAction) }
-            Text("Action account: \(login.isEmpty ? "unavailable" : login) · \(pr?.key.host ?? readPR.key.host)").font(.headline)
-            Button("Review active account") { Task { await load() } }.disabled(busy || draftSaveBusy)
+            HStack(spacing:6) {
+                Label("\(login.isEmpty ? "Account unavailable" : login) · \(pr?.key.host ?? readPR.key.host)",systemImage:"person.crop.circle").foregroundStyle(.secondary)
+                Button { Task { await load() } } label: { Image(systemName:"arrow.clockwise") }.buttonStyle(.borderless).disabled(busy || draftSaveBusy).help("Reload the pull request and this account's review state")
+            }.font(.callout)
             if saveConflict { Text("Another editor saved this draft. Local text remains here; copy or resolve it before explicitly reloading the saved draft.").foregroundStyle(.orange) }
             if let status { Text(status).foregroundStyle(.secondary).textSelection(.enabled) }
             if let draft {
@@ -93,26 +95,32 @@ struct ReviewComposer:View {
                     TextField("Comment for selection",text:$commentBody,axis:.vertical).lineLimit(3...6).focused($focus,equals:.selection)
                     Button("Add selection to pending draft") { addSelection(selection) }.disabled(busy || commentBody.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)
                 }
-                ScrollView { ForEach(draft.comments) { comment in
+                if !draft.comments.isEmpty { ScrollView { ForEach(draft.comments) { comment in
                     VStack(alignment:.leading) { Text("\(comment.providerPath) · \(comment.postedCommentID == nil ? "Local draft" : comment.hasUnsentEdit ? "Provider comment · newer local edit unsent" : "Provider pending comment")").font(.caption);Text(comment.body).textSelection(.enabled)
                         if let selection,comment.postedCommentID == nil { Button("Relocate this draft to selected current coordinates") { relocate(comment,to:selection) }.disabled(busy) }
                     }.padding(6)
-                } }.frame(maxHeight:110)
+                } }.frame(maxHeight:110) }
                 if let pending=truth?.pendingReviewID,draft.pendingReviewID != pending || pendingIsStale { pendingReviewNotice(pending,draft:draft) }
-                if truth?.pendingReviewID == nil,let snapshot {
+                // Only a draft with inline comments has anything to archive before starting over.
+                if truth?.pendingReviewID == nil,!draft.comments.isEmpty,let snapshot {
                     Button("Start next review · archive current draft") { Task { await startNextReview(draft,revision:PRWriteRevision(snapshot)) } }.disabled(busy)
                 }
                 if !draft.previousDrafts.isEmpty { DisclosureGroup("Saved prior drafts (\(draft.previousDrafts.count))") { ScrollView { ForEach(Array(draft.previousDrafts.enumerated()),id:\.offset) { _,old in Text("\(old.revision.head.prefix(8)) · \(old.summary)").textSelection(.enabled);ForEach(old.comments) { comment in Text("\(comment.providerPath): \(comment.body)").textSelection(.enabled) } } }.frame(maxHeight:100) } }
-                if let requirements=truth?.codeOwnerRequirements { Text(requirements).font(.caption).textSelection(.enabled) }
+                Spacer(minLength:0)
+                if truth?.codeOwnerRequirements?.contains("true") == true {
+                    Label("A code owner must approve before this pull request can merge.",systemImage:"person.badge.shield.checkmark").font(.caption).foregroundStyle(.secondary)
+                        .help(truth?.codeOwnerRequirements ?? "")
+                }
                 operationStatus(draft.key)
                 HStack {
                     Button("Save draft") { persist() };Spacer()
+                    if busy { ProgressView().controlSize(.small);Text("Sending to GitHub…").font(.callout).foregroundStyle(.secondary) }
                     Button("Post conversation comment") { Task { await conversation() } }.disabled(busy || saveConflict || draftSaveBusy || stale || summary.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)
                     Button(draft.pendingReviewID == nil && draft.comments.isEmpty ? "Submit review" : "Submit pending review") { Task { await submit() } }.keyboardShortcut(focus == nil ? .defaultAction : nil).buttonStyle(.borderedProminent).disabled(!canSubmit(draft)).help("Submit (⌘Return)")
                 }
                 .background { Button("Submit review") { if canSubmit(draft) { Task { await submit() } } }.keyboardShortcut(.return,modifiers:.command).hidden().accessibilityHidden(true) }
             } else { ProgressView("Resolving selected account…") }
-        }.padding(20).frame(width:720,height:760)
+        }.padding(20).frame(width:720,height:640,alignment:.topLeading)
         .confirmationDialog("Discard pending review?",isPresented:Binding(get:{ discardTarget != nil },set:{ if !$0 { discardTarget=nil } }),titleVisibility:.visible,presenting:discardTarget) { id in
             Button("Discard pending review",role:.destructive) { Task { await discardPending(id) } }
             Button("Cancel",role:.cancel) {}
