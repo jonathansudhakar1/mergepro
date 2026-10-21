@@ -17,7 +17,7 @@ public struct LocalCommitDraft: Equatable, Codable, Sendable {
         return draft
     }
     public func save(_ draft: LocalCommitDraft, directory: URL) {
-        guard let data = try? JSONEncoder().encode(draft) else { return }
+        guard let data = try? JSONEncoder.stable.encode(draft) else { return }
         defaults.set(data, forKey: key(directory))
     }
     public func clear(directory: URL) { defaults.removeObject(forKey: key(directory)) }

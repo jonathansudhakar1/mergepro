@@ -358,12 +358,12 @@ final class InventoryWatermarkTests: XCTestCase {
     func rewrite(_ store: PollCycleStore, _ change: (inout GitHubPRInventoryPayload.Checkpoint) throws -> Void) throws {
         let snapshot = try XCTUnwrap(store.featureSnapshots(account:account,feature:"github-pr-inventory").first)
         var status = try JSONDecoder().decode(PRInventoryStatus.self,from:snapshot.payload)
-        var saved = try checkpoint(status); try change(&saved); status.continuation = try JSONEncoder().encode(saved)
+        var saved = try checkpoint(status); try change(&saved); status.continuation = try JSONEncoder.stable.encode(saved)
         let context = PollFetchContext(cycleID:UUID(),account:account,repositories:[snapshot.key.repository],featureID:snapshot.feature,cachedPullRequests:[],
             cachedSnapshots:[snapshot],repositoryMetadata:[:],deadline:.now.advanced(by:.seconds(10)),operation:nil,client:nil,budget:RateBudget(),
             baselinedRepositories:[],suppressNotifications:true,cachedResponses:[:])
         try store.begin(context.cycleID,at:Date(),baseline:true)
-        try store.apply(PollFetchResult(snapshots:[PollFeatureSnapshot(key:snapshot.key,feature:snapshot.feature,payload:try JSONEncoder().encode(status))]),context:context,deadline:.now.advanced(by:.seconds(10)),requireTracked:false)
+        try store.apply(PollFetchResult(snapshots:[PollFeatureSnapshot(key:snapshot.key,feature:snapshot.feature,payload:try JSONEncoder.stable.encode(status))]),context:context,deadline:.now.advanced(by:.seconds(10)),requireTracked:false)
         _ = try store.close(context.cycleID,at:Date(),policy:NotificationPolicy())
     }
     func row(_ store: PollCycleStore, _ id: Int) throws -> PullRequest {
@@ -620,13 +620,13 @@ final class InventoryWatermarkTests: XCTestCase {
         var status = try JSONDecoder().decode(PRInventoryStatus.self,from:snapshot.payload)
         var saved = try checkpoint(status); saved.teamsFetchedAt = Date().addingTimeInterval(-3600)
         XCTAssertNotNil(saved.watermark)
-        status.continuation = try JSONEncoder().encode(saved)
+        status.continuation = try JSONEncoder.stable.encode(saved)
         await transport.setTeams(#"[{"node_id":"NEWTEAM"}]"#)
         let repo = RepositoryKey(account:account,repositoryID:"1")
         let context = PollFetchContext(
             cycleID:UUID(),account:account,repositories:[repo],featureID:"github-pr-inventory",
             cachedPullRequests:try store.pullRequests(account:account),
-            cachedSnapshots:[PollFeatureSnapshot(key:snapshot.key,feature:snapshot.feature,payload:try JSONEncoder().encode(status))],
+            cachedSnapshots:[PollFeatureSnapshot(key:snapshot.key,feature:snapshot.feature,payload:try JSONEncoder.stable.encode(status))],
             repositoryMetadata:try store.repositoryMetadata(account:account),deadline:.now.advanced(by:.seconds(10)),
             operation:AccountOperation(account:account,credential:GitHubCredential(accessToken:"fixture"),generation:UUID()),
             client:GitHubHTTPClient(transport:transport),budget:RateBudget(minimumSpacing:.zero),baselinedRepositories:[repo],
@@ -647,7 +647,7 @@ final class InventoryWatermarkTests: XCTestCase {
         let legacy = #"{"nodes":[{"name":"bug"}],"pageInfo":{"hasNextPage":false}}"#
         let connection = try JSONDecoder().decode(GitHubPRInventoryPayload.Connection.self,from:Data(legacy.utf8))
         XCTAssertNil(connection.nodes.first??.color)
-        var old = try JSONSerialization.jsonObject(with:JSONEncoder().encode(metadata)) as! [String: Any]
+        var old = try JSONSerialization.jsonObject(with:JSONEncoder.stable.encode(metadata)) as! [String: Any]
         old["labelColors"] = nil
         let decoded = try JSONDecoder().decode(PRMetadata.self,from:JSONSerialization.data(withJSONObject:old))
         XCTAssertNil(decoded.labelColors)
@@ -1044,7 +1044,7 @@ final class ActionsPollingEfficiencyTests: XCTestCase {
         var stale = second.snapshots
         for id in 100..<125 {
             let dead = WorkflowRun(repository:Repository(key:repo,name:"o/r",isPrivate:false,capabilities:[]),runID:Int64(id),workflowID:3,attempt:1,name:"CI",branch:"main",headSHA:"sha",event:"push",actor:"dev",status:"in_progress",conclusion:nil,createdAt:Date(timeIntervalSince1970:0),updatedAt:Date(timeIntervalSince1970:0))
-            stale.append(PollFeatureSnapshot(key:dead.key,feature:"github-actions",payload:try JSONEncoder().encode(dead)))
+            stale.append(PollFeatureSnapshot(key:dead.key,feature:"github-actions",payload:try JSONEncoder.stable.encode(dead)))
         }
         await transport.setDeleted(Set((100..<125).map(Int64.init)))
         func overlay(_ base: [PollFeatureSnapshot], _ newer: [PollFeatureSnapshot]) -> [PollFeatureSnapshot] {

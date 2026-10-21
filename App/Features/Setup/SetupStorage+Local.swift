@@ -23,7 +23,7 @@ extension SetupStorage {
         if state != .idle { hints.append(.init(repository:repository,worktree:worktree,state:state,updatedAt:dependencies.clock())) }
         // Recovery hints never supersede the current Git metadata and retain only recent worktrees.
         hints=Array(hints.suffix(128))
-        let data=try JSONEncoder().encode(hints)
+        let data=try JSONEncoder.stable.encode(hints)
         guard data.count<=2*1024*1024,let value=String(data:data,encoding:.utf8) else { throw CocoaError(.coderInvalidValue) }
         try database.setApplicationSetting(value,for:.localRecoveryHints)
     }

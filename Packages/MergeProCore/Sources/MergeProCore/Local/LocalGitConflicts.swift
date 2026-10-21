@@ -197,7 +197,7 @@ extension LocalGitService {
             if let link = try? FileManager.default.destinationOfSymbolicLink(atPath: url.path) { data.append(Data(link.utf8)) }
             else if !entry.path.hasSuffix("/") { data.append(try readRegularFile(url, directory: snapshot.repository.directory)) }
         }
-        data.append(try JSONEncoder().encode(snapshot.status.entries.filter { $0.path != path }))
+        data.append(try JSONEncoder.stable.encode(snapshot.status.entries.filter { $0.path != path }))
         return Self.digest(data)
     }
 }

@@ -141,7 +141,7 @@ enum LocalFolderAccessError: LocalizedError {
             if let replacingBookmark, next[index].bookmarkData != replacingBookmark { return }
             next[index] = folder
         } else { next.append(folder) }
-        try await saveData(JSONEncoder().encode(next))
+        try await saveData(JSONEncoder.stable.encode(next))
         folders = next
     }
 

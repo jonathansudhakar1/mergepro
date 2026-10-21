@@ -104,7 +104,7 @@ struct WindowFrameMemory: NSViewRepresentable {
             guard !restoring, let window = observed, let screen = window.screen, let configuration,
                   !window.styleMask.contains(.fullScreen), window.isVisible, !window.isMiniaturized,
                   window.frame.width > 0, window.frame.height > 0 else { return }
-            if let data = try? JSONEncoder().encode(Geometry(frame: window.frame)) {
+            if let data = try? JSONEncoder.stable.encode(Geometry(frame: window.frame)) {
                 UserDefaults.standard.set(data, forKey: key(for: screen, role: configuration.role))
                 UserDefaults.standard.set(data, forKey:"windowGeometry.\(configuration.role).last")
             }

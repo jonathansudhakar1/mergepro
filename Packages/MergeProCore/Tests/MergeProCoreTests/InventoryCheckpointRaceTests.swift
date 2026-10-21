@@ -19,9 +19,9 @@ import XCTest
         await transport.waitUntilHolding()
         // The poller commits this repository's inventory checkpoint while the tab's read is in flight.
         let statusKey=ProviderKey(host:account.host,accountID:account.accountID,repositoryID:key.repositoryID,objectID:"pull-request-inventory")
-        let polled=PollFeatureSnapshot(key:statusKey,feature:"github-pr-inventory",payload:try JSONEncoder().encode(PRInventoryStatus(complete:false,fetchedCount:1,fetchedAt:Date(),message:"poller")))
+        let polled=PollFeatureSnapshot(key:statusKey,feature:"github-pr-inventory",payload:try JSONEncoder.stable.encode(PRInventoryStatus(complete:false,fetchedCount:1,fetchedAt:Date(),message:"poller")))
         try await database.database.write { db in
-            try db.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?)",arguments:[statusKey.host,statusKey.accountID,statusKey.repositoryID,statusKey.objectID,polled.feature,try JSONEncoder().encode(polled)])
+            try db.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?)",arguments:[statusKey.host,statusKey.accountID,statusKey.repositoryID,statusKey.objectID,polled.feature,try JSONEncoder.stable.encode(polled)])
         }
         await transport.release()
         let status=try await task.value

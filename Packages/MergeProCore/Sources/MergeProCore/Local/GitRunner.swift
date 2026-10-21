@@ -175,6 +175,10 @@ private final class GitOwnedProcess: @unchecked Sendable {
         process.environment = environment; process.standardOutput = output; process.standardError = errors
         // No inherited stdin: noninteractive commands cannot wait forever for input from the app.
         process.standardInput = inputPipe ?? FileHandle.nullDevice as Any
+        // Signalled the moment Git exits. `isRunning`/`waitUntilExit()` only notice exit on a ~50 ms polling loop,
+        // which added that much idle time to almost every command.
+        let exited = DispatchSemaphore(value: 0)
+        process.terminationHandler = { _ in exited.signal() }
         do { try process.run() } catch { lock.unlock(); throw GitRunnerError.launchFailed(message: error.localizedDescription) }
         lock.unlock()
         try? output.fileHandleForWriting.close(); try? errors.fileHandleForWriting.close()
@@ -189,6 +193,7 @@ private final class GitOwnedProcess: @unchecked Sendable {
         let descriptors = [output.fileHandleForReading.fileDescriptor, errors.fileHandleForReading.fileDescriptor]
         for descriptor in descriptors { _ = fcntl(descriptor, F_SETFL, fcntl(descriptor, F_GETFL) | O_NONBLOCK) }
         var buffers = [Data(), Data()]
+        var open = [true, true]
         var limitError: GitRunnerError?
         var bytes = [UInt8](repeating: 0, count: 16_384)
         repeat {
@@ -202,10 +207,11 @@ private final class GitOwnedProcess: @unchecked Sendable {
                 }
                 if inputOffset == input.count { inputClosed = true; try? inputPipe?.fileHandleForWriting.close() }
             }
-            for index in descriptors.indices {
+            for index in descriptors.indices where open[index] {
                 while true {
                     let count = Darwin.read(descriptors[index], &bytes, bytes.count)
-                    if count <= 0 { break }
+                    if count == 0 { open[index] = false; break }
+                    if count < 0 { break }
                     if buffers[index].count + count > limit {
                         if limitError == nil {
                             limitError = .outputLimitExceeded(stream: index == 0 ? .standardOutput : .standardError, limit: limit)
@@ -216,15 +222,17 @@ private final class GitOwnedProcess: @unchecked Sendable {
                     buffers[index].append(contentsOf: bytes.prefix(count))
                 }
             }
-            if !process.isRunning { break }
-            var polls = descriptors.map { pollfd(fd: $0, events: Int16(POLLIN), revents: 0) }
+            // Both pipes at end of file: nothing more to read, so wait for the exit itself.
+            if !open.contains(true) && inputClosed { exited.wait(); break }
+            // Exited while a descendant may still hold a pipe open: stop reading rather than wait for its EOF.
+            if exited.wait(timeout: .now()) == .success { break }
+            var polls = descriptors.indices.filter { open[$0] }.map { pollfd(fd: descriptors[$0], events: Int16(POLLIN), revents: 0) }
             if let inputDescriptor, !inputClosed { polls.append(pollfd(fd: inputDescriptor, events: Int16(POLLOUT), revents: 0)) }
             _ = Darwin.poll(&polls, nfds_t(polls.count), 20)
         } while true
-        process.waitUntilExit()
         // Drain bytes already in the pipes after termination without waiting for descendant EOF.
         if limitError == nil {
-            for index in descriptors.indices {
+            for index in descriptors.indices where open[index] {
                 while true {
                     let count = Darwin.read(descriptors[index], &bytes, bytes.count)
                     if count <= 0 { break }

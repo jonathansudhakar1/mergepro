@@ -63,9 +63,9 @@ final class LegacyPRKeyCleanupTests: XCTestCase {
         XCTAssertTrue(try repaired.operations(canonical).contains { $0.id == pending.id },"terminal history remains visible")
         // A crash between saving the ledger and adopting its receipt must recover the same owner.
         try upgraded.database.write { db in
-            let encoder=JSONEncoder();encoder.outputFormatting = [.sortedKeys]
+            let encoder=JSONEncoder.stable;encoder.outputFormatting = [.sortedKeys]
             let identity=try encoder.encode(raw).base64EncodedString()
-            try db.execute(sql:"UPDATE reviewDrafts SET json=? WHERE identity=?",arguments:[try JSONEncoder().encode(original),identity])
+            try db.execute(sql:"UPDATE reviewDrafts SET json=? WHERE identity=?",arguments:[try JSONEncoder.stable.encode(original),identity])
         }
         try repaired.recoverReceipts(canonical)
         XCTAssertEqual(try repaired.load(raw)?.pendingReviewID,"provider-review")
@@ -201,7 +201,7 @@ final class LegacyPRKeyCleanupTests: XCTestCase {
     func testCorruptLocalStateIsLeftInPlace() throws {
         let store=try store()
         try store.savePullRequests([pr(key(account,"PR_a"),number:1),pr(key(account,"pull-request:PR_a"),number:1)])
-        let identity=try { () throws -> String in let e=JSONEncoder();e.outputFormatting = [.sortedKeys];return try e.encode(key(account,"PR_a")).base64EncodedString() }()
+        let identity=try { () throws -> String in let e=JSONEncoder.stable;e.outputFormatting = [.sortedKeys];return try e.encode(key(account,"PR_a")).base64EncodedString() }()
         try store.database.write { db in
             try db.execute(sql:"INSERT INTO reviewDrafts VALUES (?,?,?,?)",arguments:[identity,account.host,account.accountID,Data("{broken".utf8)])
             try db.execute(sql:"INSERT INTO reviewOperations VALUES (?,?,?)",arguments:["op",identity,Data("{broken".utf8)])
@@ -214,7 +214,7 @@ final class LegacyPRKeyCleanupTests: XCTestCase {
         let path=directory.appendingPathComponent("legacy.sqlite").path
         let queue=try DatabaseQueue(path:path)
         try Migrations.migrator().migrate(queue,upTo:"v8-storage-lookup-indexes")
-        let encoder=JSONEncoder()
+        let encoder=JSONEncoder.stable
         try queue.write { db in
             try db.execute(sql:"INSERT INTO accounts (host,accountID,login,tokenReference) VALUES (?,?,?,NULL)",arguments:[account.host,account.accountID,"me"])
             try db.execute(sql:"INSERT INTO repositories VALUES (?,?,?,?)",arguments:[account.host,account.accountID,"R",try encoder.encode(Repository(key:RepositoryKey(account:account,repositoryID:"R"),name:"o/r",isPrivate:true,capabilities:ProviderCapabilities()))])

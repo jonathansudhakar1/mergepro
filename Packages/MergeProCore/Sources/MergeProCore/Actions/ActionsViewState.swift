@@ -56,7 +56,7 @@ public extension ActionsStore {
         try database.database.read { db in try Data.fetchOne(db,sql:"SELECT json FROM actions_view_state WHERE host=? AND accountID=?",arguments:[account.host,account.accountID]).map { try JSONDecoder().decode(ActionsViewState.self,from:$0) } ?? .init() }
     }
     func saveViewState(_ state:ActionsViewState,account:AccountScope) throws {
-        try database.database.write { try $0.execute(sql:"INSERT INTO actions_view_state VALUES(?,?,?) ON CONFLICT(host,accountID) DO UPDATE SET json=excluded.json",arguments:[account.host,account.accountID,try JSONEncoder().encode(state)]) }
+        try database.database.write { try $0.execute(sql:"INSERT INTO actions_view_state VALUES(?,?,?) ON CONFLICT(host,accountID) DO UPDATE SET json=excluded.json",arguments:[account.host,account.accountID,try JSONEncoder.stable.encode(state)]) }
     }
     func matchingEventKeys(events:[ChangeEvent],repositories:[Repository]) throws -> Set<String> {
         var keys:Set<String>=[]

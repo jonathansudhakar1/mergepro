@@ -120,8 +120,8 @@ extension PRWorkspaceModel {
         guard let message,!message.isEmpty else { return }
         AccessibilityNotification.Announcement(message).post()
     }
-    func dragToken(_ pr:PullRequest,merge:Bool) -> String { (merge ? "merge:" : "state:") + ((try? JSONEncoder().encode(pr.key).base64EncodedString()) ?? "") }
-    func cardDragToken(_ pr:PullRequest) -> String { "card:" + ((try? JSONEncoder().encode(pr.key).base64EncodedString()) ?? "") }
+    func dragToken(_ pr:PullRequest,merge:Bool) -> String { (merge ? "merge:" : "state:") + ((try? JSONEncoder.stable.encode(pr.key).base64EncodedString()) ?? "") }
+    func cardDragToken(_ pr:PullRequest) -> String { "card:" + ((try? JSONEncoder.stable.encode(pr.key).base64EncodedString()) ?? "") }
     /// The drag payload for a card or handle: internal token plus the https URL for other apps.
     func dragItem(_ pr:PullRequest,token:String) -> PRDragItem { PRDragItem(token:token,url:pr.metadata?.webURL ?? pr.key.routeURL) }
     func drop(_ tokens:[String],column:PRColumn?) -> Bool {

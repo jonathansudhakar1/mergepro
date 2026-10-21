@@ -28,7 +28,7 @@ final class SettingsKeyTests: XCTestCase {
         let repository = RepositoryKey(account:account, repositoryID:"42")
         let pr = ProviderKey(host:"github.com", accountID:"7", repositoryID:"42", objectID:"PR_1")
         XCTAssertEqual(SettingsKey.mergeMethod(repository).rawValue, "mergeMethod:github.com:7:42")
-        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let encoder = JSONEncoder.stable; encoder.outputFormatting = [.sortedKeys]
         XCTAssertEqual(try SettingsKey.editorBookmark(repository).rawValue, "editor-map:" + (try encoder.encode(repository)).base64EncodedString())
         XCTAssertEqual(try SettingsKey.detailProgress(pr).rawValue, "pr-detail-viewed:" + (try encoder.encode(pr)).base64EncodedString())
         XCTAssertEqual(try SettingsKey.reviewedHead(pr).rawValue, "pr-reviewed-head:" + (try encoder.encode(pr)).base64EncodedString())
@@ -44,7 +44,7 @@ final class SettingsKeyTests: XCTestCase {
         let store = try DatabaseStore(path:":memory:")
         try store.saveAccount(Account(scope:account, login:"octo", tokenReference:nil))
         let pr = ProviderKey(host:"github.com", accountID:"7", repositoryID:"42", objectID:"PR_1")
-        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let encoder = JSONEncoder.stable; encoder.outputFormatting = [.sortedKeys]
         let identity = try encoder.encode(pr).base64EncodedString()
         let details = PRDetailStore(database:store)
         try details.save(PRDetailState(headSHA:"head"), key:pr)

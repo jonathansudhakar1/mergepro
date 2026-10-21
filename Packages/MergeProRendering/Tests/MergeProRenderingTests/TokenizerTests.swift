@@ -109,7 +109,9 @@ extension TokenizerTests {
     static func seconds(_ duration:Duration) -> Double { Double(duration.components.seconds)+Double(duration.components.attoseconds)/1e18 }
     /// Tiny distinct sources isolate the fixed per-call cost (reading and compiling the highlight query);
     /// large distinct sources measure parse plus query execution, sequentially and as two concurrent diff sides.
-    func testTokenizerCompileParseAndConcurrencyEvidence() async {
+    func testTokenizerCompileParseAndConcurrencyEvidence() async throws {
+        // Large sources must finish inside the interactive highlighting budget, which shared CI runners can miss.
+        try XCTSkipIf(ProcessInfo.processInfo.environment["CI"] != nil, "Timing evidence runs on developer Macs, not shared CI runners")
         let tokenizer=CodeTokenizer(),clock=ContinuousClock()
         var tiny:[Double]=[]
         for index in 0..<6 {

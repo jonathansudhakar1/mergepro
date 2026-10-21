@@ -56,7 +56,7 @@ extension DatabaseStore {
     @discardableResult static func storePullRequest(_ pr:PullRequest,in db:Database) throws -> Bool {
         if try contradictsConfirmedMerge(pr,in:db) { return false }
         let pr=try PRClassificationStore.applyingRules(to:pr,in:db)
-        let encoder=JSONEncoder();encoder.outputFormatting = [.sortedKeys]
+        let encoder=JSONEncoder.stable;encoder.outputFormatting = [.sortedKeys]
         try db.execute(sql:"INSERT INTO pullRequests VALUES (?,?,?,?,?) ON CONFLICT(host,accountID,repositoryID,objectID) DO UPDATE SET json=excluded.json WHERE json IS NOT excluded.json",arguments:[pr.key.host,pr.key.accountID,pr.key.repositoryID,pr.key.objectID,try encoder.encode(pr)])
         return db.changesCount > 0
     }

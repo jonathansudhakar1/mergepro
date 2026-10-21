@@ -131,7 +131,7 @@ private actor CheckpointProbeFetcher: PollFeatureFetcher {
             for id in interactiveRepositories {
                 let interactive = PollFeatureSnapshot(key:key(id),feature:featureID,payload:Data("interactive".utf8))
                 try await database.database.write { db in
-                    try db.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?) ON CONFLICT(host,accountID,repositoryID,objectID,feature) DO UPDATE SET json=excluded.json",arguments:["github.com","1",id,"checkpoint",interactive.feature,try JSONEncoder().encode(interactive)])
+                    try db.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?) ON CONFLICT(host,accountID,repositoryID,objectID,feature) DO UPDATE SET json=excluded.json",arguments:["github.com","1",id,"checkpoint",interactive.feature,try JSONEncoder.stable.encode(interactive)])
                 }
             }
         }
@@ -504,7 +504,7 @@ final class PollCoordinatorTests: XCTestCase {
         let key = ProviderKey(host:"github.com",accountID:"1",repositoryID:"1",objectID:"checkpoint")
         let seed = PollFeatureSnapshot(key:key,feature:"probe-inventory",payload:Data("seed".utf8))
         try await database.database.write { db in
-            try db.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?)",arguments:["github.com","1","1","checkpoint",seed.feature,try JSONEncoder().encode(seed)])
+            try db.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?)",arguments:["github.com","1","1","checkpoint",seed.feature,try JSONEncoder.stable.encode(seed)])
         }
         // An interactive refresh of the same repository commits while the poller's work item is in flight.
         let fetcher = CheckpointProbeFetcher(database:database,interactiveRepositories:["1"])

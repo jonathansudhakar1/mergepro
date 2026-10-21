@@ -25,7 +25,7 @@ public struct GitHubActionsFetcher:PollFeatureFetcher {
         let old=Dictionary(context.cachedSnapshots.compactMap { snapshot -> (ProviderKey,WorkflowRun)? in guard let run=try? JSONDecoder().decode(WorkflowRun.self,from:snapshot.payload) else { return nil };return (snapshot.key,run) },uniquingKeysWith:{ _,latest in latest })
         var idle:[RepositoryKey:Bool]=[:]
         // Sorted keys: an unchanged run encodes to its stored bytes, so the store skips rewriting it.
-        let encoder=JSONEncoder();encoder.outputFormatting = [.sortedKeys]
+        let encoder=JSONEncoder.stable;encoder.outputFormatting = [.sortedKeys]
         for key in context.repositories {
             try context.checkDeadline();guard let repository=context.repositoryMetadata[key] else { continue }
             let polled=try await provider.pollRuns(repository:repository,cached:Array(old.values.filter { $0.repository.key==repository.key }),deadline:context.deadline,validators:context.cachedResponses)

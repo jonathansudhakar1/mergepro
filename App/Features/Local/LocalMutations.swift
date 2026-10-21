@@ -78,6 +78,12 @@ extension LocalWorkspaceModel {
         }
     }
 
+    /// A mutation's own fresh snapshot replaces the displayed state, without re-reading the folder.
+    private func apply(_ value: LocalGitSnapshot) {
+        snapshot = value; overview = .init(snapshot: value); repository = value.repository; status = value.status
+        reconcileSelection(value.status)
+    }
+
     func stageFile(path: String, unstage: Bool, folderStore: SecurityScopedFolderStore, runner: any GitRunner) async {
         await stageFiles(paths: [path], unstage: unstage, folderStore: folderStore, runner: runner)
     }
@@ -87,13 +93,15 @@ extension LocalWorkspaceModel {
         mutating = true; defer { mutating = false }
         do {
             let sink = operationStateSink
+            // Staging names exact paths and validates them against the snapshot it reads itself, so no separate read
+            // first; the snapshot it returns is current, so only the preview is reloaded rather than the whole folder.
             let value = try await folderStore.withAllAccess { roots in
                 let service = LocalGitService(runner: runner, authorizedRoots: roots, requiresTerminalForHooks: true, operationStateSink: sink)
-                let fresh = try await service.snapshot(directory: directory)
-                return try await (unstage ? service.unstage(paths: paths, directory: directory, expected: fresh) : service.stage(paths: paths, directory: directory, expected: fresh))
+                return try await (unstage ? service.unstage(paths: paths, directory: directory) : service.stage(paths: paths, directory: directory))
             }
-            if self.directory == directory { snapshot = value; overview = .init(snapshot: value); repository = value.repository; status = value.status }
-            await refresh(folderStore: folderStore, runner: runner)
+            guard self.directory == directory else { return }
+            apply(value)
+            await loadPreview(folderStore: folderStore, runner: runner)
         } catch { await refresh(folderStore: folderStore, runner: runner); self.error = Self.message(for: error) }
     }
 
@@ -111,12 +119,16 @@ extension LocalWorkspaceModel {
         mutating = true; defer { mutating = false }
         do {
             let sink = operationStateSink
-            _ = try await folderStore.withAllAccess { roots in
+            let value = try await folderStore.withAllAccess { roots in
                 let service = LocalGitService(runner: runner, authorizedRoots: roots, requiresTerminalForHooks: true, operationStateSink: sink)
                 if unstage { return try await service.unstageHunk(patch: hunk.patch, expected: diff.snapshot, directory: directory) }
                 return try await service.stageHunk(patch: hunk.patch, expected: diff.snapshot, directory: directory)
             }
-            fileDiff = nil; await refresh(folderStore: folderStore, runner: runner)
+            fileDiff = nil
+            guard self.directory == directory else { return }
+            apply(value)
+            await loadPreview(folderStore: folderStore, runner: runner)
+            await loadHunks(staged: unstage, folderStore: folderStore, runner: runner)
         } catch { self.error = Self.message(for: error) }
     }
 

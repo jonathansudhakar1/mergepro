@@ -137,11 +137,11 @@ public struct PRDetailStore: Sendable {
         guard let raw=try database.applicationSetting(.detailProgress(key)),let data=Data(base64Encoded:raw) else { return PRDetailState(headSHA:headSHA) }
         var state=try JSONDecoder().decode(PRDetailState.self,from:data);state.acceptRevision(headSHA);return state
     }
-    public func save(_ state:PRDetailState,key:ProviderKey) throws { try database.setApplicationSetting(JSONEncoder().encode(state).base64EncodedString(),for:.detailProgress(key)) }
+    public func save(_ state:PRDetailState,key:ProviderKey) throws { try database.setApplicationSetting(JSONEncoder.stable.encode(state).base64EncodedString(),for:.detailProgress(key)) }
     /// Records the head a provider-confirmed review by `key`'s account covered. Call only after confirmation. Kept apart
     /// from reading progress so a window saving older progress never drops a newer review record.
     public func recordReview(_ key:ProviderKey,headSHA:String,at date:Date = Date()) throws {
-        try database.setApplicationSetting(JSONEncoder().encode(PRReviewedHead(head:headSHA,at:date)).base64EncodedString(),for:.reviewedHead(key))
+        try database.setApplicationSetting(JSONEncoder.stable.encode(PRReviewedHead(head:headSHA,at:date)).base64EncodedString(),for:.reviewedHead(key))
     }
     public func reviewedHead(_ key:ProviderKey) throws -> PRReviewedHead? {
         guard let raw=try database.applicationSetting(.reviewedHead(key)),let data=Data(base64Encoded:raw) else { return nil }

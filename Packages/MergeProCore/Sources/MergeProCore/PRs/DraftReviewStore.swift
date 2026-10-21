@@ -84,7 +84,7 @@ public struct PRWriteOperation:Codable,Sendable,Equatable,Identifiable {
 public final class DraftReviewStore:Sendable {
     private let database:DatabaseStore
     public init(database:DatabaseStore) { self.database=database }
-    private func identity(_ key:ProviderKey) throws -> String { let encoder=JSONEncoder();encoder.outputFormatting = [.sortedKeys];return try encoder.encode(key).base64EncodedString() }
+    private func identity(_ key:ProviderKey) throws -> String { let encoder=JSONEncoder.stable;encoder.outputFormatting = [.sortedKeys];return try encoder.encode(key).base64EncodedString() }
     public func save(_ draft:ReviewDraft,expectedVersion:Int?=nil) throws {
         let key=try identity(draft.key)
         try database.database.write { db in
@@ -106,7 +106,7 @@ public final class DraftReviewStore:Sendable {
                 let expected=expectedVersion ?? draft.editVersion-1
                 guard saved.editVersion == expected,draft.editVersion == expected+1 else { throw PRWriteFailure.draftChanged }
             }
-            let data=try JSONEncoder().encode(value)
+            let data=try JSONEncoder.stable.encode(value)
             guard data.count <= 12_000_000 else { throw PRDetailFailure.oversized }
             try db.execute(sql:"INSERT INTO reviewDrafts VALUES (?,?,?,?) ON CONFLICT(identity) DO UPDATE SET json=excluded.json",arguments:[key,draft.key.host,draft.key.accountID,data])
         }
@@ -124,7 +124,7 @@ public final class DraftReviewStore:Sendable {
                 let old=try JSONDecoder().decode(ReviewDraft.self,from:json)
                 next.editVersion=old.editVersion+1;next.previousDrafts=old.previousDrafts+[ReviewDraftArchive(revision:old.revision,summary:old.summary,comments:old.comments,texts:old.texts,pendingReviewID:old.pendingReviewID)]
             }
-            let data=try JSONEncoder().encode(next);guard data.count <= 12_000_000 else { throw PRDetailFailure.oversized }
+            let data=try JSONEncoder.stable.encode(next);guard data.count <= 12_000_000 else { throw PRDetailFailure.oversized }
             try db.execute(sql:"INSERT INTO reviewDrafts VALUES (?,?,?,?) ON CONFLICT(identity) DO UPDATE SET json=excluded.json",arguments:[identity,key.host,key.accountID,data]);return next
         }
     }
@@ -149,7 +149,7 @@ public final class DraftReviewStore:Sendable {
             }
             var captured=operation
             if let json=try Data.fetchOne(db,sql:"SELECT json FROM reviewDrafts WHERE identity=?",arguments:[identity]) { captured.draftGeneration=try JSONDecoder().decode(ReviewDraft.self,from:json).reviewGeneration }
-            try db.execute(sql:"INSERT INTO reviewOperations VALUES (?,?,?)",arguments:[captured.id.uuidString,identity,try JSONEncoder().encode(captured)])
+            try db.execute(sql:"INSERT INTO reviewOperations VALUES (?,?,?)",arguments:[captured.id.uuidString,identity,try JSONEncoder.stable.encode(captured)])
         }
     }
     public func rejectUnsent(_ id:UUID) throws {
@@ -158,7 +158,7 @@ public final class DraftReviewStore:Sendable {
             var operation=try JSONDecoder().decode(PRWriteOperation.self,from:json)
             guard operation.state == .prepared else { throw PRWriteFailure.uncertain }
             operation.state = .rejected;operation.message="Explicitly released before any dispatch. Draft retained."
-            try db.execute(sql:"UPDATE reviewOperations SET json=? WHERE id=?",arguments:[try JSONEncoder().encode(operation),id.uuidString])
+            try db.execute(sql:"UPDATE reviewOperations SET json=? WHERE id=?",arguments:[try JSONEncoder.stable.encode(operation),id.uuidString])
         }
     }
     public func update(_ operation:PRWriteOperation,expectedState:PRWriteOperation.State?=nil) throws {
@@ -180,7 +180,7 @@ public final class DraftReviewStore:Sendable {
         }
         guard allowed else { throw PRWriteFailure.operationInProgress }
         var value=operation;value.draftGeneration=old.draftGeneration;value.draftOwnerKey=old.draftOwnerKey
-        try db.execute(sql:"UPDATE reviewOperations SET json=? WHERE id=?",arguments:[try JSONEncoder().encode(value),value.id.uuidString]);return value
+        try db.execute(sql:"UPDATE reviewOperations SET json=? WHERE id=?",arguments:[try JSONEncoder.stable.encode(value),value.id.uuidString]);return value
     }
     /// One owner transaction commits terminal state, adopted draft receipt and normalized truth.
     public func commitReceipt(_ operation:PRWriteOperation,expectedState:PRWriteOperation.State,normalized:PullRequest?) throws {
@@ -223,7 +223,7 @@ public final class DraftReviewStore:Sendable {
                 if let index=draft.comments.firstIndex(where:{ $0.postedCommentID == id }) { draft.comments[index].postedBody=body }
             default:return
             }
-            try db.execute(sql:"UPDATE reviewDrafts SET json=? WHERE identity=?",arguments:[try JSONEncoder().encode(draft),key])
+            try db.execute(sql:"UPDATE reviewDrafts SET json=? WHERE identity=?",arguments:[try JSONEncoder.stable.encode(draft),key])
     }
     /// Retention for terminal history (confirmed, posted-outdated, rejected) created before `cutoff`. Each
     /// receipt is adopted into its draft first, so a pruned row can never make sent text look unsent.

@@ -39,7 +39,7 @@ final class ActionsRepositoryFilterTests: XCTestCase {
         var state = ActionsViewState()
         state.filter.repositoryKey = repository("alice").key
         state.savedViews = [.init(name: "Project", filter: state.filter)]
-        let decoded = try JSONDecoder().decode(ActionsViewState.self, from: JSONEncoder().encode(state))
+        let decoded = try JSONDecoder().decode(ActionsViewState.self, from: JSONEncoder.stable.encode(state))
         XCTAssertEqual(decoded.filter.repositoryKey, repository("alice").key)
         XCTAssertFalse(decoded.savedViews[0].filter.matches(run(repository("bob"))))
     }
@@ -86,7 +86,7 @@ final class ActionsRepositoryFilterTests: XCTestCase {
     func testLegacySavedRepositoryIDDecodesAndKeepsItsFilter() throws {
         var old = ActionsFilter()
         old.repositoryID = "1"
-        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(old)) as? [String: Any])
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder.stable.encode(old)) as? [String: Any])
         object.removeValue(forKey: "repositoryKey")
         let decoded = try JSONDecoder().decode(ActionsFilter.self, from: JSONSerialization.data(withJSONObject: object))
         XCTAssertNil(decoded.repositoryKey)

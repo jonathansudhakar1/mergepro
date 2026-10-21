@@ -73,7 +73,7 @@ final class ViewedBlobIdentityTests: XCTestCase {
     }
     func testCodableAndEqualityCarryTheSHA() throws {
         let file = DiffFile(path: "a.swift", status: .modified, patch: Self.patch, additions: 1, deletions: 1, sha: Self.blob)
-        let decoded = try JSONDecoder().decode(DiffFile.self, from: JSONEncoder().encode(file))
+        let decoded = try JSONDecoder().decode(DiffFile.self, from: JSONEncoder.stable.encode(file))
         XCTAssertEqual(decoded.sha, Self.blob)
         XCTAssertEqual(decoded, file)
         XCTAssertNotEqual(file, DiffFile(path: "a.swift", status: .modified, patch: Self.patch, additions: 1, deletions: 1))

@@ -85,7 +85,7 @@ final class NotificationTextTests: XCTestCase {
         XCTAssertEqual(decoded.items, [])
         XCTAssertEqual(decoded.eventKeys, ["a"])
         let current = NotificationAggregator.summary(cycleID: UUID(), events: [prEvent(1)])
-        XCTAssertEqual(try JSONDecoder().decode(PollSummary.self, from: JSONEncoder().encode(current)), current)
+        XCTAssertEqual(try JSONDecoder().decode(PollSummary.self, from: JSONEncoder.stable.encode(current)), current)
     }
 
     func testSnoozeDurations() throws {

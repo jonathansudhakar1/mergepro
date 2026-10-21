@@ -90,7 +90,7 @@ extension MergePolicyTests {
         let a=evidence { $0.methodReasons=["rebase":"Not allowed by ruleset 'Old name'"] },b=evidence { $0.methodReasons=["rebase":"Not allowed by ruleset 'New name'"] }
         XCTAssertTrue(a.sameAdmission(as:b),"A renamed ruleset does not change the admission facts")
         XCTAssertFalse(a.sameAdmission(as:evidence { $0.methods=[.squash] }),"Methods remain admission facts")
-        var payload=try JSONSerialization.jsonObject(with:JSONEncoder().encode(a)) as! [String:Any]
+        var payload=try JSONSerialization.jsonObject(with:JSONEncoder.stable.encode(a)) as! [String:Any]
         payload.removeValue(forKey:"methodReasons")
         XCTAssertNil(try JSONDecoder().decode(MergeEvidence.self,from:JSONSerialization.data(withJSONObject:payload)).methodReasons)
     }

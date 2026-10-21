@@ -164,7 +164,7 @@ private actor PartialActionsTransport:GitHubTransport {
         let schema=try WorkflowInputSchema.parse(yaml:"on:\n  workflow_dispatch:\n    inputs:\n      token:\n        type: string\n        default: TOP_SECRET",workflowID:2,ref:"main",revision:"sha")
         let workflow=ActionsWorkflow(id:2,name:"deploy",path:".github/workflows/deploy.yml",state:"active",webURL:nil)
         let operation=ActionsWriteOperation(repository:repo,intent:.dispatch(workflow:workflow,schema:schema,inputs:["token":.text("ANOTHER_SECRET")],productionConfirmed:false))
-        let json=String(decoding:try JSONEncoder().encode(operation),as:UTF8.self)
+        let json=String(decoding:try JSONEncoder.stable.encode(operation),as:UTF8.self)
         XCTAssertFalse(json.contains("TOP_SECRET"));XCTAssertFalse(json.contains("ANOTHER_SECRET"))
     }
 }

@@ -65,7 +65,7 @@ extension PRDetailContextFixTests {
         source.succeed(.init(events:[],complete:true,fetchedAt:Date()),request:second)
         XCTAssertEqual(source.phase,.loaded);XCTAssertFalse(source.showingCached);XCTAssertEqual(source.section?.events.count,0)
         let fresh=source.begin();source.fail(GitHubFailure.invalidResponse,request:fresh);XCTAssertNil(source.section)
-        let encoded=try JSONEncoder().encode(cached),decoded=try JSONDecoder().decode(PRDetailSection.self,from:encoded)
+        let encoded=try JSONEncoder.stable.encode(cached),decoded=try JSONDecoder().decode(PRDetailSection.self,from:encoded)
         XCTAssertEqual(decoded.events,cached.events);XCTAssertTrue(decoded.cached)
     }
 }

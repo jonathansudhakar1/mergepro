@@ -33,7 +33,7 @@ final class WorkflowInputTests:XCTestCase {
         XCTAssertEqual(valid["amount"],"2")
         XCTAssertEqual(WorkflowInputValue.number(2.5).string,"2.5")
         let preset=WorkflowPreset(name:"safe",repository:.init(account:.init(host:"github.com",accountID:"1"),repositoryID:"1"),schema:schema,inputs:["token":.text("secret"),"target":.environment("staging")])
-        XCTAssertNil(preset.inputs["token"]);XCTAssertFalse(String(decoding:try JSONEncoder().encode(preset),as:UTF8.self).contains("secret"))
+        XCTAssertNil(preset.inputs["token"]);XCTAssertFalse(String(decoding:try JSONEncoder.stable.encode(preset),as:UTF8.self).contains("secret"))
     }
     func testChoiceNumberEnvironmentAndRequiredValidation() throws {
         let schema=try WorkflowInputSchema.parse(yaml:yaml,workflowID:2,ref:"main",revision:"sha")

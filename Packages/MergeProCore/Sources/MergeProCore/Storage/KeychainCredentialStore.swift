@@ -48,7 +48,7 @@ public struct KeychainCredentialStore<Backend: KeychainBackend>: GitHubCredentia
     }
     public func save(_ credential: GitHubCredential, account: AccountScope) throws {
         let reference = AccountSessionStore.tokenReference(for:account)
-        guard let data = try? JSONEncoder().encode(credential) else { throw KeychainCredentialError.invalidItem }
+        guard let data = try? JSONEncoder.stable.encode(credential) else { throw KeychainCredentialError.invalidItem }
         let status = write(data, reference, .dataProtection)
         // A stale legacy copy is best-effort cleanup: the new credential is already stored and read first.
         if status == errSecSuccess { _ = backend.delete(account:reference, kind:.legacy); return }

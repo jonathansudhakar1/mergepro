@@ -134,7 +134,7 @@ final class MergeProviderTests:XCTestCase {
 
         // Cached pre-fix proof omitted lower unknownness. It remains decodable, but
         // cannot advertise eligibility or act as an authoritative readiness baseline.
-        var oldPayload = try JSONSerialization.jsonObject(with:JSONEncoder().encode(ready.evidence)) as! [String:Any]
+        var oldPayload = try JSONSerialization.jsonObject(with:JSONEncoder.stable.encode(ready.evidence)) as! [String:Any]
         oldPayload.removeValue(forKey:"nativeAdmissionVersion")
         var legacy = try JSONDecoder().decode(MergeEvidence.self,from:JSONSerialization.data(withJSONObject:oldPayload))
         XCTAssertFalse(MergePolicy.evaluate(legacy).eligible)
@@ -205,7 +205,7 @@ extension MergeProviderTests {
         XCTAssertEqual(squash["commit_title"] as? String,"Edited");XCTAssertNil(squash["commit_message"],"Unedited body follows GitHub's default")
         XCTAssertNil(try body(.squash,.queue,"T","M")["commit_title"])
         // A decoded legacy rebase command that still carries text is not sent either.
-        var legacy=try JSONSerialization.jsonObject(with:JSONEncoder().encode(MergeCommand(selected:value,affected:[value],method:.squash,action:.direct,title:"Old",message:"Old"))) as! [String:Any]
+        var legacy=try JSONSerialization.jsonObject(with:JSONEncoder.stable.encode(MergeCommand(selected:value,affected:[value],method:.squash,action:.direct,title:"Old",message:"Old"))) as! [String:Any]
         legacy["method"]="rebase"
         let decoded=try JSONDecoder().decode(MergeCommand.self,from:JSONSerialization.data(withJSONObject:legacy))
         let legacyBody=try JSONSerialization.jsonObject(with:GitHubMergeAdapter.request(.init(command:decoded.writeCommand)).body) as! [String:Any]
@@ -242,7 +242,7 @@ extension MergeProviderTests {
         XCTAssertEqual(try MergeCommand(selected:value,affected:[value],method:.squash,action:.updateBranch,updateMethod:.rebase).updateMethod,"rebase")
         XCTAssertNil(try MergeCommand(selected:value,affected:[value],method:.squash,action:.updateBranch,updateMethod:.merge).updateMethod,"Merge update keeps the legacy encoding")
         XCTAssertNil(try MergeCommand(selected:value,affected:[value],method:.squash,action:.direct,updateMethod:.rebase).updateMethod,"Only update-branch carries an update method")
-        var payload=try JSONSerialization.jsonObject(with:JSONEncoder().encode(MergeCommand(selected:value,affected:[value],method:.squash,action:.updateBranch))) as! [String:Any]
+        var payload=try JSONSerialization.jsonObject(with:JSONEncoder.stable.encode(MergeCommand(selected:value,affected:[value],method:.squash,action:.updateBranch))) as! [String:Any]
         XCTAssertNil(payload["updateMethod"]);XCTAssertNil(try JSONDecoder().decode(MergeCommand.self,from:JSONSerialization.data(withJSONObject:payload)).updateMethod,"Legacy commands decode")
         payload["updateMethod"]="squash"
         let unknown=try JSONDecoder().decode(MergeCommand.self,from:JSONSerialization.data(withJSONObject:payload))

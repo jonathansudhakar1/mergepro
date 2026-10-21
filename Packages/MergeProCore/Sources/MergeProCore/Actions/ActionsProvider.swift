@@ -85,7 +85,7 @@ public struct GitHubActionsProvider: ActionsProvider {
             if single { values=[try decodeRun(object,repository:repository)] }
             else { guard let rows=object["workflow_runs"] as? [[String:Any]] else { throw GitHubFailure.invalidResponse };values=try rows.map { try decodeRun($0,repository:repository) } }
             if response.header("ETag") != nil || response.header("Last-Modified") != nil {
-                responses.append(PollResponseCache(url:url,etag:response.header("ETag"),body:try JSONEncoder().encode(values.map(\.key.objectID)),lastModified:response.header("Last-Modified")))
+                responses.append(PollResponseCache(url:url,etag:response.header("ETag"),body:try JSONEncoder.stable.encode(values.map(\.key.objectID)),lastModified:response.header("Last-Modified")))
             }
             return (values,false)
         }

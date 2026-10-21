@@ -429,7 +429,7 @@ extension RepositoryBrowserService {
             await session.featureFailed(error,operation:ticket)
             let malformedReceipt=(error as? GitHubFailure) == .invalidResponse && (try? persistence().operationState(identity,account:ticket.account)) == "applied"
             if error as? RepositoryBrowserFailure == .unknownWriteOutcome || malformedReceipt {
-                if malformedReceipt { try persistence().record(identity,account:ticket.account,state:"unknown",data:JSONEncoder().encode(command)) }
+                if malformedReceipt { try persistence().record(identity,account:ticket.account,state:"unknown",data:JSONEncoder.stable.encode(command)) }
                 if let data=try await Self.existing(command,reader:reader,token:ticket.credential.accessToken) {
                     try persistence().record(identity,account:ticket.account,state:"applied",data:data)
                     return try await savePR(data,command:command,existing:true,ticket:ticket)

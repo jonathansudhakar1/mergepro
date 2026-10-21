@@ -156,3 +156,11 @@ public enum SettingsMigration {
         return copied
     }
 }
+
+public extension JSONEncoder {
+    /// Byte-for-byte reproducible output. Encoded values are hashed and compared (snapshot tokens, write intents,
+    /// inventory pages), and macOS 26's encoder does not keep keyed containers in a stable order.
+    static var stable: JSONEncoder {
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]; return encoder
+    }
+}

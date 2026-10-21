@@ -265,7 +265,7 @@ public struct PRDetailService: Sendable {
         return box.value == true
     }
     private func put<T:Codable & Sendable>(_ value:T,_ pr:PullRequest,_ ctx:Context,kind:String,at date:Date) async throws -> PRDetailStamped<T> {
-        let encoder=JSONEncoder();encoder.outputFormatting = [.sortedKeys]
+        let encoder=JSONEncoder.stable;encoder.outputFormatting = [.sortedKeys]
         let data=try encoder.encode(value),hash=Self.hash(data)
         try await session.detailPayload(data,key:payloadKey(pr,kind:kind,hash:hash),pr:pr.key,headSHA:pr.headRevision.rawValue,operation:ctx.ticket)
         return .init(value:value,fetchedAt:date,hash:hash,bytes:data.count)
@@ -285,7 +285,7 @@ public struct PRDetailService: Sendable {
         }
     }
     private func storeSection(_ pr:PullRequest,tab:PRDetailTab,_ ctx:Context,record:PRSectionRecord,prior:PRDetailStamped<PRSectionRecord>?,at date:Date) async throws {
-        let encoder=JSONEncoder();encoder.outputFormatting = [.sortedKeys]
+        let encoder=JSONEncoder.stable;encoder.outputFormatting = [.sortedKeys]
         let kind="section-"+tab.rawValue.lowercased()
         let stored:PRDetailStamped<PRSectionRecord>
         if let prior,Self.hash(try encoder.encode(record)) == prior.hash { stored = .init(value:prior.value,fetchedAt:date,hash:prior.hash,bytes:prior.bytes) }
@@ -331,8 +331,8 @@ public struct PRDetailService: Sendable {
                 var index=existing ?? PRDetailCacheIndex(head:head)
                 if index.head != head { index=PRDetailCacheIndex(head:head,mergeBases:index.mergeBases) }
                 change(&index)
-                let snapshot=PollFeatureSnapshot(key:key,feature:feature,payload:try JSONEncoder().encode(index))
-                try sql.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?) ON CONFLICT(host,accountID,repositoryID,objectID,feature) DO UPDATE SET json=excluded.json",arguments:[key.host,key.accountID,key.repositoryID,key.objectID,feature,try JSONEncoder().encode(snapshot)])
+                let snapshot=PollFeatureSnapshot(key:key,feature:feature,payload:try JSONEncoder.stable.encode(index))
+                try sql.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?) ON CONFLICT(host,accountID,repositoryID,objectID,feature) DO UPDATE SET json=excluded.json",arguments:[key.host,key.accountID,key.repositoryID,key.objectID,feature,try JSONEncoder.stable.encode(snapshot)])
             }
         }) else { throw CancellationError() }
     }

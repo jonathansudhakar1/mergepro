@@ -399,9 +399,9 @@ final class StorageTests: XCTestCase {
         let legacy = detailed(object: "7", state: .merged, updated: 1_700_000_000, head: "legacy-head")
         try queue.write { db in
             try db.execute(sql: "INSERT INTO accounts VALUES ('github.com','personal','personal','keychain-personal')")
-            try db.execute(sql: "INSERT INTO repositories VALUES ('github.com','personal','repo',?)", arguments: [try JSONEncoder().encode(Repository(key: key().repository, name: "org/repo", isPrivate: true, capabilities: [.readPullRequests]))])
-            try db.execute(sql: "INSERT INTO pullRequests VALUES ('github.com','personal','repo','7',?)", arguments: [try JSONEncoder().encode(legacy)])
-            try db.execute(sql: "INSERT INTO pullRequests VALUES ('github.com','personal','repo','8',?)", arguments: [try JSONEncoder().encode(PullRequest(key: key(object: "8"), headRevision: RevisionID("v1"), title: "v1 payload", state: .open, isDraft: false))])
+            try db.execute(sql: "INSERT INTO repositories VALUES ('github.com','personal','repo',?)", arguments: [try JSONEncoder.stable.encode(Repository(key: key().repository, name: "org/repo", isPrivate: true, capabilities: [.readPullRequests]))])
+            try db.execute(sql: "INSERT INTO pullRequests VALUES ('github.com','personal','repo','7',?)", arguments: [try JSONEncoder.stable.encode(legacy)])
+            try db.execute(sql: "INSERT INTO pullRequests VALUES ('github.com','personal','repo','8',?)", arguments: [try JSONEncoder.stable.encode(PullRequest(key: key(object: "8"), headRevision: RevisionID("v1"), title: "v1 payload", state: .open, isDraft: false))])
             try db.execute(sql: "INSERT INTO pollResponses VALUES ('github.com','personal','https://api.github.com/repos/org/repo/notifications?all=true&per_page=50',NULL,NULL,x'5B5D',NULL)")
             try db.execute(sql: "INSERT INTO pollResponses VALUES ('github.com','personal','https://api.github.com/repos/org/repo/actions/runs',NULL,NULL,x'5B5D',NULL)")
         }
@@ -440,11 +440,11 @@ final class StorageTests: XCTestCase {
         active.state = .sending
         try queue.write { db in
             try db.execute(sql: "INSERT INTO accounts VALUES ('github.com','personal','personal','keychain-personal')")
-            try db.execute(sql: "INSERT INTO repositories VALUES ('github.com','personal','repo',?)", arguments: [try JSONEncoder().encode(Repository(key: key().repository, name: "org/repo", isPrivate: true, capabilities: [.readPullRequests]))])
-            try db.execute(sql: "INSERT INTO pullRequests VALUES ('github.com','personal','repo','pull-request:7',?)", arguments: [try JSONEncoder().encode(pr)])
+            try db.execute(sql: "INSERT INTO repositories VALUES ('github.com','personal','repo',?)", arguments: [try JSONEncoder.stable.encode(Repository(key: key().repository, name: "org/repo", isPrivate: true, capabilities: [.readPullRequests]))])
+            try db.execute(sql: "INSERT INTO pullRequests VALUES ('github.com','personal','repo','pull-request:7',?)", arguments: [try JSONEncoder.stable.encode(pr)])
             try db.execute(sql: "INSERT INTO reviewOperations VALUES (?,?,?)", arguments: [UUID().uuidString, "corrupt", Data("{\"state\":\"sending\",".utf8)])
             try db.execute(sql: "INSERT INTO reviewOperations VALUES (?,?,?)", arguments: [UUID().uuidString, "text", "not json at all"])
-            try db.execute(sql: "INSERT INTO reviewOperations VALUES (?,?,?)", arguments: [active.id.uuidString, "valid", try JSONEncoder().encode(active)])
+            try db.execute(sql: "INSERT INTO reviewOperations VALUES (?,?,?)", arguments: [active.id.uuidString, "valid", try JSONEncoder.stable.encode(active)])
         }
         try queue.close()
         let store = try DatabaseStore(path: path)

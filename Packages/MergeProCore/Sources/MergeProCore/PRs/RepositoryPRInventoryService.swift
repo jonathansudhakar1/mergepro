@@ -54,7 +54,7 @@ public actor RepositoryPRInventoryService {
                         let started=context.cachedSnapshots.first { $0.key == value.key && $0.feature == value.feature }?.payload
                         if let stored=try Data.fetchOne(sql,sql:"SELECT json FROM pollFeatureSnapshots WHERE host=? AND accountID=? AND repositoryID=? AND objectID=? AND feature=?",arguments:[value.key.host,value.key.accountID,value.key.repositoryID,value.key.objectID,value.feature]),
                            try JSONDecoder().decode(PollFeatureSnapshot.self,from:stored).payload != started { continue }
-                        try sql.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?) ON CONFLICT(host,accountID,repositoryID,objectID,feature) DO UPDATE SET json=excluded.json",arguments:[value.key.host,value.key.accountID,value.key.repositoryID,value.key.objectID,value.feature,try JSONEncoder().encode(value)])
+                        try sql.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?) ON CONFLICT(host,accountID,repositoryID,objectID,feature) DO UPDATE SET json=excluded.json",arguments:[value.key.host,value.key.accountID,value.key.repositoryID,value.key.objectID,value.feature,try JSONEncoder.stable.encode(value)])
                     }
                 }
             }) else { throw CancellationError() }

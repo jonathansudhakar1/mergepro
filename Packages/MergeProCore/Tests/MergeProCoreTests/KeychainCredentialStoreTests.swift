@@ -43,7 +43,7 @@ final class KeychainCredentialStoreTests: XCTestCase {
     let account = AccountScope(host:"github.com", accountID:"42")
     var reference: String { AccountSessionStore.tokenReference(for:account) }
     let credential = GitHubCredential(accessToken:"fixture-access-value", refreshToken:"fixture-refresh-value", scopes:["repo"])
-    func encoded(_ value: GitHubCredential) throws -> Data { try JSONEncoder().encode(value) }
+    func encoded(_ value: GitHubCredential) throws -> Data { try JSONEncoder.stable.encode(value) }
 
     func testDataProtectionKeychainRoundTripLeavesLegacyKeychainEmpty() throws {
         let backend = FakeKeychainBackend(), store = KeychainCredentialStore(backend:backend)

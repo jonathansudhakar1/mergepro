@@ -76,7 +76,7 @@ public final class PollCycleStore: NotificationAttemptStore, Sendable {
     }
     @discardableResult private static func record(_ events: [ChangeEvent], baselineKeys: Set<String>, cycleID: UUID, in db: Database) throws -> Int {
         let baseline = try Bool.fetchOne(db,sql:"SELECT baseline FROM pollCycles WHERE id = ?",arguments:[cycleID.uuidString]) ?? false
-        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let encoder = JSONEncoder.stable; encoder.outputFormatting = [.sortedKeys]
         // Sort duplicate payloads as well as keys so contradictory page order cannot change the ledger.
         let ordered = try events.map { ($0,try encoder.encode($0)) }.sorted {
             $0.0.key == $1.0.key ? $0.1.lexicographicallyPrecedes($1.1) : $0.0.key < $1.0.key
@@ -127,7 +127,7 @@ public final class PollCycleStore: NotificationAttemptStore, Sendable {
             // next cycle resumes from it rather than this item overwriting it with an older continuation.
             let started=Dictionary(context.cachedSnapshots.map { (SnapshotIdentity(key:$0.key,feature:$0.feature),$0.payload) },uniquingKeysWith:{ _,last in last })
             // Sorted keys: an unchanged snapshot encodes to the stored bytes and is not rewritten.
-            let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+            let encoder = JSONEncoder.stable; encoder.outputFormatting = [.sortedKeys]
             for snapshot in result.snapshots where !obsolete.contains(snapshot.key) && (rowKeys.contains(snapshot.key) || !obsolete.contains(where:{ $0.repository == snapshot.key.repository })) {
                 let key = snapshot.key
                 if let payload=started[SnapshotIdentity(key:key,feature:snapshot.feature)],
@@ -325,7 +325,7 @@ public final class PollCycleStore: NotificationAttemptStore, Sendable {
                 events = events.filter { pending.contains($0.key) }
             }
             let summary = NotificationAggregator.summary(cycleID:id,events:events)
-            try db.execute(sql:"UPDATE pollCycles SET status='closed',closedAt=?,summary=? WHERE id=?",arguments:[date.timeIntervalSince1970,try JSONEncoder().encode(summary),id.uuidString])
+            try db.execute(sql:"UPDATE pollCycles SET status='closed',closedAt=?,summary=? WHERE id=?",arguments:[date.timeIntervalSince1970,try JSONEncoder.stable.encode(summary),id.uuidString])
             return summary
         }
     }

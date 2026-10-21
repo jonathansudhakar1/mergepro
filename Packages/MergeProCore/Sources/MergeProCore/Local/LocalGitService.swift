@@ -76,7 +76,7 @@ public actor LocalGitService {
         let index = try await read(["ls-files", "--stage", "-z"], directory: directory)
         let diff = try await read(["diff", "--no-ext-diff", "--no-textconv", "--binary", "--"], directory: directory)
         var hasher = SHA256(); hasher.update(data: diff.standardOutput)
-        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let encoder = JSONEncoder.stable; encoder.outputFormatting = [.sortedKeys]
         hasher.update(data: try encoder.encode(status))
         for entry in status.entries where entry.isUntracked {
             let url = repository.directory.appendingPathComponent(entry.path)

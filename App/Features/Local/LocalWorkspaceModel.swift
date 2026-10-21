@@ -65,6 +65,16 @@ import MergeProCore
         } catch { self.error = Self.message(for: error) }
     }
 
+    /// Keeps the selected file and its Staged/Unstaged view valid for a new status.
+    func reconcileSelection(_ status: GitStatusSnapshot) {
+        if !status.entries.contains(where: { $0.path == selectedPath }) { selectedPath = status.entries.first?.path; previewStaged = nil }
+        if let entry = status.entries.first(where: { $0.path == selectedPath }) {
+            if previewStaged == nil { previewStaged = entry.isStaged && !entry.isUnmerged && (entry.worktreeStatus == "." || entry.worktreeStatus == " ") }
+            let staged = previewStaged == true
+            if staged && (!entry.isStaged || entry.isUnmerged) { previewStaged = false }
+            if !staged && entry.worktreeStatus == "." && entry.isStaged { previewStaged = true }
+        }
+    }
     func refresh(folderStore: SecurityScopedFolderStore, runner: any GitRunner) async {
         let token = UUID(); generation = token; previewGeneration = UUID(); previewTask?.cancel(); previewTask = nil
         markSelectionApplied()
@@ -115,13 +125,7 @@ import MergeProCore
                 return
             }
             failedDirectory = nil
-            if !snapshot.status.entries.contains(where: { $0.path == selectedPath }) { selectedPath = snapshot.status.entries.first?.path; previewStaged = nil }
-            if let entry = snapshot.status.entries.first(where: { $0.path == selectedPath }) {
-                if previewStaged == nil { previewStaged = entry.isStaged && !entry.isUnmerged && (entry.worktreeStatus == "." || entry.worktreeStatus == " ") }
-                let staged = previewStaged == true
-                if staged && (!entry.isStaged || entry.isUnmerged) { previewStaged = false }
-                if !staged && entry.worktreeStatus == "." && entry.isStaged { previewStaged = true }
-            }
+            reconcileSelection(snapshot.status)
             await loadPreview(folderStore: folderStore, runner: runner)
         } catch {
             guard generation == token, !Task.isCancelled else { return }

@@ -169,7 +169,7 @@ final class BoardProjectionTests: XCTestCase {
     let database = try DatabaseStore(path: url.path)
     XCTAssertEqual(try database.snapshot(for: row.key.account).pullRequests, [row])
     var object = try XCTUnwrap(
-      JSONSerialization.jsonObject(with: JSONEncoder().encode(row)) as? [String: Any])
+      JSONSerialization.jsonObject(with: JSONEncoder.stable.encode(row)) as? [String: Any])
     object.removeValue(forKey: "metadata")
     XCTAssertNil(
       try JSONDecoder().decode(

@@ -12,7 +12,7 @@ struct RepositoryBrowserPersistence:Sendable {
         }
     }
     func cache<T:Encodable>(_ value:T,key:String,account:AccountScope) throws {
-        let data=try JSONEncoder().encode(value)
+        let data=try JSONEncoder.stable.encode(value)
         guard data.count<=12_000_000 else { return }
         try database.database.write { db in
             try db.execute(sql:"INSERT INTO repo_browser_cache VALUES(?,?,?,?,?) ON CONFLICT(account_host,account_id,cache_key) DO UPDATE SET json=excluded.json,touched=excluded.touched",arguments:[account.host,account.accountID,key,data,Date().timeIntervalSince1970])
@@ -29,7 +29,7 @@ struct RepositoryBrowserPersistence:Sendable {
     }
     func saveState(_ state:RepoTreePersistence,account:AccountScope) throws {
         try database.database.write { db in
-            try db.execute(sql:"INSERT INTO repo_browser_state VALUES(?,?,?,?) ON CONFLICT(account_host,account_id,name) DO UPDATE SET json=excluded.json",arguments:[account.host,account.accountID,"catalog",try JSONEncoder().encode(state)])
+            try db.execute(sql:"INSERT INTO repo_browser_state VALUES(?,?,?,?) ON CONFLICT(account_host,account_id,name) DO UPDATE SET json=excluded.json",arguments:[account.host,account.accountID,"catalog",try JSONEncoder.stable.encode(state)])
         }
     }
     func operationState(_ identity:String,account:AccountScope) throws -> String? {
@@ -49,6 +49,6 @@ extension RepositoryBrowserPersistence {
         }
     }
     func saveCodeState(_ state:RepoCodePersistence,repository:RepositoryKey) throws {
-        try database.database.write { db in try db.execute(sql:"INSERT INTO repo_browser_state VALUES(?,?,?,?) ON CONFLICT(account_host,account_id,name) DO UPDATE SET json=excluded.json",arguments:[repository.account.host,repository.account.accountID,"code|"+repository.repositoryID,try JSONEncoder().encode(state)]) }
+        try database.database.write { db in try db.execute(sql:"INSERT INTO repo_browser_state VALUES(?,?,?,?) ON CONFLICT(account_host,account_id,name) DO UPDATE SET json=excluded.json",arguments:[repository.account.host,repository.account.accountID,"code|"+repository.repositoryID,try JSONEncoder.stable.encode(state)]) }
     }
 }

@@ -45,7 +45,7 @@ enum LegacyPRKeyCleanup {
     /// `DraftReviewStore` names review drafts and ledger rows, and `PRDetailStore` reading progress, by
     /// base64 of the sorted-keys JSON of the PR key.
     private static func identity(_ key:ProviderKey) throws -> String {
-        let encoder=JSONEncoder();encoder.outputFormatting = [.sortedKeys]
+        let encoder=JSONEncoder.stable;encoder.outputFormatting = [.sortedKeys]
         return try encoder.encode(key).base64EncodedString()
     }
     private static func key(identity:String) -> ProviderKey? {
@@ -149,7 +149,7 @@ enum LegacyPRKeyCleanup {
                     let original=operation.draftOwnerKey ?? operation.command.key
                     if try Bool.fetchOne(db,sql:"SELECT EXISTS(SELECT 1 FROM reviewDrafts WHERE identity=?)",arguments:[try identity(original)]) == true {
                         guard var object=try JSONSerialization.jsonObject(with:repaired) as? [String:Any] else { throw StorageError.draftIdentityConflict }
-                        object["draftOwnerKey"]=try JSONSerialization.jsonObject(with:JSONEncoder().encode(original))
+                        object["draftOwnerKey"]=try JSONSerialization.jsonObject(with:JSONEncoder.stable.encode(original))
                         repaired=try JSONSerialization.data(withJSONObject:object,options:[.withoutEscapingSlashes])
                     }
                 }

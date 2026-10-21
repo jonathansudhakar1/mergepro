@@ -111,7 +111,7 @@ extension RepositoryBrowserService {
             let intent=RevertIntent(number:number,nodeID:nodeID,title:title,base:base,attemptedAt:Date());captured=intent
             if let found=try await Self.findRevert(reader,repository:repository,intent:intent,token:token,since:nil).match { return try await adoptRevert(found,repository:repository,identity:identity,ticket:ticket) }
             let request=try Self.graphQLMutationBody("RevertPullRequest",input:"RevertPullRequestInput",field:"revertPullRequest",selection:"revertPullRequest { id number url title isDraft state headRefName headRefOid baseRefName baseRefOid }",variables:["pullRequestId":nodeID,"title":title,"body":body,"draft":draft])
-            let response=try await mutate(account:ticket.account,identity:identity,path:"graphql",method:"POST",body:request,intent:JSONEncoder().encode(intent),validate:{ _ = try Self.revertNode($0) }) { reader,ticket in
+            let response=try await mutate(account:ticket.account,identity:identity,path:"graphql",method:"POST",body:request,intent:JSONEncoder.stable.encode(intent),validate:{ _ = try Self.revertNode($0) }) { reader,ticket in
                 let token=ticket.credential.accessToken
                 try await Self.requirePush(reader,name:repository.repository.name,expectedID:repository.key.repositoryID,token:token)
                 _ = try Self.requireMerged(await Self.pullRequestObject(reader,repository:repository,number:number,token:token),nodeID:nodeID)
@@ -122,7 +122,7 @@ extension RepositoryBrowserService {
             await session.featureFailed(error,operation:ticket)
             let malformedReceipt=(error as? GitHubFailure) == .invalidResponse && (try? persistence().operationState(identity,account:ticket.account)) == "applied"
             guard error as? RepositoryBrowserFailure == .unknownWriteOutcome || malformedReceipt else { throw error }
-            if malformedReceipt,let captured { try persistence().record(identity,account:ticket.account,state:"unknown",data:JSONEncoder().encode(captured)) }
+            if malformedReceipt,let captured { try persistence().record(identity,account:ticket.account,state:"unknown",data:JSONEncoder.stable.encode(captured)) }
             // The durable intent (not this call's inputs) defines what is reconciled.
             guard let intent=(try Self.ledgerIntent(database,identity:identity,account:ticket.account)).flatMap({ try? JSONDecoder().decode(RevertIntent.self,from:$0) }) ?? captured else { throw RepositoryBrowserFailure.unknownWriteOutcome }
             if let found=try await Self.findRevert(reader,repository:repository,intent:intent,token:token,since:intent.attemptedAt).match { return try await adoptRevert(found,repository:repository,identity:identity,ticket:ticket) }

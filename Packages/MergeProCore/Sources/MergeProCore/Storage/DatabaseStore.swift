@@ -35,7 +35,7 @@ public final class DatabaseStore: Sendable {
     /// Sorted keys: JSONEncoder's key order otherwise varies between encodes of an equal value, so an
     /// unchanged row would never compare equal and every upsert would rewrite it.
     static func canonicalJSON<T: Encodable>(_ value: T) throws -> Data {
-        let encoder = JSONEncoder()
+        let encoder = JSONEncoder.stable
         encoder.outputFormatting = [.sortedKeys]
         return try encoder.encode(value)
     }
@@ -127,7 +127,7 @@ public final class DatabaseStore: Sendable {
             try db.execute(sql: """
                 INSERT INTO drafts VALUES (?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET json = excluded.json
-                """, arguments: [draft.id.uuidString, draft.key.host, draft.key.accountID, try JSONEncoder().encode(draft)])
+                """, arguments: [draft.id.uuidString, draft.key.host, draft.key.accountID, try JSONEncoder.stable.encode(draft)])
         }
     }
 
@@ -267,9 +267,9 @@ public final class DatabaseStore: Sendable {
                 let replacement: Data?
                 if let summary = try? decoder.decode(PollSummary.self,from:row["summary"] as Data) {
                     guard let scrubbed = summary.removing(account:scope,eventKeys:keys) else { continue }
-                    replacement = try JSONEncoder().encode(scrubbed)
+                    replacement = try JSONEncoder.stable.encode(scrubbed)
                 } else if table == "notificationAttempts" {
-                    replacement = try JSONEncoder().encode(PollSummary(cycleID:UUID(uuidString:id) ?? UUID(),eventKeys:[],title:"",body:""))
+                    replacement = try JSONEncoder.stable.encode(PollSummary(cycleID:UUID(uuidString:id) ?? UUID(),eventKeys:[],title:"",body:""))
                 } else { replacement = nil }
                 try db.execute(sql:"UPDATE \(table) SET summary=? WHERE \(column)=?",arguments:[replacement,id])
             }
@@ -298,8 +298,8 @@ public final class DatabaseStore: Sendable {
                 try db.execute(sql:"DELETE FROM pollFeatureSnapshots WHERE host=? AND accountID=? AND repositoryID=? AND objectID=? AND feature=?",arguments:target)
                 continue
             }
-            let stripped=PollFeatureSnapshot(key:snapshot.key,feature:feature,payload:try JSONEncoder().encode(PRDetailCacheIndex(head:index.head,mergeBases:index.mergeBases)))
-            try db.execute(sql:"UPDATE pollFeatureSnapshots SET json=? WHERE host=? AND accountID=? AND repositoryID=? AND objectID=? AND feature=?",arguments:[try JSONEncoder().encode(stripped)]+target)
+            let stripped=PollFeatureSnapshot(key:snapshot.key,feature:feature,payload:try JSONEncoder.stable.encode(PRDetailCacheIndex(head:index.head,mergeBases:index.mergeBases)))
+            try db.execute(sql:"UPDATE pollFeatureSnapshots SET json=? WHERE host=? AND accountID=? AND repositoryID=? AND objectID=? AND feature=?",arguments:[try JSONEncoder.stable.encode(stripped)]+target)
         }
         // Cached response bodies are private. Only the notification feed's account-partitioned
         // validators survive revocation; unknown-feature rows fail closed and are purged.

@@ -196,7 +196,7 @@ extension RepositoryBrowserService {
     /// lost or ambiguous response, never falls back, so a possibly applied write is never sent twice.
     public func apply(_ mutation:RepositoryLabelMutation,to repository:RepoCatalogEntry) async throws -> RepositoryLabel? {
         let mutation=try mutation.normalized()
-        let identity=mutation.identity(repository:repository.key),intent=try JSONEncoder().encode(mutation)
+        let identity=mutation.identity(repository:repository.key),intent=try JSONEncoder.stable.encode(mutation)
         let root=try GitHubRepoReader.repositoryPath(repository.repository.name),key="labels|"+repository.key.repositoryID
         let admitted:@Sendable (GitHubRepoReader,AccountOperation) async throws -> RepositoryLabelCatalog={ reader,ticket in
             try await Self.requireLabelManagement(reader,repository:repository,token:ticket.credential.accessToken)
@@ -275,7 +275,7 @@ extension RepositoryBrowserService {
     /// ledger holds one. Absence in an incomplete catalog proves nothing and keeps the write pending.
     public func reconcileLabel(_ mutation:RepositoryLabelMutation,in repository:RepoCatalogEntry) async throws -> RepositoryBranchReconciliation {
         let mutation=try mutation.normalized()
-        let identity=mutation.identity(repository:repository.key),intent=try JSONEncoder().encode(mutation)
+        let identity=mutation.identity(repository:repository.key),intent=try JSONEncoder.stable.encode(mutation)
         guard !inFlightWrites.contains(identity) else { throw RepositoryBrowserFailure.unknownWriteOutcome }
         return try await read(repository.key.account) { reader,ticket in
             let catalog=try await Self.fetchLabels(reader,repository:repository,token:ticket.credential.accessToken)

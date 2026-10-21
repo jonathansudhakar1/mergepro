@@ -65,7 +65,7 @@ extension DatabaseStore {
                   let event=try? JSONDecoder().decode(ChangeEvent.self,from:json),
                   try NotificationThreadCommand(event:event,intent:c.intent) == c else { throw NotificationThreadFailure.unavailable }
             guard try !Bool.fetchOne(db,sql:"SELECT EXISTS(SELECT 1 FROM notificationThreadOperations WHERE host=? AND accountID=? AND threadID=? AND state IN ('prepared','sending','uncertain'))",arguments:[c.account.host,c.account.accountID,c.threadID])! else { throw NotificationThreadFailure.operationInProgress }
-            try db.execute(sql:"INSERT INTO notificationThreadOperations(id,host,accountID,threadID,state,json) VALUES (?,?,?,?,?,?)",arguments:[operation.id.uuidString,c.account.host,c.account.accountID,c.threadID,operation.state.rawValue,try JSONEncoder().encode(operation)])
+            try db.execute(sql:"INSERT INTO notificationThreadOperations(id,host,accountID,threadID,state,json) VALUES (?,?,?,?,?,?)",arguments:[operation.id.uuidString,c.account.host,c.account.accountID,c.threadID,operation.state.rawValue,try JSONEncoder.stable.encode(operation)])
         }
     }
     func updateNotificationThread(_ operation:NotificationThreadOperation,expected:NotificationThreadOperation.State) throws {
@@ -75,7 +75,7 @@ extension DatabaseStore {
             guard old.state == expected,![.confirmed,.rejected].contains(old.state) else { throw NotificationThreadFailure.operationInProgress }
             // Retention of a terminal command starts when it closes; unresolved rows are never pruned.
             let closedAt:Double? = [.confirmed,.rejected].contains(operation.state) ? Date().timeIntervalSince1970 : nil
-            try db.execute(sql:"UPDATE notificationThreadOperations SET state=?,json=?,closedAt=? WHERE id=?",arguments:[operation.state.rawValue,try JSONEncoder().encode(operation),closedAt,operation.id.uuidString])
+            try db.execute(sql:"UPDATE notificationThreadOperations SET state=?,json=?,closedAt=? WHERE id=?",arguments:[operation.state.rawValue,try JSONEncoder.stable.encode(operation),closedAt,operation.id.uuidString])
             if operation.state == .confirmed {
                 try db.execute(sql:"UPDATE changeEvents SET acknowledged=1 WHERE eventKey=? AND host=? AND accountID=?",arguments:[operation.command.eventKey,operation.command.account.host,operation.command.account.accountID])
             }

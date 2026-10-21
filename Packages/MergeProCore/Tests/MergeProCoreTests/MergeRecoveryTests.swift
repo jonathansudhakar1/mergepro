@@ -89,7 +89,7 @@ final class MergeRecoveryTests: XCTestCase {
         try store.prepare(operation); operation.state = .sending; try store.update(operation, expectedState:.prepared)
         operation.state = .uncertain
         operation.response = json(#"{"status":"pending","details":{"uuid":"11111111-1111-1111-1111-111111111111","expected_head_sha":"h2","merge_method":"squash","merge_action":"direct_merge","bypass_rules":false}}"#).data
-        var encoded = try JSONSerialization.jsonObject(with:JSONEncoder().encode(operation)) as! [String:Any]
+        var encoded = try JSONSerialization.jsonObject(with:JSONEncoder.stable.encode(operation)) as! [String:Any]
         encoded["mergeResponseStatus"] = 202
         operation = try JSONDecoder().decode(PRWriteOperation.self, from:JSONSerialization.data(withJSONObject:encoded))
         try store.update(operation, expectedState:.sending)

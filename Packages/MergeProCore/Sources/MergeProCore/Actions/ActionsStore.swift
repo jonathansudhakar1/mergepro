@@ -53,7 +53,7 @@ public struct ActionsStore:Sendable {
     }
     public func save(_ catalog:ActionsCatalog) throws {
         let key=catalog.repository.key
-        try database.database.write { try $0.execute(sql:"INSERT INTO actions_catalog VALUES(?,?,?,?) ON CONFLICT(host,accountID,repositoryID) DO UPDATE SET json=excluded.json",arguments:[key.account.host,key.account.accountID,key.repositoryID,try JSONEncoder().encode(catalog)]) }
+        try database.database.write { try $0.execute(sql:"INSERT INTO actions_catalog VALUES(?,?,?,?) ON CONFLICT(host,accountID,repositoryID) DO UPDATE SET json=excluded.json",arguments:[key.account.host,key.account.accountID,key.repositoryID,try JSONEncoder.stable.encode(catalog)]) }
     }
     public func presets(_ repository:RepositoryKey?=nil) throws -> [WorkflowPreset] {
         try database.database.read { db in
@@ -65,14 +65,14 @@ public struct ActionsStore:Sendable {
     }
     public func save(_ preset:WorkflowPreset) throws {
         let key=preset.repository
-        try database.database.write { try $0.execute(sql:"INSERT INTO actions_presets VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET json=excluded.json",arguments:[preset.id.uuidString,key.account.host,key.account.accountID,key.repositoryID,try JSONEncoder().encode(preset)]) }
+        try database.database.write { try $0.execute(sql:"INSERT INTO actions_presets VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET json=excluded.json",arguments:[preset.id.uuidString,key.account.host,key.account.accountID,key.repositoryID,try JSONEncoder.stable.encode(preset)]) }
     }
     public func removePreset(_ id:UUID) throws { try database.database.write { try $0.execute(sql:"DELETE FROM actions_presets WHERE id=?",arguments:[id.uuidString]) } }
     public func prepare(_ operation:ActionsWriteOperation) throws {
         let key=operation.repository.key;let lock=[key.account.host,key.account.accountID,key.repositoryID,operation.intent.lockIdentity].joined(separator:"|")
         try database.database.write { db in
             guard try !Bool.fetchOne(db,sql:"SELECT EXISTS(SELECT 1 FROM actions_operations WHERE lockKey=?)",arguments:[lock])! else { throw ActionsFailure.operationInProgress }
-            try db.execute(sql:"INSERT INTO actions_operations VALUES(?,?,?,?,?,?,?)",arguments:[operation.id.uuidString,key.account.host,key.account.accountID,key.repositoryID,operation.state.rawValue,try JSONEncoder().encode(operation),lock])
+            try db.execute(sql:"INSERT INTO actions_operations VALUES(?,?,?,?,?,?,?)",arguments:[operation.id.uuidString,key.account.host,key.account.accountID,key.repositoryID,operation.state.rawValue,try JSONEncoder.stable.encode(operation),lock])
         }
     }
     public func update(_ operation:ActionsWriteOperation,from expected:ActionsWriteState) throws {
@@ -80,7 +80,7 @@ public struct ActionsStore:Sendable {
             let acceptedCreation:Bool
             if case .dispatch=operation.intent { acceptedCreation=operation.state == .accepted } else { acceptedCreation=false }
             let unlock=[ActionsWriteState.rejected,.confirmed].contains(operation.state) || acceptedCreation
-            try db.execute(sql:"UPDATE actions_operations SET state=?,json=?,lockKey=CASE WHEN ? THEN NULL ELSE lockKey END WHERE id=? AND state=?",arguments:[operation.state.rawValue,try JSONEncoder().encode(operation),unlock,operation.id.uuidString,expected.rawValue])
+            try db.execute(sql:"UPDATE actions_operations SET state=?,json=?,lockKey=CASE WHEN ? THEN NULL ELSE lockKey END WHERE id=? AND state=?",arguments:[operation.state.rawValue,try JSONEncoder.stable.encode(operation),unlock,operation.id.uuidString,expected.rawValue])
             guard db.changesCount==1 else { throw ActionsFailure.operationInProgress }
         }
     }

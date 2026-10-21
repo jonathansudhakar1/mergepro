@@ -105,7 +105,7 @@ final class StorageVolumeTests: XCTestCase {
         let path=directory.appendingPathComponent("db.sqlite").path
         let queue=try DatabaseQueue(path:path)
         try Migrations.migrator().migrate(queue,upTo:"v7-actions-repository-browser")
-        let encoder=JSONEncoder(),accounts=accounts
+        let encoder=JSONEncoder.stable,accounts=accounts
         let repositories=try accounts.flatMap { account in try (0..<Self.repos).map { [account.host,account.accountID,"repo-\($0)"].databaseValue(json:try encoder.encode(Repository(key:RepositoryKey(account:account,repositoryID:"repo-\($0)"),name:"org/repo-\($0)",isPrivate:true,capabilities:[]))) } }
         let rows=try accounts.flatMap { account in try (0..<Self.perAccount).map { let pr=pullRequest(account,index:$0);return [pr.key.host,pr.key.accountID,pr.key.repositoryID,pr.key.objectID].databaseValue(json:try encoder.encode(pr)) } }
         try await queue.write { db in

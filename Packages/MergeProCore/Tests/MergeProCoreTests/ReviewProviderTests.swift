@@ -155,7 +155,7 @@ actor ReviewProviderFixture:GitHubTransport {
         let result=try await coordinator.perform(command(.thread(comment,pendingReviewID:try XCTUnwrap(pending.providerIDs.first))))
         XCTAssertEqual(result.state,.confirmed)
         // Exact old crash boundary: terminal ledger persisted but draft adoption did not commit.
-        let original=try JSONEncoder().encode(draft)
+        let original=try JSONEncoder.stable.encode(draft)
         try await db.database.write { try $0.execute(sql:"UPDATE reviewDrafts SET json=?",arguments:[original]) }
         let reopened=try DatabaseStore(path:db.database.path),restarted=DraftReviewStore(database:reopened)
         // A stale pre-crash editor cannot stage the captured comment before recovery finishes.

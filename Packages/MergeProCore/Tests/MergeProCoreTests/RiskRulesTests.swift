@@ -6,7 +6,7 @@ final class RiskRulesTests: XCTestCase {
         let risks = RiskRules.evaluate(files:[file],viewed:[],usualSize:0)
         XCTAssertTrue(risks.contains { $0.kind == .sensitivePath })
         XCTAssertTrue(risks.contains { $0.kind == .possibleSecret && $0.line == 1 })
-        XCTAssertFalse(String(decoding:try JSONEncoder().encode(risks),as:UTF8.self).contains("ghp_"))
+        XCTAssertFalse(String(decoding:try JSONEncoder.stable.encode(risks),as:UTF8.self).contains("ghp_"))
     }
     func testDependencyAndMissingTestRulesRespectTestChanges() {
         let source = DiffFile(path:"src/main.swift",status:.modified,patch:nil)

@@ -108,7 +108,7 @@ final class PollStoreDecodeTests: XCTestCase {
         try store.begin(id,at:Date(),baseline:true)
         let runs = try keys.map { key in
             let run = WorkflowRun(repository:try XCTUnwrap(database.repository(key)),runID:Int64(key.repositoryID)!,workflowID:3,attempt:1,name:"CI",branch:"main",headSHA:"sha",event:"push",actor:"dev",status:"completed",conclusion:"success",createdAt:Date(),updatedAt:Date())
-            return PollFeatureSnapshot(key:run.key,feature:"github-actions",payload:try JSONEncoder().encode(run))
+            return PollFeatureSnapshot(key:run.key,feature:"github-actions",payload:try JSONEncoder.stable.encode(run))
         }
         let context = PollFetchContext(cycleID:id,account:account,repositories:Set(keys),featureID:"github-actions",cachedPullRequests:[],cachedSnapshots:[],repositoryMetadata:[:],
             deadline:.now.advanced(by:.seconds(10)),operation:nil,client:nil,budget:RateBudget(),baselinedRepositories:[],suppressNotifications:true,cachedResponses:[:])

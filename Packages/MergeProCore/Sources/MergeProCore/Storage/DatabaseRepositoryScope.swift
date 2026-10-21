@@ -117,7 +117,7 @@ extension DatabaseStore {
     }
     private static func writeRetainedTracking(_ ids:Set<String>,account:AccountScope,in db:Database) throws {
         if ids.isEmpty { try db.execute(sql:"DELETE FROM settings WHERE host=? AND accountID=? AND name=?",arguments:[account.host,account.accountID,AccountSettingKey.retainedTrackedRepositories.rawValue]);return }
-        try writeScopeSetting(String(decoding:JSONEncoder().encode(ids.sorted()),as:UTF8.self),key:.retainedTrackedRepositories,account:account,in:db)
+        try writeScopeSetting(String(decoding:JSONEncoder.stable.encode(ids.sorted()),as:UTF8.self),key:.retainedTrackedRepositories,account:account,in:db)
     }
     /// Keeps tracked repository IDs (opaque, no names) across a purge of the repository rows.
     static func retainTracking(_ ids:Set<String>,account:AccountScope,in db:Database) throws {

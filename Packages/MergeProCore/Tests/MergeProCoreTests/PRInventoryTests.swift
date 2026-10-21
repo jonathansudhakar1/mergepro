@@ -168,7 +168,7 @@ final class PRInventoryTests: XCTestCase {
     let body = "A short summary.\n" + String(repeating: "More details. ", count: 100)
     let result = try await GitHubPRInventoryFetcher().fetch(context(InventoryTransport(bodyText: body)))
     let metadata = try XCTUnwrap(result.pullRequests.first?.metadata)
-    let value = try JSONSerialization.jsonObject(with: JSONEncoder().encode(metadata)) as! [String: Any]
+    let value = try JSONSerialization.jsonObject(with: JSONEncoder.stable.encode(metadata)) as! [String: Any]
     XCTAssertEqual(value["descriptionPreview"] as? String, String(body.prefix(600)))
   }
   func testInventoryQueryUsesSupportedReviewAuthorSelection() async throws {

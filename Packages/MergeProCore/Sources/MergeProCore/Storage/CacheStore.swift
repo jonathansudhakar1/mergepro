@@ -209,7 +209,7 @@ public actor CacheStore {
     static func payloadID(_ key: PayloadKey) throws -> String { try identifier(key) }
 
     private static func identifier<T: Encodable>(_ value: T) throws -> String {
-        let encoder = JSONEncoder()
+        let encoder = JSONEncoder.stable
         encoder.outputFormatting = [.sortedKeys]
         return SHA256.hash(data: try encoder.encode(value)).map { String(format: "%02x", $0) }.joined()
     }

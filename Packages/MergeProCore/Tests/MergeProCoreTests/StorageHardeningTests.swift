@@ -312,7 +312,7 @@ final class StorageHardeningTests: XCTestCase {
         try write(store) { db in
             for repo in ["1","2"] {
                 let snapshot = PollFeatureSnapshot(key:key(account,repo:repo),feature:"fixture-feature",payload:Data("private".utf8))
-                try db.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?)",arguments:[account.host,account.accountID,repo,"pull-request:1","fixture-feature",try JSONEncoder().encode(snapshot)])
+                try db.execute(sql:"INSERT INTO pollFeatureSnapshots VALUES (?,?,?,?,?,?)",arguments:[account.host,account.accountID,repo,"pull-request:1","fixture-feature",try JSONEncoder.stable.encode(snapshot)])
                 try db.execute(sql:"INSERT INTO actions_catalog VALUES (?,?,?,?)",arguments:[account.host,account.accountID,repo,Data("{}".utf8)])
                 try db.execute(sql:"INSERT INTO repo_browser_cache VALUES (?,?,?,?,?)",arguments:[account.host,account.accountID,"branches|"+repo,Data("[]".utf8),0])
                 try db.execute(sql:"INSERT INTO repo_browser_cache VALUES (?,?,?,?,?)",arguments:[account.host,account.accountID,"tree|\(repo)|sha|tree",Data("[]".utf8),0])

@@ -14,7 +14,7 @@ public final class PullRequestStore: Sendable {
   }
   public func save(_ state: PRViewState) throws {
     try Self.validate(state.views)
-    let data = try JSONEncoder().encode(state)
+    let data = try JSONEncoder.stable.encode(state)
     try database.database.write {
       try $0.execute(
         sql:
@@ -23,7 +23,7 @@ public final class PullRequestStore: Sendable {
     }
   }
   public func exportViews() throws -> Data {
-    let encoder = JSONEncoder()
+    let encoder = JSONEncoder.stable
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     return try encoder.encode(load().views)
   }

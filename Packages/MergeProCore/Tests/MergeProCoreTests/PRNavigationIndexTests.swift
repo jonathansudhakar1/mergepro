@@ -15,7 +15,7 @@ final class PRNavigationIndexTests:XCTestCase {
         XCTAssertEqual(state.navigationHistory?.first { $0.key == key(1199) }?.opens,2)
         let expected=state.navigationScore(key(1199),at:now.addingTimeInterval(2000))
         XCTAssertGreaterThan(expected,state.navigationScore(key(1198),at:now.addingTimeInterval(2000)))
-        let decoded=try JSONDecoder().decode(PRViewState.self,from:JSONEncoder().encode(state))
+        let decoded=try JSONDecoder().decode(PRViewState.self,from:JSONEncoder.stable.encode(state))
         XCTAssertEqual(decoded,state)
         XCTAssertEqual(decoded.navigationScore(key(1199),at:now.addingTimeInterval(2000)),expected,"A decoded state is indexed")
         var other=decoded

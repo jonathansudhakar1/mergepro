@@ -21,13 +21,13 @@ public struct PRClassificationStore:Sendable {
             guard !key.isEmpty,key.count <= 100,key.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber || "-_[].".contains($0)) }),normalized[key] == nil else { throw Failure.invalidRule }
             normalized[key]=value
         }
-        let data=try JSONEncoder().encode(normalized).base64EncodedString()
+        let data=try JSONEncoder.stable.encode(normalized).base64EncodedString()
         try database.database.write { db in
             try db.execute(sql:"INSERT INTO applicationSettings VALUES (?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value",arguments:[SettingsKey.authorRules(account).rawValue,data])
             let rows=try Data.fetchAll(db,sql:"SELECT json FROM pullRequests WHERE host=? AND accountID=?",arguments:[account.host,account.accountID])
             for value in rows {
                 let pr=try Self.applyingRules(to:JSONDecoder().decode(PullRequest.self,from:value),in:db)
-                try db.execute(sql:"UPDATE pullRequests SET json=? WHERE host=? AND accountID=? AND repositoryID=? AND objectID=?",arguments:[JSONEncoder().encode(pr),pr.key.host,pr.key.accountID,pr.key.repositoryID,pr.key.objectID])
+                try db.execute(sql:"UPDATE pullRequests SET json=? WHERE host=? AND accountID=? AND repositoryID=? AND objectID=?",arguments:[JSONEncoder.stable.encode(pr),pr.key.host,pr.key.accountID,pr.key.repositoryID,pr.key.objectID])
             }
         }
     }

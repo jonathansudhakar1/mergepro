@@ -226,8 +226,8 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
           for field in ["reviewRequests", "labels", "assignees", "reviews", "timelineItems"]
           where node.connections[field]?.pageInfo.hasNextPage == true {
             if let fresh = node.connections[field], let saved = completed.connections[field],
-              (try? JSONEncoder().encode(fresh.nodes))
-                == (try? JSONEncoder().encode(Array(saved.nodes.prefix(fresh.nodes.count))))
+              (try? JSONEncoder.stable.encode(fresh.nodes))
+                == (try? JSONEncoder.stable.encode(Array(saved.nodes.prefix(fresh.nodes.count))))
             {
               node.connections[field] = saved
             }
@@ -750,7 +750,7 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
     staleRetry = staleRetry.filter { stale[$0.key] != nil }
     checkpoint.staleRetry = staleRetry.isEmpty ? nil : staleRetry
     // Never retain unbounded opaque provider payloads in a checkpoint.
-    if try JSONEncoder().encode(checkpoint).count > 2 * 1024 * 1024 {
+    if try JSONEncoder.stable.encode(checkpoint).count > 2 * 1024 * 1024 {
       checkpoint.pending = []
       checkpoint.recentComplete = []
       checkpoint.sweepPending = nil
@@ -771,7 +771,7 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
         checkpoint.sweepCursor = nil
       }
     }
-    let continuation = try JSONEncoder().encode(checkpoint)
+    let continuation = try JSONEncoder.stable.encode(checkpoint)
     let status = PRInventoryStatus(
       complete: complete, fetchedCount: rows.count - enrichedCachedRows, fetchedAt: Date(),
       message: complete
@@ -794,7 +794,7 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
       pullRequests: Array(rows.values).sorted { $0.metadata!.number < $1.metadata!.number },
       snapshots: [
         PollFeatureSnapshot(
-          key: statusKey, feature: featureID, payload: try JSONEncoder().encode(status))
+          key: statusKey, feature: featureID, payload: try JSONEncoder.stable.encode(status))
       ], baselinedRepositories: complete ? [repo] : [], baselineEventKeys: silent)
   }
   private static let teamTTL: TimeInterval = 300

@@ -11,7 +11,7 @@ extension SetupStorage {
         return try JSONDecoder().decode([PRNavigationVisit].self,from:Data(text.utf8))
     }
     func savePRNavigationHistory(_ history:[PRNavigationVisit]) throws {
-        let data=try JSONEncoder().encode(history)
+        let data=try JSONEncoder.stable.encode(history)
         try stores().0.setApplicationSetting(String(decoding:data,as:UTF8.self),for:.prNavigationHistory)
     }
 }
