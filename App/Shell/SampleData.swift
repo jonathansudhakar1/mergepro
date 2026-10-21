@@ -10,7 +10,7 @@ enum SampleData {
     /// The stored shape of `PRInventoryStatus`, which has no public initializer.
     private struct InventoryStatus: Encodable { let complete: Bool; let fetchedCount: Int; let fetchedAt: Date; let lastSuccessAt: Date }
     private struct Sample {
-        var repo: String, number: Int, title: String, author: String
+        var repo: String, number: Int, title: String, author: String, branchPrefix = ""
         var state: PullRequest.State = .open, draft = false
         var review = "REVIEW_REQUIRED", checks = "SUCCESS", mergeable = "MERGEABLE"
         var labels: [String] = [], needsMe = false, mine = false
@@ -18,11 +18,11 @@ enum SampleData {
         var summary = ""
     }
     private static let labelColors = ["bug": "d73a4a", "enhancement": "a2eeef", "performance": "fbca04", "dependencies": "0366d6",
-                                      "security": "b60205", "ui": "c5def5", "infra": "5319e7", "tests": "0e8a16", "docs": "0075ca"]
+                                      "security": "b60205", "ui": "c5def5", "infra": "5319e7", "tests": "0e8a16", "docs": "0075ca", "ai-generated": "8b5cf6"]
     private static let samples: [Sample] = [
-        .init(repo: "acme/api", number: 305, title: "Back off on secondary rate limits", author: "maria-chen", labels: ["performance"], needsMe: true, add: 86, del: 12, files: 3, comments: 4, hours: 2, summary: "Honor Retry-After on secondary limits and cap the exponential backoff at 60 seconds."),
-        .init(repo: "acme/web", number: 1182, title: "Paginate repository search results", author: "kenji-tanaka", review: "APPROVED", labels: ["enhancement"], add: 214, del: 58, files: 7, comments: 6, hours: 20, summary: "Cursor pagination for search, with a skeleton state while the next page loads."),
-        .init(repo: "acme/ios", number: 311, title: "Fix flaky checkout UI test", author: "sam-okafor", checks: "FAILURE", labels: ["tests", "bug"], needsMe: true, add: 18, del: 9, files: 2, comments: 3, hours: 6, summary: "Wait for the payment sheet before tapping Pay; the test raced the animation."),
+        .init(repo: "acme/api", number: 305, title: "Back off on secondary rate limits", author: "claude[bot]", branchPrefix: "claude/", labels: ["performance", "ai-generated"], needsMe: true, add: 86, del: 12, files: 3, comments: 4, hours: 2, summary: "Honor Retry-After on secondary limits and cap the exponential backoff at 60 seconds."),
+        .init(repo: "acme/web", number: 1182, title: "Paginate repository search results", author: "devin-ai-integration[bot]", branchPrefix: "devin/", review: "APPROVED", labels: ["enhancement"], add: 214, del: 58, files: 7, comments: 6, hours: 20, summary: "Cursor pagination for search, with a skeleton state while the next page loads."),
+        .init(repo: "acme/ios", number: 311, title: "Fix flaky checkout UI test", author: "Copilot", branchPrefix: "copilot/", checks: "FAILURE", labels: ["tests", "bug"], needsMe: true, add: 18, del: 9, files: 2, comments: 3, hours: 6, summary: "Wait for the payment sheet before tapping Pay; the test raced the animation."),
         .init(repo: "acme/api", number: 318, title: "Spike: streaming responses", author: login, draft: true, checks: "PENDING", labels: ["enhancement"], mine: true, add: 402, del: 37, files: 11, comments: 1, hours: 30, summary: "Experiment with chunked responses for the export endpoint."),
         .init(repo: "acme/infra", number: 94, title: "Bump Terraform AWS provider to 6.2", author: "dependabot", labels: ["dependencies", "infra"], add: 6, del: 6, files: 1, comments: 0, hours: 9, summary: "Bumps hashicorp/aws from 6.1.0 to 6.2.0."),
         .init(repo: "acme/web", number: 1190, title: "Cache avatars on disk", author: login, review: "APPROVED", labels: ["performance"], mine: true, add: 120, del: 44, files: 5, comments: 5, hours: 3, summary: "Store avatars in a size-capped disk cache keyed by URL and ETag."),
@@ -31,7 +31,7 @@ enum SampleData {
         .init(repo: "acme/web", number: 1176, title: "Try the new onboarding copy", author: "priya-nair", draft: true, labels: ["ui"], add: 48, del: 31, files: 6, comments: 3, hours: 44),
         .init(repo: "acme/api", number: 296, title: "Rotate signing keys without downtime", author: "maria-chen", review: "APPROVED", labels: ["security"], needsMe: true, add: 156, del: 40, files: 6, comments: 9, hours: 14, summary: "Serve both keys during the overlap window; drop the old key after 24 hours."),
         .init(repo: "acme/infra", number: 91, title: "Move CI runners to arm64", author: login, checks: "PENDING", labels: ["infra", "performance"], mine: true, add: 74, del: 66, files: 9, comments: 7, hours: 8),
-        .init(repo: "acme/ios", number: 315, title: "Dark mode polish for settings", author: "lena-park", mergeable: "CONFLICTING", labels: ["ui"], needsMe: true, add: 92, del: 57, files: 8, comments: 2, hours: 11),
+        .init(repo: "acme/ios", number: 315, title: "Dark mode polish for settings", author: "codex[bot]", branchPrefix: "codex/", mergeable: "CONFLICTING", labels: ["ui"], needsMe: true, add: 92, del: 57, files: 8, comments: 2, hours: 11),
         .init(repo: "acme/web", number: 1170, title: "Remove legacy feature flags", author: "kenji-tanaka", state: .merged, review: "APPROVED", add: 12, del: 420, files: 14, comments: 1, hours: 70),
         .init(repo: "acme/api", number: 290, title: "Paginate the audit log endpoint", author: "sam-okafor", state: .merged, review: "APPROVED", labels: ["enhancement"], add: 133, del: 21, files: 5, comments: 3, hours: 52),
     ]
@@ -56,8 +56,7 @@ enum SampleData {
             var m = PRMetadata(number: sample.number, webURL: URL(string: "https://github.com/\(sample.repo)/pull/\(sample.number)")!, repositoryName: sample.repo)
             m.descriptionPreview = sample.summary.isEmpty ? nil : sample.summary
             m.authorID = sample.author; m.authorLogin = sample.author
-            m.actorType = sample.author == "dependabot" ? "Bot" : "User"
-            m.authorClassification = sample.author == "dependabot" ? "automation" : "human"
+            m.actorType = sample.author == "dependabot" || sample.author.hasSuffix("[bot]") ? "Bot" : "User"
             m.viewerID = login; m.viewerIsAuthor = sample.mine
             m.createdAt = now.addingTimeInterval(-sample.hours * 3600 - 7200)
             m.updatedAt = now.addingTimeInterval(-sample.hours * 3600)
@@ -65,11 +64,12 @@ enum SampleData {
             m.columnChangedAt = now.addingTimeInterval(-sample.hours * 1800)
             if sample.state == .merged { m.mergedAt = m.updatedAt }
             m.reviewDecision = sample.review
-            m.headBranch = sample.title.lowercased().split(separator: " ").prefix(3).joined(separator: "-")
+            m.headBranch = sample.branchPrefix + sample.title.lowercased().split(separator: " ").prefix(3).joined(separator: "-")
             m.baseBranch = "main"; m.headRepositoryID = repositoryID
             m.mergeable = sample.mergeable; m.checks = sample.checks
             m.autoMergeKnown = true
             m.labels = sample.labels; m.labelColors = labelColors.filter { sample.labels.contains($0.key) }
+            m.authorClassification = AgentClassifier.classify(login: sample.author, actorType: m.actorType, branch: m.headBranch, labels: m.labels).rawValue
             m.files = sample.files; m.additions = sample.add; m.deletions = sample.del; m.comments = sample.comments
             m.requests = sample.needsMe ? [.init(id: login, name: login, kind: .direct, isForViewer: true)] : []
             return PullRequest(key: ProviderKey(host: account.host, accountID: account.accountID, repositoryID: repositoryID, objectID: "pull-request:\(sample.repo):\(sample.number)"),

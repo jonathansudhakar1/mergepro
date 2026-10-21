@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>MergePro: GitHub pull requests, native on your Mac</title>
-  <meta name="description" content="MergePro is a free, open-source, native macOS app for working through GitHub pull requests across several accounts and repositories. Board, reviews, merges, Actions, repositories and local Git, built directly on the GitHub API.">
+  <meta name="description" content="MergePro is a free, open-source, native macOS inbox for pull requests in an AI-first workflow. See every PR your agents and teammates open across all your GitHub accounts, spot AI-authored and risky changes, and review and merge from the keyboard.">
   <link rel="canonical" href="https://mergepro.app/">
   <meta name="theme-color" content="#06070d" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#f6f7fc" media="(prefers-color-scheme: light)">
@@ -13,16 +13,16 @@
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="MergePro">
-  <meta property="og:title" content="MergePro: GitHub pull requests, native on your Mac">
-  <meta property="og:description" content="Review, merge and ship across all your GitHub accounts from one fast, private, native macOS app. Free and open source.">
+  <meta property="og:title" content="MergePro: the pull request inbox for AI-first teams">
+  <meta property="og:description" content="Agents write the pull requests; you review and ship them. Every PR across all your GitHub accounts in one fast, native Mac app. Free and open source.">
   <meta property="og:url" content="https://mergepro.app/">
   <meta property="og:image" content="https://mergepro.app/assets/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="The MergePro app icon on a cobalt-to-violet gradient with the tagline: GitHub pull requests, native on your Mac.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="MergePro: GitHub pull requests, native on your Mac">
-  <meta name="twitter:description" content="Review, merge and ship across all your GitHub accounts from one fast, private, native macOS app. Free and open source.">
+  <meta name="twitter:title" content="MergePro: the pull request inbox for AI-first teams">
+  <meta name="twitter:description" content="Agents write the pull requests; you review and ship them. Every PR across all your GitHub accounts in one fast, native Mac app. Free and open source.">
   <meta name="twitter:image" content="https://mergepro.app/assets/og.png">
   <meta name="twitter:image:alt" content="The MergePro app icon on a cobalt-to-violet gradient.">
 
@@ -105,6 +105,7 @@
       <svg width="20" height="20" aria-hidden="true"><use href="#i-menu"/></svg>
     </button>
     <ul class="nav-links" id="nav-links">
+      <li><a href="#ai">AI workflow</a></li>
       <li><a href="#features">Features</a></li>
       <li><a href="#internals">Under the hood</a></li>
       <li><a href="#keyboard">Keyboard</a></li>
@@ -127,8 +128,8 @@
         <img class="hero-icon" src="/assets/img/icon-256.png" width="112" height="112" alt="MergePro app icon">
       </picture>
       <a class="eyebrow" href="#open-source" style="text-decoration:none"><span class="pill">FREE</span> Native for macOS 26 &middot; Open source</a>
-      <h1 id="hero-title">Every pull request. <span class="grad-text" style="display:inline-block">One native Mac app.</span></h1>
-      <p class="lede">MergePro brings your GitHub reviews, merges, Actions runs and local clones across every account into one fast, keyboard-driven SwiftUI app. Built directly on the GitHub API and the git you already use.</p>
+      <h1 id="hero-title">Agents write the PRs. <span class="grad-text" style="display:inline-block">You ship them.</span></h1>
+      <p class="lede">Coding agents and teammates send you pull requests all day, across every repository and account. MergePro gathers them into one native Mac inbox, shows which ones AI wrote and where to look closely, and lets you review and merge from the keyboard.</p>
 
       <div class="cta-row">
         <!--
@@ -241,13 +242,44 @@
     </div>
   </section>
 
+  <!-- ============ AI WORKFLOW ============ -->
+  <section class="section" id="ai" aria-labelledby="ai-title">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker">Made for an AI-first workflow</span>
+        <h2 id="ai-title">Writing code got cheap. <span class="grad-text">Reviewing it didn&rsquo;t.</span></h2>
+        <p>Agents open pull requests faster than anyone can read them, and they land in your queue from every repo you touch. MergePro is built around the part that&rsquo;s still yours: deciding what ships.</p>
+      </div>
+      <div class="features">
+        <article class="feature glass reveal">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-pr"/></svg></div>
+          <h3>Spot what agents wrote</h3>
+          <p>Pull requests from coding agents are recognized by their bot account, branch prefix or labels, and collected in an AI-authored view. Override any login you classify differently.</p>
+          <div class="tags"><span>Copilot</span><span>Codex</span><span>Claude</span><span>Devin</span><span>ai-generated</span></div>
+        </article>
+        <article class="feature glass reveal" style="--d:.06s">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-shield"/></svg></div>
+          <h3>Know where to look</h3>
+          <p>Every pull request is scanned for changes that deserve a human: sensitive paths like workflows, infra and migrations, dependency bumps, source without tests, possible credentials and diffs larger than the repository usually sees.</p>
+          <div class="tags"><span>Sensitive paths</span><span>Dependencies</span><span>No tests</span><span>Possible secrets</span><span>Unusually large</span></div>
+        </article>
+        <article class="feature glass reveal" style="--d:.12s">
+          <div class="f-icon"><svg aria-hidden="true"><use href="#i-inbox"/></svg></div>
+          <h3>Clear the queue</h3>
+          <p>One Needs my review queue across every account, in the app and the menu bar. Approve with a key, batch-approve a stack, and merge pinned to the commit you reviewed, so a late push from an agent can&rsquo;t slip in.</p>
+          <div class="tags"><span>Needs my review</span><span>J / K</span><span>A to approve</span><span>M to merge</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ FEATURES ============ -->
   <section class="section" id="features" aria-labelledby="features-title">
     <div class="container">
       <div class="section-head reveal">
         <span class="kicker">Everything in one window</span>
-        <h2 id="features-title">Built for people who live in pull requests.</h2>
-        <p>Board, review, merge, ship. MergePro covers the whole loop for every repository you work on, across all of your GitHub accounts.</p>
+        <h2 id="features-title">Built for reviewing more than you write.</h2>
+        <p>When agents open the pull requests, review is the job. MergePro covers the whole loop for every repository you work on, across all of your GitHub accounts.</p>
       </div>
 
       <div class="features">
@@ -473,6 +505,10 @@
           <div class="a"><p>A Mac with Apple silicon running macOS 26 or later, and a GitHub account.</p></div>
         </details>
         <details class="glass reveal">
+          <summary>How does MergePro know a pull request was written by AI?</summary>
+          <div class="a"><p>It looks at the author and the pull request itself: known agent accounts (such as Copilot, Codex, Claude and Devin), agent branch prefixes like <code>copilot/</code> or <code>claude/</code>, and labels such as <code>ai-generated</code> or <code>agent:claude</code>. Bots that aren&rsquo;t coding agents, like Dependabot, count as automation instead. You can override the classification for any login in Settings.</p></div>
+        </details>
+        <details class="glass reveal">
           <summary>How much does it cost?</summary>
           <div class="a"><p>Nothing. MergePro is free, with no subscription, no in-app purchases and no ads. The source code is available under the Apache License 2.0.</p></div>
         </details>
@@ -508,7 +544,7 @@
           <source srcset="/assets/img/icon-512.webp" type="image/webp">
           <img src="/assets/img/icon-256.png" width="96" height="96" alt="">
         </picture>
-        <h2 id="final-title">Pull requests, <span class="grad-text">at home on your Mac.</span></h2>
+        <h2 id="final-title">Keep up with <span class="grad-text">every PR your agents open.</span></h2>
         <p>Free and open source. Native on macOS 26.</p>
         <div class="cta-row">
           <a class="btn btn-store" data-app-store href="https://github.com/jonathansudhakar1/mergepro/releases">

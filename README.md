@@ -5,8 +5,8 @@
 <h1 align="center">MergePro</h1>
 
 <p align="center">
-  <strong>Every pull request. One native Mac app.</strong><br>
-  Review, merge and ship across all of your GitHub accounts and repositories, without leaving your Mac.
+  <strong>Agents write the PRs. You ship them.</strong><br>
+  A native Mac inbox for pull requests in an AI-first workflow: every PR, every account, reviewed and merged from the keyboard.
 </p>
 
 <p align="center">
@@ -25,14 +25,26 @@
 
 ---
 
-MergePro is a free, open-source SwiftUI app for people who live in pull requests. It brings your review queue, merges,
-GitHub Actions runs and local clones together in one fast, keyboard-friendly window, and a menu bar queue for the
-reviews waiting on you.
+Coding agents now open a large share of pull requests, and people review and merge them. The result is more PRs than
+ever, arriving all day from every repository you touch. MergePro is a free, open-source SwiftUI app that centralizes
+them: one queue across all your GitHub accounts, clear signals about which PRs AI wrote and where to look closely, and
+fast review and merge from the keyboard or the menu bar.
 
 There is no MergePro server. The app talks to GitHub directly, keeps your tokens in the macOS Keychain and everything
 else in a local database on your Mac.
 
-## Features
+## Built for an AI-first workflow
+
+- **Spot what agents wrote.** Pull requests from coding agents (Copilot, Codex, Claude, Devin and others) are
+  recognized by bot account, branch prefix (`copilot/`, `claude/`, …) and labels (`ai-generated`, `agent:*`), and
+  gathered in an *AI-authored* view. Override the classification for any login in Settings.
+- **Know where to look.** Each pull request is scanned for changes that deserve a human: sensitive paths (workflows,
+  infra, migrations, auth, CODEOWNERS), dependency changes, source without tests, possible credentials and diffs
+  larger than the repository's usual size. Optionally require every file to be viewed before approving a risky PR.
+- **Clear the queue.** One *Needs my review* queue across every account, in the app and the menu bar. Approve with a
+  key, approve a whole stack at once, and merge pinned to the commit you reviewed, so a late push can't slip in.
+
+## Everything else
 
 - **Pull request board and list** across every connected account, with saved views such as *Needs my review*,
   *My PRs*, *Ready to merge*, *Failing checks*, *Stale* and *AI-authored*, plus filters and swimlanes.

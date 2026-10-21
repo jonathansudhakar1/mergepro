@@ -35,6 +35,7 @@ struct PRCardView: View, Equatable {
   private var columnColor: Color { DesignTokens.columnColor(column) }
   private var checks: PRStatusValue { ProviderStateText.checks(m?.checks) }
   private var review: PRStatusValue { ProviderStateText.review(m?.reviewDecision) }
+  private var isAgentAuthored: Bool { m?.authorClassification == AgentClassifier.Classification.agent.rawValue }
   private var conflicts: PRStatusValue { ProviderStateText.mergeable(m?.mergeable) }
   /// Merge verification says how long ago GitHub was read, so it is rendered from `now` (see `PRVerificationAge`).
   private func verification(_ now: Date) -> PRStatusValue { ProviderStateText.mergeVerification(eligibility, now: now) }
@@ -48,6 +49,7 @@ struct PRCardView: View, Equatable {
   private func spokenLabel(_ now: Date) -> String {
     var parts = ["\(m?.repositoryName ?? pr.key.repositoryID) pull request \(number)", pr.title]
     parts.append("\(ProviderStateText.column(column)) column")
+    if isAgentAuthored { parts.append("AI-authored") }
     if pr.isDraft { parts.append("Draft") }
     if pr.state == .closed { parts.append("Closed") }
     if isNew { parts.append("New since last look") }
@@ -146,6 +148,11 @@ struct PRCardView: View, Equatable {
         Image(systemName: "circle.fill").imageScale(.small).font(.caption2).foregroundStyle(DesignTokens.cobalt)
           .accessibilityLabel("New since last look")
       }
+      if isAgentAuthored {
+        Label("AI", systemImage: "sparkles").font(.caption.weight(.semibold)).foregroundStyle(DesignTokens.violet)
+          .padding(.horizontal, 6).padding(.vertical, 3).background(DesignTokens.violet.opacity(0.14), in: Capsule())
+          .help("Opened by a coding agent")
+      }
       if pr.isDraft {
         Text("Draft").font(.caption.weight(.medium)).foregroundStyle(.secondary).padding(.horizontal, 6).padding(.vertical, 3)
           .background(Color.secondary.opacity(0.10), in: Capsule())
@@ -157,7 +164,7 @@ struct PRCardView: View, Equatable {
       Text(preview).font(.callout).foregroundStyle(.secondary)
         .lineSpacing(2).lineLimit(3).frame(maxWidth: .infinity, alignment: .leading)
     }
-    Label(m?.authorLogin ?? "Unknown author", systemImage: m?.actorType == "Bot" ? "gearshape" : "person.crop.circle")
+    Label(m?.authorLogin ?? "Unknown author", systemImage: isAgentAuthored ? "sparkles" : m?.actorType == "Bot" ? "gearshape" : "person.crop.circle")
       .font(.callout.weight(.medium))
     Text("\(m?.headBranch ?? "Unknown") → \(m?.baseBranch ?? "Unknown")").font(.system(.caption, design: .monospaced))
       .foregroundStyle(.secondary).lineLimit(1)
