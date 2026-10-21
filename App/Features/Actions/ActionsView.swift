@@ -214,8 +214,8 @@ struct ActionsView:View {
                 Text("Attempt \(run.attempt) · "+String(run.headSHA.prefix(8))).font(.caption.monospaced()).foregroundStyle(.secondary)
             }.frame(maxWidth:.infinity,alignment:.leading)
             VStack(alignment:.trailing,spacing:7) {
-                WorkspaceStatusBadge(text:(run.conclusion ?? run.status).replacingOccurrences(of:"_",with:" "),tint:actionsStatusTint(run.conclusion ?? run.status))
-                if run.isActive { TimelineView(.periodic(from:.now,by:1)) { _ in Text((run.startedAt ?? run.createdAt),style:.relative).font(.caption).foregroundStyle(.secondary) } }
+                WorkspaceStatusBadge(text:ProviderStateText.actionsStatus(run.conclusion ?? run.status),tint:actionsStatusTint(run.conclusion ?? run.status))
+                if run.isActive { TimelineView(.periodic(from:.now,by:1)) { _ in Text("Running for \(Text((run.startedAt ?? run.createdAt),style:.relative))").font(.caption).foregroundStyle(.secondary) } }
                 else { Text(Duration.seconds(run.duration).formatted(.time(pattern:.hourMinuteSecond))).font(.caption.monospacedDigit()).foregroundStyle(.secondary) }
             }
         }.padding(.vertical,10).contentShape(Rectangle())
@@ -261,7 +261,7 @@ struct ActionsView:View {
     }
     private func workflowControls(_ workflow:ActionsWorkflow,catalog:ActionsCatalog) -> some View {
         HStack(spacing:10) {
-            if let last=catalog.runs.first(where:{ $0.workflowID==workflow.id }) { WorkspaceStatusBadge(text:(last.conclusion ?? last.status).replacingOccurrences(of:"_",with:" "),tint:actionsStatusTint(last.conclusion ?? last.status)) }
+            if let last=catalog.runs.first(where:{ $0.workflowID==workflow.id }) { WorkspaceStatusBadge(text:ProviderStateText.actionsStatus(last.conclusion ?? last.status),tint:actionsStatusTint(last.conclusion ?? last.status)) }
             Button("History") { model.state.filter.workflow=String(workflow.id);section="recent" }
             Button(workflow.manualTrigger == true ? "Run…":"Inspect inputs…") { selectedWorkflow = .init(repository:catalog.repository,workflow:workflow,preset:nil) }
                 .disabled(workflow.state != "active" || workflow.manualTrigger == false)
@@ -287,7 +287,7 @@ struct ActionsView:View {
     private func deploymentControls(_ deployment:ActionsDeployment) -> some View {
         HStack(spacing:10) {
             if deployment.production { WorkspaceStatusBadge(text:"Production",symbol:"exclamationmark.shield",tint:.orange) }
-            WorkspaceStatusBadge(text:deployment.state.replacingOccurrences(of:"_",with:" "),tint:actionsStatusTint(deployment.state))
+            WorkspaceStatusBadge(text:ProviderStateText.actionsStatus(deployment.state),tint:actionsStatusTint(deployment.state))
             if let url=deployment.webURL { Link("Open",destination:url) }
         }
     }

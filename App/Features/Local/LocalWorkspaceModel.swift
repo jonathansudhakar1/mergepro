@@ -206,7 +206,7 @@ import MergeProCore
                 try Self.requireAuthorization(target, roots: roots)
                 let location = try selectedPath.map { try EditorLocation(root: directory, path: $0, line: 1) }
                 if editor == .xcode {
-                    guard let application = await MainActor.run(body: { NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.dt.Xcode") }) else { throw LocalEditorError.unavailable(editor.rawValue) }
+                    guard let application = await MainActor.run(body: { NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.dt.Xcode") }) else { throw LocalEditorError.unavailable(editor.displayName) }
                     try await Self.open([target], application: application)
                 } else {
                     try await MainActor.run {
@@ -215,7 +215,7 @@ import MergeProCore
                         components.host = editor == .jetbrains ? "idea" : "file"
                         if editor == .jetbrains { components.path = "/navigate/reference"; components.queryItems = [.init(name: "path", value: target.path)] }
                         else { components.path = target.path }
-                        guard let url = location?.editorURL(editor) ?? components.url, NSWorkspace.shared.open(url) else { throw LocalEditorError.unavailable(editor.rawValue) }
+                        guard let url = location?.editorURL(editor) ?? components.url, NSWorkspace.shared.open(url) else { throw LocalEditorError.unavailable(editor.displayName) }
                     }
                 }
             }
@@ -257,6 +257,6 @@ import MergeProCore
 private enum LocalEditorError: LocalizedError {
     case unavailable(String)
     var errorDescription: String? {
-        switch self { case .unavailable(let editor): "\(editor.capitalized) could not open this path. Verify the editor is installed or choose another editor in Settings." }
+        switch self { case .unavailable(let editor): "\(editor) could not open this path. Verify the editor is installed or choose another editor in Settings." }
     }
 }

@@ -40,7 +40,7 @@ struct RepoBranchesView:View {
                     VStack(alignment:.leading,spacing:6) {
                         Text(branch.name).font(.system(.headline,design:.rounded)).textSelection(.enabled)
                         HStack(spacing:8) { if branch.protected { WorkspaceStatusBadge(text:"Protected",symbol:"lock.fill",tint:DesignTokens.violet) };if branch.name==model.repository?.defaultBranch { WorkspaceStatusBadge(text:"Default",tint:DesignTokens.cobalt) };Spacer(minLength:4);Text(String(branch.sha.prefix(8))).font(.system(.caption,design:.monospaced)).foregroundStyle(.secondary) }
-                        if let comparison=ahead[branch.name] { Text("\(comparison.ahead) ahead · \(comparison.behind) behind default").font(.caption) }
+                        if branch.name != model.repository?.defaultBranch,let comparison=ahead[branch.name] { Text("\(comparison.ahead) ahead · \(comparison.behind) behind default").font(.caption) }
                         if let message=messages[branch.name] { Text(message).font(.caption).lineLimit(1) }
                         ScrollView(.horizontal) {
                             HStack(spacing:8) {

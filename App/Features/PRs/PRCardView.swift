@@ -180,7 +180,7 @@ struct PRCardView: View, Equatable {
       if let date = m?.createdAt { Text(date, style: .relative) }
     }.font(.caption2).foregroundStyle(.secondary)
     HStack {
-      Text(m?.comments.map { "\($0) comments" } ?? "Comments unknown")
+      Text(m?.comments.map { "\($0) \($0 == 1 ? "comment" : "comments")" } ?? "Comments unknown")
       Spacer()
       if let at = m?.columnChangedAt {
         Text("In column")

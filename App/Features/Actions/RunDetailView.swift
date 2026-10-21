@@ -98,7 +98,7 @@ struct RunDetailView:View {
     }
     private var runSummary:some View {
         HStack(spacing:12) {
-            WorkspaceStatusBadge(text:(currentRun.conclusion ?? currentRun.status).replacingOccurrences(of:"_",with:" "),tint:actionsStatusTint(currentRun.conclusion ?? currentRun.status))
+            WorkspaceStatusBadge(text:ProviderStateText.actionsStatus(currentRun.conclusion ?? currentRun.status),tint:actionsStatusTint(currentRun.conclusion ?? currentRun.status))
             Text(String(run.headSHA.prefix(12))).font(.caption.monospaced()).foregroundStyle(.secondary)
             if loading { ProgressView().controlSize(.small) }
         }
@@ -126,7 +126,7 @@ struct RunDetailView:View {
                         VStack(alignment:.leading,spacing:8) {
                             Label(job.name,systemImage:job.conclusion=="success" ? "checkmark.circle.fill":job.conclusion=="failure" ? "xmark.circle.fill":"circle")
                                 .font(.headline).foregroundStyle(selectedJob?.id==job.id ? DesignTokens.cobalt:Color.primary)
-                            HStack { WorkspaceStatusBadge(text:(job.conclusion ?? job.status).replacingOccurrences(of:"_",with:" "),tint:actionsStatusTint(job.conclusion ?? job.status));Spacer(minLength:4);ActionsElapsedView(started:job.startedAt,completed:job.completedAt,active:job.status=="in_progress",notStarted:job.status=="queued" || job.status=="pending") }
+                            HStack { WorkspaceStatusBadge(text:ProviderStateText.actionsStatus(job.conclusion ?? job.status),tint:actionsStatusTint(job.conclusion ?? job.status));Spacer(minLength:4);ActionsElapsedView(started:job.startedAt,completed:job.completedAt,active:job.status=="in_progress",notStarted:job.status=="queued" || job.status=="pending") }
                         }.padding(.vertical,6).contentShape(Rectangle())
                     }.buttonStyle(.plain)
                     if selectedJob?.id==job.id {
@@ -135,7 +135,7 @@ struct RunDetailView:View {
                             Button { selectedStep=step;if log==nil,!loadingLog { Task { await loadLog(job) } } } label: {
                                 VStack(alignment:.leading,spacing:5) {
                                     Text("\(step.number). "+step.name).font(.callout).foregroundStyle(selectedStep?.number==step.number ? DesignTokens.cobalt:Color.primary)
-                                    HStack { Text((step.conclusion ?? step.status).replacingOccurrences(of:"_",with:" ")).font(.caption).foregroundStyle(actionsStatusTint(step.conclusion ?? step.status));Spacer(minLength:4);ActionsElapsedView(started:step.startedAt,completed:step.completedAt,active:step.status=="in_progress",notStarted:step.status=="queued" || step.status=="pending") }
+                                    HStack { Text(ProviderStateText.actionsStatus(step.conclusion ?? step.status)).font(.caption).foregroundStyle(actionsStatusTint(step.conclusion ?? step.status));Spacer(minLength:4);ActionsElapsedView(started:step.startedAt,completed:step.completedAt,active:step.status=="in_progress",notStarted:step.status=="queued" || step.status=="pending") }
                                 }.padding(.leading,16).padding(.vertical,4).contentShape(Rectangle())
                             }.buttonStyle(.plain)
                         }

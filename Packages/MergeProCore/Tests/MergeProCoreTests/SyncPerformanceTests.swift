@@ -883,6 +883,8 @@ final class InventoryWatermarkTests: XCTestCase {
         }
         let event = try XCTUnwrap(ready.first)
         var rule = PRViewConfiguration(); rule.filter = try FilterExpression.parse("eligible:true")
+        // Fixture timestamps are fixed in September 2026; the default 30-day scope would age them out.
+        rule.timeScope = .allTime
         let rows = BoardProjection(rows:try store.pullRequests(account:account),view:rule).rows
         XCTAssertEqual(rows.map(\.key),[event.object],"The fresh evidence read in this cycle satisfies the rule at close")
         let policy = NotificationPolicy(enabled:true,matchingEventKeys:[Set(rows.contains { $0.key == event.object } ? [event.key] : [])])

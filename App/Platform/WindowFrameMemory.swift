@@ -73,7 +73,12 @@ struct WindowFrameMemory: NSViewRepresentable {
             if configuration.sheet {
                 let size = saved.map { window.contentRect(forFrameRect: $0.frame).size } ?? configuration.defaultSize
                 if let size {
-                    let maximum = CGSize(width: max(300, screen.visibleFrame.width - 40), height: max(300, screen.visibleFrame.height - 80))
+                    var maximum = CGSize(width: max(300, screen.visibleFrame.width - 40), height: max(300, screen.visibleFrame.height - 80))
+                    // A sheet larger than its window hangs past the window's bottom edge.
+                    if let parent = window.sheetParent {
+                        maximum.width = min(maximum.width, max(300, parent.frame.width - 40))
+                        maximum.height = min(maximum.height, max(300, parent.contentLayoutRect.height - 20))
+                    }
                     window.setContentSize(CGSize(width: min(size.width, maximum.width), height: min(size.height, maximum.height)))
                 }
             } else {

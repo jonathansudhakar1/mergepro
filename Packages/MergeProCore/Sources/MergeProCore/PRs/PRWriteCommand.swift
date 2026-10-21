@@ -108,7 +108,7 @@ public enum PRWriteFailure:Error,LocalizedError,Equatable,Sendable {
     case .invalidChange:"This change is empty or adds and removes the same item. Nothing was sent."
     case .messageRequired:"Dismissing a review requires a message. Nothing was sent."
     case .accountChanged:"The active action account changed. Review this command with the selected account."
-    case .unavailable:"This pull request or provider capability is unavailable for the selected action account."
+    case .unavailable:"The selected account can’t take this action on this pull request."
     case .revisionChanged:"The head or comparison base changed. Your original draft is preserved; review relocation explicitly."
     case .permissionDenied:"The selected account no longer has permission for this object."
     case .ownApproval:"You cannot approve your own pull request."

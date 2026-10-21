@@ -50,7 +50,12 @@ public enum RichFileDocument {
     }
 }
 public struct EditorLocation:Sendable {
-    public enum Editor:String,CaseIterable,Sendable { case vscode,cursor,xcode,zed,jetbrains }
+    public enum Editor:String,CaseIterable,Sendable {
+        case vscode,cursor,xcode,zed,jetbrains
+        public var displayName:String {
+            switch self { case .vscode:"VS Code"; case .cursor:"Cursor"; case .xcode:"Xcode"; case .zed:"Zed"; case .jetbrains:"JetBrains" }
+        }
+    }
     public let url:URL
     public let line:Int
     public init(root:URL,path:String,line:Int) throws {

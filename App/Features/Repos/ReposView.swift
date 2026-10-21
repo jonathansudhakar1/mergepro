@@ -19,7 +19,7 @@ struct ReposView:View {
         GeometryReader { geometry in
             let compact=geometry.size.width<860
             VStack(spacing:0) {
-                WorkspaceSectionHeader(title:"Repositories",subtitle:"\(model.entries.count) repositories across your connected accounts",symbol:"shippingbox") {
+                WorkspaceSectionHeader(title:"Repositories",subtitle:"\(model.entries.count) \(model.entries.count == 1 ? "repository" : "repositories") across your connected accounts",symbol:"shippingbox") {
                     if model.busy { ProgressView().controlSize(.small) }
                     if compact,model.repository != nil {
                         Button { catalogPresented.toggle() } label:{ Label("Catalog",systemImage:"sidebar.left") }

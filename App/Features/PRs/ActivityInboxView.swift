@@ -93,7 +93,7 @@ struct ActivityInboxView: View {
             }
             // Said once here rather than on every row: read marks are local unless an item is changed on GitHub.
             Text("Read marks are kept in MergePro. GitHub's read state is unknown unless you change an item on GitHub from its Mark Read menu.")
-                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .font(.caption).foregroundStyle(.secondary)
         }
         .padding(.horizontal, 24).padding(.bottom, 10)
     }

@@ -140,6 +140,8 @@ public struct BoardProjection: Sendable {
       if !numeric, a.text != b.text {
         return view.ascending ? a.text < b.text : a.text > b.text
       }
+      // Ties fall back to the newest pull request number rather than the key's string order (#1, #10, #100).
+      if let m = a.row.metadata?.number, let n = b.row.metadata?.number, m != n { return m > n }
       let x = a.row.key
       let y = b.row.key
       return (x.host, x.accountID, x.repositoryID, x.objectID)

@@ -46,7 +46,7 @@ struct ReviewComposer:View {
                 if loadState.canDisplay(pr?.key,available:true) { content }
                 else { replacement }
             }
-            else { ContentUnavailableView { Label("Action account unavailable",systemImage:"lock") } description: { Text("Reconnect the selected account. Drafts remain on disk.") } actions: { Button("Read selected account") { Task { await load() } } } }
+            else { ContentUnavailableView { Label("Action account unavailable",systemImage:"lock") } description: { Text("Reconnect the selected account. Drafts remain on disk.") } actions: { Button("Try Again") { Task { await load() } } } }
         }.onChange(of:actionAvailable) { if !actionAvailable { invalidateAction() } }
         .task { decision=initialDecision;await load() }
     }
@@ -54,7 +54,7 @@ struct ReviewComposer:View {
         VStack(spacing:12) {
             if busy { ProgressView("Reading selected action account…") }
             else { Text(loadError ?? "Selected account data unavailable") }
-            Button("Read selected account") { Task { await load() } }.disabled(busy || draftSaveBusy);Button("Close") { dismiss() }.keyboardShortcut(.cancelAction)
+            Button("Try Again") { Task { await load() } }.disabled(busy || draftSaveBusy);Button("Close") { dismiss() }.keyboardShortcut(.cancelAction)
         }.padding()
     }
     private var content:some View {

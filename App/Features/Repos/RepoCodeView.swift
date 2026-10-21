@@ -37,20 +37,30 @@ struct RepoCodeView:View {
     @State private var pendingPath:String?
     @State private var shownPath:String?
     private var entry:GitTreeEntry? { tree.entries.first { $0.path==tree.selection } }
+    private var searchFields:some View {
+        Group {
+            TextField("Find loaded files",text:$fileSearch).textFieldStyle(.roundedBorder).frame(width:180)
+            TextField("Reveal path",text:$revealPath).textFieldStyle(.roundedBorder).frame(width:170).onSubmit { Task { await reveal(revealPath) } }
+            Button("Reveal") { Task { await reveal(revealPath) } }.disabled(revealPath.isEmpty)
+        }
+    }
+    @ViewBuilder private var fileActions:some View {
+        if let entry,let ref {
+            Button("Copy Permalink") { copy(RepositoryBrowserService.permalink(repository:repository,ref:ref,path:entry.path,line:selectedLine).absoluteString) }.accessibilityIdentifier("repoCopyPermalink")
+            Button("Open File on Web") { ExternalLinkPolicy.open(RepositoryBrowserService.permalink(repository:repository,ref:ref,path:entry.path,line:selectedLine)) }.buttonStyle(.link)
+            Button("Blame") { ExternalLinkPolicy.open(RepositoryBrowserService.permalink(repository:repository,ref:ref,path:entry.path,blame:true)) }.buttonStyle(.link).help("Open blame for this file on GitHub")
+        }
+    }
     var body:some View {
         VStack(spacing:0) {
-            ScrollView(.horizontal) {
-                HStack(spacing:10) {
-                    TextField("Find loaded files",text:$fileSearch).textFieldStyle(.roundedBorder).frame(width:180)
-                    TextField("Reveal path",text:$revealPath).textFieldStyle(.roundedBorder).frame(width:170).onSubmit { Task { await reveal(revealPath) } }
-                    Button("Reveal") { Task { await reveal(revealPath) } }.disabled(revealPath.isEmpty)
-                    if let entry,let ref {
-                        Button("Copy Permalink") { copy(RepositoryBrowserService.permalink(repository:repository,ref:ref,path:entry.path,line:selectedLine).absoluteString) }.accessibilityIdentifier("repoCopyPermalink")
-                        Button("Open File on Web") { ExternalLinkPolicy.open(RepositoryBrowserService.permalink(repository:repository,ref:ref,path:entry.path,line:selectedLine)) }.buttonStyle(.link)
-                        Button("Blame") { ExternalLinkPolicy.open(RepositoryBrowserService.permalink(repository:repository,ref:ref,path:entry.path,blame:true)) }.buttonStyle(.link).help("Open blame for this file on GitHub")
-                    }
-                }.fixedSize(horizontal:true,vertical:false).padding(12)
-            }.fixedSize(horizontal:false,vertical:true).background(Color(nsColor:.windowBackgroundColor))
+            // One row when it fits, otherwise the file actions wrap below the search fields.
+            ViewThatFits(in:.horizontal) {
+                HStack(spacing:10) { searchFields;fileActions;Spacer(minLength:0) }
+                VStack(alignment:.leading,spacing:8) {
+                    HStack(spacing:10) { searchFields;Spacer(minLength:0) }
+                    HStack(spacing:10) { fileActions;Spacer(minLength:0) }
+                }
+            }.padding(12).background(Color(nsColor:.windowBackgroundColor))
             if let missing=tree.missingPath { WorkspaceNotice(message:"\(missing) does not exist at this ref. Selected its nearest available parent.",symbol:"exclamationmark.triangle",tint:.orange).padding(10) }
             if let error { HStack(alignment:.top) { WorkspaceNotice(message:error,symbol:"exclamationmark.circle",tint:.red);Button("Retry") { Task { await retry(tree.selection ?? "") } }.padding(.top,12) }.padding(10) }
             Divider()

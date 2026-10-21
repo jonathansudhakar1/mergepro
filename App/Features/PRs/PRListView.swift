@@ -58,7 +58,19 @@ struct PRListView: View {
       } else {
         Text(row.values[column] ?? "").lineLimit(1)
       }
-    }.width(min: column == .title ? 240 : 65, ideal: column == .title ? 380 : column == .labels ? 180 : column == .mergeability ? 180 : 110)
+    }.width(min: Self.minimumWidth(column), ideal: Self.idealWidth(column))
+  }
+  private static func minimumWidth(_ column: PRViewConfiguration.TableColumn) -> CGFloat {
+    switch column { case .title: 240; case .number: 50; default: 65 }
+  }
+  private static func idealWidth(_ column: PRViewConfiguration.TableColumn) -> CGFloat {
+    switch column {
+    case .title: 360
+    case .number: 64
+    case .repository: 180
+    case .labels, .mergeability: 180
+    default: 110
+    }
   }
   private var table: some View {
     Table(workspace.listRows, selection: $workspace.selection.selected, sortOrder: sortOrder)

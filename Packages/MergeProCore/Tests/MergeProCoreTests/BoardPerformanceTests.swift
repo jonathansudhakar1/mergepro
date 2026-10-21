@@ -426,6 +426,7 @@ extension BoardPerformanceTests {
     return rows.sorted { a, b in
       if numeric.contains(view.sort), number(a) != number(b) { return view.ascending ? number(a) < number(b) : number(a) > number(b) }
       if !numeric.contains(view.sort), value(a) != value(b) { return view.ascending ? value(a) < value(b) : value(a) > value(b) }
+      if let m = a.metadata?.number, let n = b.metadata?.number, m != n { return m > n }
       return [a.key.host, a.key.accountID, a.key.repositoryID, a.key.objectID].lexicographicallyPrecedes([b.key.host, b.key.accountID, b.key.repositoryID, b.key.objectID])
     }
   }

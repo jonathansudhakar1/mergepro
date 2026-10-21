@@ -47,6 +47,8 @@ struct KeyboardShortcutsView: View {
               .font(.body.monospaced().weight(.medium))
               .padding(.horizontal, 6).padding(.vertical, 1)
               .background(Color.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 5))
+              // Each section is its own grid; a shared width keeps the key column aligned across sections.
+              .frame(minWidth: 96, alignment: .trailing)
               .gridColumnAlignment(.trailing)
             Text(row.title)
           }

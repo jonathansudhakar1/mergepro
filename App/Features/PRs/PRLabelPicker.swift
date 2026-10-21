@@ -268,13 +268,13 @@ struct PRLabelPicker: View {
         VStack(spacing: 10) {
             Image(systemName: "person.crop.circle.badge.exclamationmark").font(.title2).foregroundStyle(.secondary)
             Text("The active account changed. Labels are edited with the selected action account.").font(.callout).multilineTextAlignment(.center).foregroundStyle(.secondary)
-            Button("Read selected account") { Task { await load() } }.accessibilityIdentifier("labelPickerReload")
+            Button("Try Again") { Task { await load() } }.accessibilityIdentifier("labelPickerReload")
         }.frame(maxWidth: .infinity).padding(20)
     }
     private var failed: some View {
         VStack(spacing: 10) {
             Text(loadError ?? "Labels are unavailable for the selected action account.").font(.callout).multilineTextAlignment(.center).foregroundStyle(.secondary).textSelection(.enabled)
-            Button("Read selected account") { Task { await load() } }.accessibilityIdentifier("labelPickerReload")
+            Button("Try Again") { Task { await load() } }.accessibilityIdentifier("labelPickerReload")
         }.frame(maxWidth: .infinity).padding(20)
     }
 

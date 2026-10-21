@@ -358,7 +358,7 @@ struct PRDetailWindow:View {
             }
             if document.missingFileCount > 0 || (model.comparison == nil && model.detail?.nextPage != nil) {
                 HStack(spacing:10) {
-                    if document.missingFileCount > 0 { Label("At least \(document.missingFileCount) files not loaded or unavailable in this API response. Load additional pages or open Files on GitHub.",systemImage:"exclamationmark.triangle").foregroundStyle(.orange).font(.caption) }
+                    if document.missingFileCount > 0 { Label("At least \(document.missingFileCount) \(document.missingFileCount == 1 ? "file" : "files") not loaded or unavailable in this API response. Load additional pages or open Files on GitHub.",systemImage:"exclamationmark.triangle").foregroundStyle(.orange).font(.caption) }
                     Spacer(minLength:0)
                     if model.comparison == nil,model.detail?.nextPage != nil { Button(model.paging ? "Loading next file page…" : "Load next 100 files") { model.requestNextPage() }.disabled(model.paging).controlSize(.small) }
                 }.padding(.horizontal,16).padding(.bottom,8)
@@ -541,7 +541,9 @@ struct PRDetailWindow:View {
                 }
                 else if model.eventLoading { ProgressView("Reading \(PRDetailText.title(model.tab).lowercased())…").controlSize(.small) }
                 else { Text("Load or refresh this tab to read provider context.").foregroundStyle(.secondary) }
-                Text("Use Conversation for replies and review commands. Open Actions for job logs and available deployment approvals.").font(.caption).foregroundStyle(.secondary)
+                if model.tab != .conversation {
+                    Text("Use Conversation for replies and review commands. Open Actions for job logs and available deployment approvals.").font(.caption).foregroundStyle(.secondary)
+                }
             }.frame(maxWidth:.infinity,alignment:.leading).padding(20)
         }.frame(maxWidth:.infinity,maxHeight:.infinity,alignment:.topLeading)
     }
@@ -590,7 +592,7 @@ struct PRDetailWindow:View {
         if account.blocked,let error=account.actionError {
             HStack(spacing:8) {
                 Label(error,systemImage:"lock").font(.caption).foregroundStyle(.orange)
-                Button("Read selected account") { account.reset();Task { await account.loadAdministration() } }.controlSize(.small)
+                Button("Try Again") { account.reset();Task { await account.loadAdministration() } }.controlSize(.small)
             }
         }
         if let key=account.actionPR?.key {

@@ -211,7 +211,7 @@ struct PRDetailLoadTrace {
     var eventSection:PRDetailSection? { eventSource.map { $0.section } ?? (sectionTab == tab ? section : nil) }
     var eventLoading:Bool { eventSource.map { $0.phase == .loading } ?? (sectionReadLoading || sectionTab != tab || section == nil && sectionError == nil) }
     var eventFailed:Bool { eventSource?.phase == .failed }
-    var eventError:String? { eventSource.map { $0.phase == .failed && $0.section == nil ? "This provider context is unavailable. Open the exact PR tab on GitHub." : nil } ?? (sectionTab == tab ? sectionError : nil) }
+    var eventError:String? { eventSource.map { $0.phase == .failed && $0.section == nil ? "GitHub didn’t return this information. Try again, or open this tab on GitHub." : nil } ?? (sectionTab == tab ? sectionError : nil) }
     /// Matches the Files list: grouped by directory, then by path.
     static func displayOrder(_ files:[DiffFile]) -> [DiffFile] { files.map { (($0.path as NSString).deletingLastPathComponent,$0) }.sorted { ($0.0,$0.1.path) < ($1.0,$1.1.path) }.map(\.1) }
     func jumpFiles(_ query:String) -> [DiffFile] { Self.displayOrder(comparison?.files ?? detail?.files ?? []).filter { query.isEmpty || $0.path.localizedCaseInsensitiveContains(query) } }

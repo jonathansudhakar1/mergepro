@@ -60,7 +60,7 @@ struct PRBatchActionSheet:View {
     private var presented:Bool { identity.canDisplay(identity.key,available:available) }
     var body:some View {
         VStack(alignment:.leading,spacing:12) {
-            Text(approve ? "Approve selected layers" : "Merge selected pull requests").font(.system(.title2,design:.rounded).bold())
+            Text(approve ? (rows.count == 1 ? "Approve pull request" : "Approve \(rows.count) pull requests") : "Merge selected pull requests").font(.system(.title2,design:.rounded).bold())
             Text("Every item is reviewed below and processed one at a time. The batch stops at the first incomplete or failed result.").font(.caption)
             if !approve,available,!(skipped+notReady).isEmpty { skippedList }
             if presented {

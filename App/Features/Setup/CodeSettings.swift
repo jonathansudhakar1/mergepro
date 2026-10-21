@@ -77,7 +77,7 @@ struct LocalSettings:View {
     }
     var body:some View {
         Section("Editor") {
-            Picker("Editor",selection:$editor) { ForEach(EditorLocation.Editor.allCases,id:\.rawValue) { Text($0.rawValue.capitalized).tag($0.rawValue) } }
+            Picker("Editor",selection:$editor) { ForEach(EditorLocation.Editor.allCases,id:\.rawValue) { Text($0.displayName).tag($0.rawValue) } }
             Button("Save editor preference") { Task {
                 do { try await model.prs.storage.setting(editor,for:.editor);status="Saved." } catch { status="Preferences could not be saved." }
             } }
@@ -86,7 +86,13 @@ struct LocalSettings:View {
         Section("Local clones") {
             TextField("Search repositories",text:$search).textFieldStyle(.roundedBorder)
             ForEach(repositories,id:\.key) { repository in
-                LabeledContent(repository.name) { Button("Map local clone…") { Task { status=await EditorNavigation.map(storage:model.prs.storage,repository:repository.key) } } }
+                LabeledContent {
+                    Button("Map local clone…") { Task { status=await EditorNavigation.map(storage:model.prs.storage,repository:repository.key) } }
+                } label: {
+                    Text(repository.name)
+                    // The same repository can appear once per account.
+                    if model.snapshots.count > 1, let login=model.snapshots.first(where:{ $0.account?.scope == repository.key.account })?.account?.login { Text(login) }
+                }
             }
             if repositories.isEmpty { Text(search.isEmpty ? "No repositories discovered yet" : "No matching repositories").foregroundStyle(.secondary) }
         }

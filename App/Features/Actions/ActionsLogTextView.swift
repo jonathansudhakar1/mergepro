@@ -29,7 +29,8 @@ struct ActionsLogTextView:View {
         Button("Copy job link",systemImage:"link") { guard let webURL,let link=ActionsLog.safeJobLink(webURL) else { return };NSPasteboard.general.clearContents();NSPasteboard.general.setString(link.absoluteString,forType:.string) }.disabled(webURL==nil)
     }
     private var lineCount:some View {
-        Text("\(text.components(separatedBy:"\n").count) lines").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+        let count = text.isEmpty ? 0 : text.components(separatedBy:"\n").count - (text.hasSuffix("\n") ? 1 : 0)
+        return Text("\(count) \(count == 1 ? "line" : "lines")").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
 
     }
 }

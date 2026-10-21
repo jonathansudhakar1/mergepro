@@ -161,7 +161,9 @@ struct PRWorkspaceView: View {
     let repositories = workspace.repositoryFreshness
     guard !repositories.isEmpty else { return "Choose tracked repositories in Setup" }
     let affected = repositories.filter { $0.state != .fresh }.count
-    if affected > 0 { return "\(affected) of \(repositories.count) repositories need attention" }
+    if affected > 0 {
+      return repositories.count == 1 ? "Repository needs attention" : "\(affected) of \(repositories.count) repositories need attention"
+    }
     return "\(repositories.count) \(repositories.count == 1 ? "repository" : "repositories") current"
   }
   private var freshnessDetails: some View {
