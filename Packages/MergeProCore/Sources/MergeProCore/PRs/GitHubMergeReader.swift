@@ -142,8 +142,14 @@ struct GitHubMergeReader:Sendable {
         let pr=PullRequest(key:t.key,headRevision:.init(head),title:p["title"] as? String ?? "",state:p["state"] as? String == "MERGED" ? .merged : e.open ? .open : .closed,isDraft:e.draft,metadata:m)
         var stack:PRStack?
         if let native=p["stack"] as? Object {
-            var connection=object(native["entries"])
+            // The admission read names the stack only: its entries, each with commits, cost GitHub ~100 points per
+            // read, so they are read here, for stacked PRs, rather than for every PR whose evidence is checked.
+            var connection:Object=["nodes":[Any](),"pageInfo":["hasNextPage":true]]
             do {
+                let firstPage=try await query(Self.stackPageQuery,["id":t.gitHubNodeID,"after":nil])
+                let firstNode=object(firstPage["node"]),firstStack=object(firstNode["stack"])
+                guard firstNode["headRefOid"] as? String == head,firstStack["id"] as? String == native["id"] as? String else { throw PRWriteFailure.revisionChanged }
+                connection=object(firstStack["entries"])
                 connection=try await completeConnection(connection) { cursor in
                     let data=try await query(Self.stackPageQuery,["id":t.gitHubNodeID,"after":cursor])
                     let node=object(data["node"]),stack=object(node["stack"])
@@ -334,10 +340,7 @@ struct GitHubMergeReader:Sendable {
         headRef { target { ... on Commit { parents(first:2) { nodes { oid } } \(checkFields) } } } potentialMergeCommit { \(checkFields) }
         commits(first:100) { nodes { commit { oid signature { isValid } parents(first:2) { totalCount nodes { oid } } } } pageInfo { hasNextPage endCursor } }
         reviewThreads(first:100) { nodes { isResolved } pageInfo { hasNextPage endCursor } }
-        stack { id number size entries(first:100) {
-          nodes { \(stackEntryFields) }
-          pageInfo { hasNextPage endCursor }
-        } }
+        stack { id number size }
       } }
       rateLimit { cost remaining resetAt }
     }
