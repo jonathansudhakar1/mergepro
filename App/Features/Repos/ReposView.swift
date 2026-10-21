@@ -100,21 +100,21 @@ struct ReposView:View {
             VStack(alignment:.leading,spacing:10) {
                 HStack(spacing:12) {
                     TextField("Search repositories",text:$model.filter.search).textFieldStyle(.roundedBorder).frame(width:240)
-                    Picker("Sort",selection:$model.filter.sort) { ForEach(RepoCatalogSort.allCases,id:\.self) { Text(Self.title($0)).tag($0) } }.frame(width:150)
+                    Picker("Sort",selection:$model.filter.sort) { ForEach(RepoCatalogSort.allCases,id:\.self) { Text(Self.title($0)).tag($0) } }.fixedSize()
                     Toggle("Pinned",isOn:$model.filter.pinnedOnly).toggleStyle(.checkbox)
                     Toggle("Open PRs",isOn:$model.filter.hasOpenPRs).toggleStyle(.checkbox)
                 }.fixedSize(horizontal:true,vertical:false)
                 HStack(spacing:12) {
-                    Picker("Owner",selection:$model.filter.owner) { Text("All owners").tag("");ForEach(Array(Set(model.entries.map(\.owner)+model.tree.owners.map(\.name))).sorted(),id:\.self) { Text($0).tag($0) } }.frame(width:150)
-                    Picker("Language",selection:$model.filter.language) { Text("All languages").tag("");ForEach(Array(Set(model.entries.compactMap(\.language))).sorted(),id:\.self) { Text($0).tag($0) } }.frame(width:160)
+                    Picker("Owner",selection:$model.filter.owner) { Text("All owners").tag("");ForEach(Array(Set(model.entries.map(\.owner)+model.tree.owners.map(\.name))).sorted(),id:\.self) { Text($0).tag($0) } }.fixedSize()
+                    Picker("Language",selection:$model.filter.language) { Text("All languages").tag("");ForEach(Array(Set(model.entries.compactMap(\.language))).sorted(),id:\.self) { Text($0).tag($0) } }.fixedSize()
                     TextField("Topic",text:$model.filter.topic).textFieldStyle(.roundedBorder).frame(width:100)
                     Picker("Visibility",selection:$model.filter.visibility) { Text("All").tag(Optional<Bool>.none);Text("Private").tag(Optional(true));Text("Public").tag(Optional(false)) }
                     Picker("Archived",selection:$model.filter.archived) { Text("Any").tag(Optional<Bool>.none);Text("Active").tag(Optional(false));Text("Archived").tag(Optional(true)) }
                     Picker("Fork",selection:$model.filter.fork) { Text("Any").tag(Optional<Bool>.none);Text("Forks").tag(Optional(true));Text("Sources").tag(Optional(false)) }
                 }.fixedSize(horizontal:true,vertical:false)
-            }.controlSize(.small).padding(.horizontal,14).padding(.vertical,12)
+            }.padding(.horizontal,14).padding(.vertical,12)
         }
-        .scrollIndicators(.hidden)
+        .scrollIndicators(.never)
         .fixedSize(horizontal:false,vertical:true).workspaceGlass(radius:16).padding(.horizontal,24).padding(.bottom,14)
     }
     private func catalogRow(_ repository:RepoCatalogEntry) -> some View {
@@ -151,22 +151,24 @@ struct ReposView:View {
                 HStack(spacing:12) { repositoryTitle(repository);Spacer(minLength:8);repositoryActions(repository) }
                 VStack(alignment:.leading,spacing:10) { repositoryTitle(repository);repositoryActions(repository) }
             }
-            ScrollView(.horizontal) {
-                HStack(spacing:10) {
-                    Menu {
-                        ForEach(model.branches) { branch in Button(branch.name) { model.changeRef(branch.name) } }
-                        if model.branchPage != nil { Button("Load More Branches") { Task { await model.moreBranches() } } }
-                        Divider()
-                        ForEach(model.tags) { tag in Button("Tag: "+tag.name) { model.changeRef(tag.name) } }
-                        if model.tagPage != nil { Button("Load More Tags") { Task { await model.moreTags() } } }
-                    } label:{ Label(model.refName.isEmpty ? repository.defaultBranch : model.refName,systemImage:"arrow.triangle.branch").lineLimit(1) }
-                    .frame(maxWidth:180)
-                    TextField("Branch, tag or commit SHA",text:$model.refName).textFieldStyle(.roundedBorder).frame(width:200).onSubmit { model.changeRef(model.refName) }
-                    if let ref=model.ref { Text(String(ref.commitSHA.prefix(8))).font(.system(.caption,design:.monospaced)).foregroundStyle(.secondary).textSelection(.enabled) }
-                }.padding(.bottom,2)
-            }.fixedSize(horizontal:false,vertical:true)
+            // One ref control: type any branch, tag or SHA, or pick from the list.
+            HStack(spacing:6) {
+                Image(systemName:"arrow.triangle.branch").foregroundStyle(.secondary).accessibilityHidden(true)
+                TextField("Branch, tag or commit SHA",text:$model.refName,prompt:Text(repository.defaultBranch)).textFieldStyle(.roundedBorder).frame(width:220).onSubmit { model.changeRef(model.refName) }
+                Menu {
+                    ForEach(model.branches) { branch in Button(branch.name) { model.changeRef(branch.name) } }
+                    if model.branchPage != nil { Button("Load More Branches") { Task { await model.moreBranches() } } }
+                    Divider()
+                    ForEach(model.tags) { tag in Button("Tag: "+tag.name) { model.changeRef(tag.name) } }
+                    if model.tagPage != nil { Button("Load More Tags") { Task { await model.moreTags() } } }
+                } label:{ Image(systemName:"chevron.down") }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .help("Choose a branch or tag").accessibilityLabel("Choose a branch or tag")
+                if let ref=model.ref { Text(String(ref.commitSHA.prefix(8))).font(.system(.caption,design:.monospaced)).foregroundStyle(.secondary).textSelection(.enabled).padding(.leading,4) }
+            }
             ViewThatFits(in:.horizontal) {
                 sectionPicker.pickerStyle(.segmented).fixedSize(horizontal:true,vertical:false)
+                sectionPicker.pickerStyle(.segmented).controlSize(.small).fixedSize(horizontal:true,vertical:false)
                 sectionPicker.pickerStyle(.menu).fixedSize(horizontal:true,vertical:false)
             }.frame(maxWidth:.infinity,alignment:.leading)
         }.padding(16)

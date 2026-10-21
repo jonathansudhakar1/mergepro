@@ -29,7 +29,7 @@ struct LocalView: View {
                 WorkspaceSectionHeader(title: "Local", subtitle: model.directory?.path ?? "Your authorized repositories and worktrees", symbol: "externaldrive") {
                     if model.loading || model.preparingCommand { ProgressView().controlSize(.small) }
                     if compact { Button("Folders", systemImage: "sidebar.left") { folderPopover.toggle() }.popover(isPresented: $folderPopover) { folders.frame(width: 300, height: 400) } }
-                    Button("Add Folder", systemImage: "folder.badge.plus") { Task { await addFolder() } }.disabled(busy).accessibilityIdentifier("localAddFolder")
+                    Button("Add Folder…", systemImage: "folder.badge.plus") { Task { await addFolder() } }.disabled(busy).accessibilityIdentifier("localAddFolder")
                     Button { Task { await model.refresh(folderStore: folderStore, runner: activeRunner) } } label: { Image(systemName: "arrow.clockwise") }
                         .disabled(busy).help("Refresh local status").accessibilityLabel("Refresh local status").keyboardShortcut("r", modifiers: .command)
                 }
@@ -147,8 +147,7 @@ struct LocalView: View {
             if folderStore.folders.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("No folders yet").font(.callout.weight(.medium))
-                    Text("Only folders you select are accessed.").font(.caption).foregroundStyle(.secondary)
-                    Button("Add Folder…", systemImage: "folder.badge.plus") { Task { await addFolder() } }.controlSize(.small)
+                    Text("Only folders you select are accessed. Use Add Folder… above.").font(.caption).foregroundStyle(.secondary)
                 }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else {
             List(selection: $model.selectedFolder) {

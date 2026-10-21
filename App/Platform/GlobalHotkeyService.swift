@@ -126,7 +126,27 @@ struct GlobalHotkeySettings: View {
     }
   }
   private func modifier(_ symbol: String, name: String, isOn: Binding<Bool>) -> some View {
-    Toggle(isOn: isOn) { Text(symbol).frame(minWidth: 14) }.toggleStyle(.button)
-      .help(name).accessibilityLabel(name)
+    ModifierKeyToggle(symbol: symbol, name: name, isOn: isOn)
+  }
+}
+
+/// A modifier key that reads clearly as on (filled accent) or off (outlined), unlike `.button` toggles.
+private struct ModifierKeyToggle: View {
+  let symbol: String
+  let name: String
+  @Binding var isOn: Bool
+  @Environment(\.isEnabled) private var isEnabled
+  var body: some View {
+    Button { isOn.toggle() } label: {
+      Text(symbol).font(.body.weight(.semibold))
+        .frame(width: 26, height: 22)
+        .foregroundStyle(isOn ? Color.white : Color.secondary)
+        .background(isOn ? DesignTokens.cobalt : Color.clear, in: RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(isOn ? Color.clear : Color.secondary.opacity(0.5)))
+        .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain).opacity(isEnabled ? 1 : 0.4)
+    .help(name).accessibilityLabel(name).accessibilityValue(isOn ? "On" : "Off")
+    .accessibilityAddTraits(isOn ? .isSelected : [])
   }
 }

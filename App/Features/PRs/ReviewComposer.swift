@@ -77,7 +77,7 @@ struct ReviewComposer:View {
                 if decision == .approve,truth?.viewerIsAuthor == true {
                     Text("You cannot approve your own pull request. You can leave a comment instead.").foregroundStyle(.orange)
                 }
-                if decision == .approve,requireViewed { Text("Settings require every file marked viewed on GitHub before approving a risk-flagged pull request.").font(.caption).foregroundStyle(.secondary) }
+                if decision == .approve,requireViewed { Text("Settings require all files marked Viewed on GitHub before approving a risky pull request.").font(.caption).foregroundStyle(.secondary) }
                 Toggle("Markdown preview",isOn:$preview)
                 if preview { ScrollView { MarkdownView(source:summary,webURL:pr?.metadata?.webURL) }.frame(minHeight:150,maxHeight:220) }
                 else { TextEditor(text:$summary).font(.body).frame(height:150).border(.separator).focused($focus,equals:.summary).accessibilityLabel("Review summary") }

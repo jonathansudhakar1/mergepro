@@ -232,7 +232,11 @@ struct PRCardView: View, Equatable {
       HStack(spacing: 10) { PRStatusLabel(value: checks); PRStatusLabel(value: review); if !compact { PRStatusLabel(value: conflicts) } }
       VStack(alignment: .leading, spacing: 3) { PRStatusLabel(value: checks); PRStatusLabel(value: review); if !compact { PRStatusLabel(value: conflicts) } }
     }
-    PRStatusLabel(value: verification(now))
+    let verification = verification(now)
+    // A conflict blocker repeats the Conflicts status above; show it once.
+    if compact || !(verification.tone == .failing && conflicts.tone == .failing && verification.text.localizedCaseInsensitiveContains("conflict")) {
+      PRStatusLabel(value: verification)
+    }
   }
   /// State drag, labels, and visible Approve and Merge. Merge stays draggable onto the Merged column.
   private var actionRow: some View {

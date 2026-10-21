@@ -56,7 +56,7 @@ struct PRDetailWindow:View {
                     .pickerStyle(.segmented).labelsHidden().fixedSize()
                     .padding(.horizontal,20).padding(.vertical,8)
                     .help("Switch sections with ⌃⌘1–⌃⌘6")
-            }.scrollIndicators(.hidden).frame(maxWidth:.infinity,alignment:.leading)
+            }.scrollIndicators(.never).frame(maxWidth:.infinity,alignment:.leading)
             reReviewBanner
             if let loadError=model.loadError { WorkspaceNotice(message:loadError,symbol:"exclamationmark.triangle",tint:.orange).padding(.horizontal,20).padding(.bottom,8) }
             if let comparisonStatus=model.comparisonStatus { WorkspaceNotice(message:comparisonStatus).padding(.horizontal,20).padding(.bottom,8) }
@@ -210,15 +210,16 @@ struct PRDetailWindow:View {
                 }.disabled(model.actionsWaitForUpdate).help(model.actionsWaitForUpdate ? Self.waitForUpdateHelp : "")
                 Button("Edit metadata / state") { editingMetadata=true }
                 // Evidence age alone never disables Merge: the sheet re-verifies before anything is sent.
-                Button(workspace?.mergeEligibility(pr).label ?? "Merge") { model.openMerge(nil) }.disabled(!mergeEnabled)
-                    .help(model.actionsWaitForUpdate ? Self.waitForUpdateHelp : workspace.map { PRStatusSummary.merge($0.mergeEligibility(pr)).text } ?? "Merge status unknown")
-                Menu("Merge actions") {
-                    Button("Refresh eligibility") { Task { await workspace?.refreshMergeEvidence(pr) } }
-                    Button("Enable auto-merge…") { model.openMerge(.enableAutoMerge) }.disabled(!model.canOpenMerge(.enableAutoMerge))
-                    Button("Disable auto-merge…") { model.openMerge(.disableAutoMerge) }
-                    Button("Remove from merge queue…") { model.openMerge(.removeQueue) }
-                    Button("Update branch…") { model.openMerge(.updateBranch) }
+                // One split button: clicking merges when allowed; the arrow holds the other merge actions.
+                Group {
+                    if mergeEnabled {
+                        Menu { mergeMenuItems(pr) } label: { Text(workspace?.mergeEligibility(pr).label ?? "Merge") } primaryAction: { model.openMerge(nil) }
+                    } else {
+                        Menu { mergeMenuItems(pr) } label: { Text(workspace?.mergeEligibility(pr).label ?? "Merge") }
+                    }
                 }
+                .fixedSize()
+                .help(model.actionsWaitForUpdate ? Self.waitForUpdateHelp : workspace.map { PRStatusSummary.merge($0.mergeEligibility(pr)).text } ?? "Merge status unknown")
                 // Head-branch cleanup applies to same-repository heads of merged/closed PRs only.
                 if pr.state != .open,pr.metadata?.headRepositoryID.map({ $0 == pr.key.repositoryID }) ?? true { PRHeadBranchControl(pr:pr,account:account,didWrite:{ rowChanged() }) }
                 if pr.state == .merged { Button("Revert…",systemImage:"arrow.uturn.backward.circle") { reverting=true }.accessibilityIdentifier("revertPR") }
@@ -235,12 +236,21 @@ struct PRDetailWindow:View {
                     .fixedSize().help("More actions").accessibilityLabel("More actions").accessibilityIdentifier("prDetailMore")
             }
                 .padding(8)
-            }.scrollIndicators(.hidden)
+            }.scrollIndicators(.never)
             .workspaceGlass(radius: 12)
             .padding(.top, 4)
             accountStatus
 
         }.frame(maxWidth:.infinity,alignment:.leading)
+    }
+    @ViewBuilder private func mergeMenuItems(_ pr:PullRequest) -> some View {
+        Button("Merge…") { model.openMerge(nil) }.disabled(!mergeEnabled)
+        Divider()
+        Button("Refresh eligibility") { Task { await workspace?.refreshMergeEvidence(pr) } }
+        Button("Enable auto-merge…") { model.openMerge(.enableAutoMerge) }.disabled(!model.canOpenMerge(.enableAutoMerge))
+        Button("Disable auto-merge…") { model.openMerge(.disableAutoMerge) }
+        Button("Remove from merge queue…") { model.openMerge(.removeQueue) }
+        Button("Update branch…") { model.openMerge(.updateBranch) }
     }
     private func overview() -> some View {
         ScrollView {
@@ -367,7 +377,7 @@ struct PRDetailWindow:View {
                 let result=document.search(model.search)
                 HStack(spacing:8) {
                     Text("\(result.matches.count) matches\(result.complete ? "" : " · incomplete: some patches unavailable")").font(.caption.weight(.medium)).foregroundStyle(.secondary).fixedSize()
-                    ScrollView(.horizontal) { HStack(spacing:6) { ForEach(result.matches.prefix(50)) { match in Button("\(match.path):\(match.line.newLine ?? match.line.oldLine ?? 0)") { model.reveal(path:match.path,line:match.line.newLine ?? match.line.oldLine,side:match.line.kind == .removed ? .left : .right) }.controlSize(.small) } } }.scrollIndicators(.hidden)
+                    ScrollView(.horizontal) { HStack(spacing:6) { ForEach(result.matches.prefix(50)) { match in Button("\(match.path):\(match.line.newLine ?? match.line.oldLine ?? 0)") { model.reveal(path:match.path,line:match.line.newLine ?? match.line.oldLine,side:match.line.kind == .removed ? .left : .right) }.controlSize(.small) } } }.scrollIndicators(.never)
                 }.padding(.horizontal,16).padding(.bottom,8)
             }
             Divider()

@@ -221,7 +221,7 @@ struct ActivityInboxView: View {
                     else { Button("Read provider result") { Task { await model.reconcileNotification(operation) } }.disabled(pending) }
                 }
             }
-        }.scrollIndicators(.hidden)
+        }.scrollIndicators(.never)
     }
 
     private func groupSummary(_ group: ActivityGroup) -> String {

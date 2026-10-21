@@ -19,10 +19,15 @@ struct MergeProSettings: View {
                 Text("Turn a shortcut on, choose its modifiers and key, then save. \(model.globalHotkeyStatus)").font(.callout).foregroundStyle(.secondary)
             } } }
         }
-        .frame(width:640,height:600)
+        // Each pane gets a height that fits its content, so short panes don't leave empty space.
+        .frame(width:640,height:Self.height(tab))
+        .animation(.default,value:tab)
         .navigationTitle("MergePro Settings")
         .background { SettingsWindowTitle(title:"MergePro Settings") }
         .onDisappear { model.cancelAuthorization() }
+    }
+    private static func height(_ tab:SettingsTab) -> CGFloat {
+        switch tab { case .general:440; case .accounts:340; case .notifications:620; case .code:520; case .local:520; case .advanced:340 }
     }
 }
 

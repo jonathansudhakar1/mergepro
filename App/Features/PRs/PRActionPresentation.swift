@@ -42,7 +42,11 @@ extension PRWorkspaceModel {
     /// An explicit `action` (auto-merge, update branch, remove from queue) always opens it; the sheet decides.
     func requestMerge(_ pr:PullRequest,action:MergeAction?=nil) {
         let current=mergeEligibility(pr)
-        guard action != nil || current.opensMergeSheet else { status=current.blockers.joined(separator:" ");announce(status);return }
+        guard action != nil || current.opensMergeSheet else {
+            status=current.blockers.joined(separator:" ");announce(status)
+            blockedMerge=(pr,status ?? "")
+            return
+        }
         present(.init(rows:[pr],kind:.merge(action)))
     }
     func requestReview(_ pr:PullRequest,decision:ReviewDecision) { present(.init(rows:[pr],kind:.review(decision))) }

@@ -113,6 +113,8 @@ final class PRWorkspaceModel {
   var actionPresentation:PRActionPresentation?
   /// A card dropped on the Draft column, waiting for confirmation (conversion leaves any merge queue).
   var pendingDraftConversion:PullRequest?
+  /// A merge request refused before the sheet opened, with the blockers to explain.
+  var blockedMerge:(pr:PullRequest,reason:String)?
   var stateActionRequest:UUID?
   var expandedStacks:Set<String>=[] { didSet { if oldValue != expandedStacks { board=pipeline.layout(projection:projection,view:state.current,expanded:expandedStacks);refreshEligibility() } } }
   var palettePresented = false

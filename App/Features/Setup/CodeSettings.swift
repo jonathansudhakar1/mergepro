@@ -29,10 +29,10 @@ struct CodeSettings:View {
             } }
         }
         Section("Reviews") {
-            Toggle("Require every file provider-viewed before approving risk-flagged pull requests",isOn:Binding(get:{ requireViewed ?? false },set:{ value in Task {
+            Toggle("Require all files marked Viewed before approving risky pull requests",isOn:Binding(get:{ requireViewed ?? false },set:{ value in Task {
                 do { try await model.prs.storage.setRequireAllFilesViewed(value);requireViewed=value;status=nil } catch { status="The review requirement could not be saved." }
             } })).disabled(requireViewed == nil)
-            Text(requireViewed == nil ? "Reading the saved requirement…" : "Applies when you approve from the review composer.").font(.caption).foregroundStyle(.secondary)
+            Text(requireViewed == nil ? "Reading the saved requirement…" : "Risky pull requests touch sensitive paths, dependencies or possible credentials, change source without tests, or are unusually large. Files must be marked Viewed on GitHub. Applies when you approve from the review composer.").font(.caption).foregroundStyle(.secondary)
         }
         Section("Author classification overrides") {
             Picker("Account",selection:$ruleAccount) {

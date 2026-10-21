@@ -150,7 +150,7 @@ struct RichDiffView:View {
     private var toolbar:some View {
         ViewThatFits(in:.horizontal) {
             toolbarContent
-            ScrollView(.horizontal) { toolbarContent }.scrollIndicators(.hidden)
+            ScrollView(.horizontal) { toolbarContent }.scrollIndicators(.never)
         }
     }
     private var toolbarContent:some View {

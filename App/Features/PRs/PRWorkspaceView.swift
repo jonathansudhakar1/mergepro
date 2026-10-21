@@ -122,6 +122,12 @@ struct PRWorkspaceView: View {
       Button("Convert to draft") { workspace.pendingDraftConversion=nil;Task { await workspace.setDraft(pr,true) } }
       Button("Cancel",role:.cancel) { workspace.pendingDraftConversion=nil }
     } message: { pr in Text("\(pr.title) becomes a draft. Reviewers stop being asked to review it, and it leaves the merge queue if it was queued.") }
+    .alert("Can’t merge #\(workspace.blockedMerge?.pr.metadata?.number ?? 0)",isPresented:Binding(get:{ workspace.blockedMerge != nil },set:{ if !$0 { workspace.blockedMerge=nil } })) {
+      if let url=workspace.blockedMerge?.pr.metadata?.webURL { Button("Open on GitHub") { ExternalLinkPolicy.open(url);workspace.blockedMerge=nil } }
+      Button("OK",role:.cancel) { workspace.blockedMerge=nil }
+    } message: {
+      Text((workspace.blockedMerge?.reason).map { $0.isEmpty ? "GitHub doesn’t allow this merge yet." : $0 } ?? "")
+    }
     .sheet(isPresented: $workspace.viewEditorPresented) { viewEditor }
     .fileImporter(isPresented: $workspace.importPresented, allowedContentTypes: [.json]) { result in
       if case .success(let url) = result {
