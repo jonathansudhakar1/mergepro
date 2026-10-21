@@ -7,6 +7,7 @@ struct AppShell<Chrome: ViewModifier & Sendable>: View {
     let chrome: Chrome
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
+    @Environment(\.colorScheme) private var colorScheme
     var body: some View {
         NavigationSplitView {
             VStack(spacing: 0) {
@@ -103,7 +104,13 @@ struct AppShell<Chrome: ViewModifier & Sendable>: View {
                 .workspaceGlass(radius: 16)
                 .padding(12)
             }
-            .background { WorkspaceCanvas() }
+            .background {
+                // A slightly deeper sidebar than the content, so the two read as separate areas.
+                WorkspaceCanvas().overlay(Color.black.opacity(colorScheme == .dark ? 0.18 : 0.035)).ignoresSafeArea()
+            }
+            .overlay(alignment: .trailing) {
+                Rectangle().fill(Color(nsColor: .separatorColor)).frame(width: 1).ignoresSafeArea().accessibilityHidden(true)
+            }
             .navigationSplitViewColumnWidth(
                 min: DesignTokens.sidebarMinimumWidth,
                 ideal: DesignTokens.sidebarIdealWidth,
