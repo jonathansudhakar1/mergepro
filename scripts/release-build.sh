@@ -33,6 +33,14 @@ xcodebuild archive -project MergePro.xcodeproj -scheme MergePro -configuration R
     ARCHS=arm64 CODE_SIGN_STYLE=Automatic CODE_SIGN_IDENTITY='Apple Development' DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
     MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
 
+# Swift package resource bundles hold data only, but the archive signs them with the development certificate and the
+# exports leave that signature in place (App Store Connect rejects it: ITMS-90284). Unsigned, they are sealed as plain
+# resources by the app's distribution signature. A bundle with an executable would need its own signature: stop.
+for bundle in "$archive/Products/Applications/MergePro.app/Contents/Resources/"*.bundle; do
+    [[ -e "$bundle/Contents/MacOS" ]] && { echo "$bundle contains an executable; sign it instead of stripping" >&2; exit 1; }
+    rm -rf "$bundle/Contents/_CodeSignature"
+done
+
 export_options() { # method destination
     cat > "$output/$1.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
