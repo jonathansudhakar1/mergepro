@@ -33,6 +33,18 @@ final class ActionsStoreTests:XCTestCase {
         let unavailable=try await provider.log(repository:repo,jobID:1);XCTAssertEqual(unavailable,.unavailable)
         let empty=try await provider.log(repository:repo,jobID:1);XCTAssertEqual(empty,.available(""))
     }
+    func testRefSearchIsOneGraphQLReadOfMatchingBranchesAndNewestTags() async throws {
+        let body=#"{"data":{"repository":{"defaultBranchRef":{"name":"main"},"branches":{"nodes":[{"name":"release/2"}]},"tags":{"nodes":[{"name":"v2.1"},{"name":"v2.0"}]}}}}"#
+        let transport=ScriptedTransport(bodies:[body])
+        let provider=GitHubActionsProvider(client:.init(transport:transport),credential:.init(accessToken:"fixture",scopes:[]))
+        let found=try await provider.refs(repository:repo,matching:"2")
+        XCTAssertEqual(found,.init(defaultBranch:"main",branches:["release/2"],tags:["v2.1","v2.0"]))
+        let requests=await transport.requests
+        XCTAssertEqual(requests.count,1);XCTAssertEqual(requests[0].url?.path,"/graphql")
+        let sent=try XCTUnwrap(JSONSerialization.jsonObject(with:XCTUnwrap(requests[0].httpBody)) as? [String:Any])
+        XCTAssertEqual(sent["variables"] as? [String:String],["owner":"o","name":"r","query":"2"])
+        XCTAssertTrue((sent["query"] as? String ?? "").contains("TAG_COMMIT_DATE"))
+    }
     func testDispatchCapabilityUsesImmutableDefaultBranchWorkflowContent() async throws {
         let yaml="on: workflow_dispatch"
         let content=Data(yaml.utf8).base64EncodedString()

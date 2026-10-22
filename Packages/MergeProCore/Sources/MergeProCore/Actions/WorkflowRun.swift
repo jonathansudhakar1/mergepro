@@ -70,6 +70,13 @@ public struct ActionsAnnotation: Codable, Equatable, Identifiable, Sendable {
     public let title:String?
     public var id:String { "\(path):\(startLine):\(endLine):\(level):\(message)" }
 }
+/// Refs a workflow can run from, as found by a search; the default branch is listed even when it does not match.
+public struct WorkflowRefMatches: Equatable, Sendable {
+    public let defaultBranch:String?
+    public let branches:[String]
+    public let tags:[String]
+    public init(defaultBranch:String?,branches:[String],tags:[String]) { self.defaultBranch=defaultBranch;self.branches=branches;self.tags=tags }
+}
 public struct ActionsEnvironment: Codable, Equatable, Identifiable, Sendable {
     public let id:Int64
     public let name:String

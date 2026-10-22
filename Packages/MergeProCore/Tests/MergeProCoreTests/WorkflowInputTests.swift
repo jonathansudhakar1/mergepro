@@ -50,6 +50,9 @@ final class WorkflowInputTests:XCTestCase {
         XCTAssertFalse(custom.requiresProductionConfirmation(values:[:],productionEnvironments:[]))
         let dynamic=try WorkflowInputSchema.parse(yaml:"on: workflow_dispatch\njobs:\n  deploy:\n    environment: ${{ matrix.target }}",workflowID:2,ref:"main",revision:"sha")
         XCTAssertTrue(dynamic.requiresProductionConfirmation(values:[:],productionEnvironments:[]))
+        let chosen=try WorkflowInputSchema.parse(yaml:"on:\n  workflow_dispatch:\n    inputs:\n      environment:\n        type: environment",workflowID:2,ref:"main",revision:"sha")
+        XCTAssertTrue(chosen.requiresProductionConfirmation(values:["environment":.environment("prd")],productionEnvironments:[]),"prd is a common short name for production")
+        XCTAssertFalse(chosen.requiresProductionConfirmation(values:["environment":.environment("dev")],productionEnvironments:[]))
     }
     func testPinsUseAccountAndRepositoryScopedWorkflowIdentity() {
         let first=RepositoryKey(account:.init(host:"github.com",accountID:"1"),repositoryID:"1")

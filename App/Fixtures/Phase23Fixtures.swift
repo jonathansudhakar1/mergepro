@@ -85,6 +85,13 @@ actor Phase23FixtureTransport:GitHubTransport {
            let query=body["query"] as? String,query.hasPrefix("query RepositoryOverview") {
             return try response(["data":["repository":["pullRequests":["totalCount":1],"latestRelease":["name":"Native workspace preview","tagName":"v1.0"],"defaultBranchRef":["target":["statusCheckRollup":["state":"SUCCESS"]]]]]])
         }
+        if method == "POST",path == "/graphql",let data=request.httpBody,
+           let body=try JSONSerialization.jsonObject(with:data) as? [String:Any],
+           let query=body["query"] as? String,query.hasPrefix("query WorkflowRefs") {
+            let typed=((body["variables"] as? [String:Any])?["query"] as? String ?? "").lowercased()
+            func nodes(_ names:[String]) -> [String:Any] { ["nodes":names.filter { typed.isEmpty || $0.lowercased().contains(typed) }.map { ["name":$0] }] }
+            return try response(["data":["repository":["defaultBranchRef":["name":"main"],"branches":nodes(["feature/native","main"]),"tags":nodes(["v1.0"])]]])
+        }
         // Fixture writes are local simulations only. Production transport cannot enter this branch.
         guard method == "GET" else { throw GitHubFailure.resourceDenied }
         let account = request.value(forHTTPHeaderField:"Authorization")?.hasSuffix("100") == true ? "100" : "99"

@@ -198,10 +198,23 @@ public struct GitHubActionsProvider: ActionsProvider {
         }
         return result
     }
-    public func refs(repository:Repository) async throws -> [String] {
-        let branches=try await pages(repository,"/branches").map { try string($0,"name") }
-        let tags=try await pages(repository,"/tags").map { try string($0,"name") }
-        return Array(Set(branches+tags)).sorted()
+    /// Branches and tags whose names contain `query`, read in one GraphQL request: repositories can hold thousands
+    /// of tags, so listing every ref before the form opens is never an option. Tags come newest first.
+    public func refs(repository:Repository,matching query:String,limit:Int=20) async throws -> WorkflowRefMatches {
+        let parts=try base(repository).dropFirst("repos/".count).split(separator:"/").map(String.init),first=max(1,min(limit,100))
+        let text="""
+        query WorkflowRefs($owner:String!,$name:String!,$query:String!) {
+          repository(owner:$owner,name:$name) {
+            defaultBranchRef { name }
+            branches:refs(refPrefix:"refs/heads/",query:$query,first:\(first),orderBy:{field:ALPHABETICAL,direction:ASC}) { nodes { name } }
+            tags:refs(refPrefix:"refs/tags/",query:$query,first:\(first),orderBy:{field:TAG_COMMIT_DATE,direction:DESC}) { nodes { name } }
+          }
+        }
+        """
+        let response=try await client.readQuery(text,variables:["owner":parts[0],"name":parts[1],"query":query],token:credential.accessToken)
+        guard let envelope=try JSONSerialization.jsonObject(with:response.data) as? [String:Any],envelope["errors"] == nil,let data=envelope["data"] as? [String:Any],let node=data["repository"] as? [String:Any] else { throw GitHubFailure.invalidResponse }
+        func names(_ key:String) -> [String] { ((node[key] as? [String:Any])?["nodes"] as? [[String:Any]] ?? []).compactMap { $0["name"] as? String } }
+        return .init(defaultBranch:(node["defaultBranchRef"] as? [String:Any])?["name"] as? String,branches:names("branches"),tags:names("tags"))
     }
     public func schema(repository:Repository,workflow:ActionsWorkflow,ref:String) async throws -> WorkflowInputSchema {
         guard !ref.isEmpty,workflow.path.hasPrefix(".github/workflows/"),!workflow.path.split(separator:"/").contains("..") else { throw GitHubFailure.unsafeURL }
@@ -251,7 +264,7 @@ public struct GitHubActionsProvider: ActionsProvider {
         guard url.scheme=="https",url.user==nil,url.password==nil,(url.port ?? 443)==443,let host=url.host?.lowercased() else { return false }
         return host.hasSuffix(".blob.core.windows.net") || host.hasSuffix(".githubusercontent.com") || host.hasSuffix(".s3.amazonaws.com")
     }
-    public static func productionName(_ name:String) -> Bool { ["prod","production"].contains(name.lowercased()) || name.lowercased().hasPrefix("production-") }
+    public static func productionName(_ name:String) -> Bool { ["prod","prd","production"].contains(name.lowercased()) || name.lowercased().hasPrefix("production-") }
     private func decodeRun(_ o:[String:Any],repository:Repository) throws -> WorkflowRun {
         if let scope=o["repository"] as? [String:Any],let id=scope["id"] as? NSNumber,String(id.int64Value) != repository.key.repositoryID { throw GitHubFailure.invalidResponse }
         guard let created=date(o["created_at"]),let updated=date(o["updated_at"]) else { throw GitHubFailure.invalidResponse }

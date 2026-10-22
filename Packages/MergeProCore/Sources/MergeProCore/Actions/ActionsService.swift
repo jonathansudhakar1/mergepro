@@ -92,9 +92,14 @@ public actor ActionsService {
         let (ticket,provider)=try await provider(repository)
         do { let data=try await provider.artifact(repository:repository,artifact:artifact);try await current(ticket);return data } catch { await session.featureFailed(error,operation:ticket);throw error }
     }
-    public func refs(repository:Repository) async throws -> [String] {
+    public func refs(repository:Repository,matching query:String) async throws -> WorkflowRefMatches {
         let (ticket,provider)=try await provider(repository)
-        do { let refs=try await provider.refs(repository:repository);try await current(ticket);return refs } catch { await session.featureFailed(error,operation:ticket);throw error }
+        do { let refs=try await provider.refs(repository:repository,matching:query);try await current(ticket);return refs } catch { await session.featureFailed(error,operation:ticket);throw error }
+    }
+    /// The repository's environments as dispatch admission will see them, for environment-typed inputs.
+    public func environments(repository:Repository) async throws -> [ActionsEnvironment] {
+        let (ticket,provider)=try await provider(repository)
+        do { let values=try await provider.environments(repository:repository);try await current(ticket);return values } catch { await session.featureFailed(error,operation:ticket);throw error }
     }
     public func schema(repository:Repository,workflow:ActionsWorkflow,ref:String) async throws -> WorkflowInputSchema {
         let (ticket,provider)=try await provider(repository)
