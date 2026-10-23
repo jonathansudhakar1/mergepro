@@ -43,7 +43,9 @@ public final class AppServices {
     private var actions: ActionsService?
     private var repositoryBrowser: RepositoryBrowserService?
 
-    public init(_ configuration: Configuration, budget: RateBudget = RateBudget()) {
+    /// Three requests per account in flight (background GraphQL still one at a time): the sync of an account with
+    /// hundreds of repositories is bound by request latency, not by its hourly quota.
+    public init(_ configuration: Configuration, budget: RateBudget = RateBudget(concurrency: 3)) {
         self.configuration = configuration; self.budget = budget
     }
 

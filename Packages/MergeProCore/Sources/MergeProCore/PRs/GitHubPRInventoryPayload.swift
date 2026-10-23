@@ -403,6 +403,10 @@ enum GitHubPRInventoryPayload {
     struct Retry: Codable, Sendable { var count: Int; var at: Date }
     /// Scheduled incremental head reads since the last one that carried the open-PR volatile batch.
     var readsSinceOpenBatch: Int? = nil
+    /// `InventoryProbe` signature observed just before the last complete read, and when that read was: a later
+    /// probe with the same signature means nothing changed, so the read can be skipped until `probeTrust`.
+    var probeSignature: String? = nil
+    var fullReadAt: Date? = nil
     struct Observation: Codable, Sendable, Equatable {
       var updatedAt: String; var head: String
       var signature: String { updatedAt + "|" + head }

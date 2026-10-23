@@ -133,6 +133,7 @@ private actor WatermarkInventoryTransport: GitHubTransport {
     var pages: [Page] = []
     var teamReads = 0
     var otherReads = 0
+    var probeReads = 0
     /// Supplementary open-PR pages (by cursor), PR node reads, nested connection pages and merge-evidence requests.
     var openPages: [String] = []
     var nodeReads: [String] = []
@@ -156,7 +157,9 @@ private actor WatermarkInventoryTransport: GitHubTransport {
     var total: Int { pages.count + teamReads + otherReads + openPages.count + nodeReads.count + connectionReads + evidenceRequests }
     /// Merge-evidence attempts, answered or not.
     var evidenceAttempts: Int { otherReads + evidenceReads.count }
-    func reset() { pages = []; teamReads = 0; otherReads = 0; openPages = []; nodeReads = []; connectionReads = 0; evidenceReads = []; evidenceRequests = 0 }
+    var answersProbe = false
+    func answerProbe() { answersProbe = true }
+    func reset() { pages = []; teamReads = 0; otherReads = 0; probeReads = 0; openPages = []; nodeReads = []; connectionReads = 0; evidenceReads = []; evidenceRequests = 0 }
     func update(_ id: Int, at time: Int, _ change: (inout PR) -> Void = { _ in }) {
         guard let index = prs.firstIndex(where:{ $0.id == id }) else { return }
         prs[index].updatedAt = time; change(&prs[index])
@@ -291,6 +294,19 @@ private actor WatermarkInventoryTransport: GitHubTransport {
         if query.contains("query OpenVolatile") {
             let after = variables["after"] as? String; openPages.append(after ?? "")
             return try envelope(["viewer": Self.viewer, "repository": ["openVolatile": openPage(after:after)]])
+        }
+        // The batched change probe: no signatures, so every repository is read in full.
+        if query.contains("query InventoryProbe") {
+            probeReads += 1
+            guard answersProbe else { return json(#"{"data":{}}"#) }
+            // Repository "1" is the first alias; other aliases (peers) are unknown to this fixture.
+            let open = ordered().filter { $0.state == "OPEN" }
+            let nodes: [[String: Any]] = open.prefix(InventoryProbe.openPerRepository).map { pr in
+                ["id": "PR\(pr.id)", "headRefOid": "sha\(pr.id)", "commits": ["nodes": [["commit": ["statusCheckRollup": ["state": pr.checks]]]]]]
+            }
+            let newest = ordered().first.map { ["updatedAt": Self.iso($0.updatedAt)] }
+            return try envelope(["r0": ["databaseId": 1, "latest": ["nodes": newest.map { [$0] } ?? []],
+                "open": ["totalCount": open.count, "pageInfo": ["hasNextPage": open.count > InventoryProbe.openPerRepository], "nodes": nodes]]])
         }
         guard query.contains("query Inventory") else { otherReads += 1; return json(#"{"data":{}}"#) }
         let after = variables["after"] as? String
@@ -768,7 +784,8 @@ final class InventoryWatermarkTests: XCTestCase {
         try rewrite(store) { $0.teamsFetchedAt = Date().addingTimeInterval(-86_400) }
         let fetcher = GitHubPRInventoryFetcher(fullPassInterval:0)
         var swept = false
-        for _ in 0..<4 {
+        // The sweep reads one page per fetch (`sweepPagesPerFetch`): 250 PRs take up to 10 cycles to reach PR 3.
+        for _ in 0..<12 {
             await transport.reset()
             let value = try await cycle(fetcher,transport,store)
             XCTAssertTrue(value.status.complete,"Sweep-originated nested pages never make the inventory partial")
@@ -840,6 +857,45 @@ final class InventoryWatermarkTests: XCTestCase {
         let changed = try await cycle(fetcher,transport,store)
         XCTAssertEqual(changed.changes.pullRequests.map(\.objectID),["pull-request:PR299"])
         XCTAssertEqual(try row(store,299).title,"Changed")
+    }
+
+    func testABatchedProbeSkipsUnchangedRepositoriesAndChecksOnlyChangesAreStillRead() async throws {
+        let transport = WatermarkInventoryTransport(count:60,open:[1,2,3])
+        await transport.answerProbe()
+        let store = try store()
+        try await synced(transport,GitHubPRInventoryFetcher(),store,settle:false)
+        // The first scheduled read probes, reads in full and records what the probe saw.
+        let fetcher = GitHubPRInventoryFetcher()
+        await transport.reset()
+        var value = try await cycle(fetcher,transport,store,reason:.scheduled)
+        XCTAssertTrue(value.status.complete)
+        var probes = await transport.probeReads, total = await transport.total
+        XCTAssertEqual(probes,1);XCTAssertGreaterThan(total,0)
+        // Unchanged: the read is skipped, yet the repository is current.
+        await transport.reset()
+        value = try await cycle(fetcher,transport,store,reason:.scheduled)
+        probes = await transport.probeReads;total = await transport.total
+        XCTAssertEqual(total,0,"An unchanged repository costs no read of its own")
+        XCTAssertTrue(value.status.complete)
+        XCTAssertLessThan(Date().timeIntervalSince(try XCTUnwrap(value.status.lastSuccessAt)),5)
+        XCTAssertNotNil(value.status.continuation,"A skip keeps the resumable checkpoint")
+        // Checks change without bumping updatedAt: the next probe sees it and the read refreshes that PR's checks.
+        await transport.silently(2) { $0.checks = "FAILURE" }
+        await transport.reset()
+        value = try await cycle(GitHubPRInventoryFetcher(),transport,store,reason:.scheduled)
+        probes = await transport.probeReads;total = await transport.total
+        XCTAssertEqual(probes,1);XCTAssertGreaterThan(total,0)
+        XCTAssertEqual(try row(store,2).metadata?.checks,"FAILURE")
+        // A new probe that matches again skips.
+        await transport.reset()
+        _ = try await cycle(GitHubPRInventoryFetcher(),transport,store,reason:.scheduled)
+        total = await transport.total
+        XCTAssertEqual(total,0)
+        // A manual refresh always reads.
+        await transport.reset()
+        _ = try await cycle(fetcher,transport,store)
+        total = await transport.total
+        XCTAssertGreaterThan(total,0)
     }
 
     func testUnchangedEvidenceIsRenewedOnlyAfterTheRenewalIntervalAndOnlyWhenItLooksMergeable() async throws {
@@ -1074,14 +1130,14 @@ final class ActionsPollingEfficiencyTests: XCTestCase {
         XCTAssertEqual(fetcher.pollInterval(for:.activeRun,repository:repo,focused:true),15,"Visible repositories keep their cadence")
         XCTAssertEqual(fetcher.pollInterval(for:.scheduled,repository:repo,focused:true),60)
     }
-    func testCoordinatorPassesFocusAndRunsInventoryFirstForNewWork() async throws {
+    func testCoordinatorPassesFocusAndInterleavesNewWorkByRepositoryInventoryFirst() async throws {
         let log = CadenceLog()
         let store = PollCycleStore(database:try DatabaseStore(path:":memory:"))
         let poller = PollCoordinator(store:store,publisher:PollNotificationPublisher(store:store,sink:RecordingNotificationSink()),
             fetchers:[CadenceProbeFetcher(featureID:"feed",schedulingPriority:0,log:log),CadenceProbeFetcher(featureID:"inventory",schedulingPriority:100,log:log)],budget:RateBudget(minimumSpacing:.zero))
         let a = RepositoryKey(account:account,repositoryID:"1"), b = RepositoryKey(account:account,repositoryID:"2")
         _ = try await poller.refresh(PollRequest(scopes:[PollScope(account:account,repositories:[a,b])],reason:.scheduled,focusedRepositories:[a]))
-        XCTAssertEqual(log.calls,["inventory:1","inventory:2","feed:1","feed:2"])
+        XCTAssertEqual(log.calls,["inventory:1","feed:1","inventory:2","feed:2"],"Every feature advances; none waits out a full pass of another")
         XCTAssertEqual(log.focus["inventory:1"],true); XCTAssertEqual(log.focus["inventory:2"],false)
         // Until the App reports focus, an active-run request keeps every repository fast.
         _ = try await poller.refresh(PollRequest(scopes:[PollScope(account:account,repositories:[a,b])],reason:.activeRun))

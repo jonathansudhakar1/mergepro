@@ -17,13 +17,25 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
   public let featureID = "github-pr-inventory"
   public let fetchScope: PollFetchScope = .repository
   public var pollInterval: TimeInterval? { 60 }
+  /// Unchanged repositories cost a share of one batched probe, not a read each.
+  public var secondsPerRepository: TimeInterval { PollCadence.probedSecondsPerRepository }
+  /// The last successful read of a complete inventory; an incomplete one is continued at once.
+  public func lastCompleted(_ snapshots: [PollFeatureSnapshot]) -> Date? {
+    snapshots.lazy.filter { $0.feature == featureID && $0.key.objectID == "pull-request-inventory" }
+      .compactMap { Self.decodeStored(PRInventoryStatus.self, from: $0.payload) }
+      .first { $0.complete }?.lastSuccessAt
+  }
   /// PR inventory feeds the board, so it leads newly ordered account work.
   public var schedulingPriority: Int { 100 }
   /// Interval between full sweeps of an incrementally synced repository.
   public let fullPassInterval: TimeInterval
   /// Account-scoped team membership shared by every repository this fetcher polls.
   private let teams = TeamMembershipCache()
-  public init() { fullPassInterval = 86_400 }
+  /// Batched change checks shared by every repository this fetcher polls.
+  private let probe = InventoryProbe()
+  /// Weekly: the sweep only catches fields GitHub changes on older PRs without bumping `updatedAt`, and reading
+  /// every repository's whole history daily crowded out current reads for accounts with many repositories.
+  public init() { fullPassInterval = 7 * 86_400 }
   public init(fullPassInterval: TimeInterval) { self.fullPassInterval = max(0, fullPassInterval) }
   private typealias Payload = GitHubPRInventoryPayload
   private typealias Node = Payload.Node
@@ -70,6 +82,31 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
         Self.decodeStored(Payload.Checkpoint.self, from: $0)
       } ?? Payload.Checkpoint()
     let now = Date()
+    // One batched probe (shared with up to 24 other repositories of the account) tells whether anything changed
+    // since the last complete read; an unchanged, settled repository skips its read. Manual refreshes always read.
+    var probed: String? = probe.fresh(repo, now: now)
+    if probed == nil, context.reason != .manual {
+      do {
+        try context.checkDeadline()
+        probed = try await probe.signature(
+          for: repo, peers: context.peerRepositories.union([repo]), metadata: context.repositoryMetadata,
+          client: client, token: operation.credential.accessToken, now: now)
+      } catch {
+        if error as? GitHubFailure == .invalidAuthentication || error is CancellationError { throw error }
+      }
+    }
+    if context.reason != .manual, let probed, probed == checkpoint.probeSignature, var status = priorStatus, status.complete,
+      checkpoint.watermark != nil, checkpoint.pending.isEmpty, checkpoint.staleOpen?.isEmpty ?? true,
+      checkpoint.sweeping != true, let read = checkpoint.fullReadAt, now.timeIntervalSince(read) < Self.probeTrust,
+      checkpoint.fullPassAt.map({ now.timeIntervalSince($0) <= fullPassInterval }) ?? false
+    {
+      status.fetchedAt = now
+      status.fetchedCount = 0
+      status.lastSuccessAt = now
+      return PollFetchResult(
+        snapshots: [PollFeatureSnapshot(key: statusKey, feature: featureID, payload: try JSONEncoder.stable.encode(status))],
+        baselinedRepositories: [repo])
+    }
     // A bounded chunk leaves transaction time before the coordinator's fixed deadline.
     // Shared client still owns pacing/quota/lifecycle; one slow request may expire and is rejected.
     let reserve = min(Duration.seconds(2), ContinuousClock.now.duration(to: context.deadline) / 5)
@@ -418,8 +455,12 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
     // mergeability and labels GitHub changes without bumping updatedAt) rides on every manual refresh and on
     // every `openVolatileEvery`-th scheduled read, which bounds its GraphQL cost and response size.
     var latestOpen: Payload.OpenPRs?
+    // A probe that saw a change since the last complete read may have seen only checks or a head move, which the
+    // head page alone does not refresh: carry the open-PR batch so the read records what the probe saw.
+    let probeChanged = probed != nil && checkpoint.probeSignature != nil && probed != checkpoint.probeSignature
     let carryOpen = floor != nil
-      && (context.reason == .manual || (checkpoint.readsSinceOpenBatch ?? Self.openVolatileEvery) >= Self.openVolatileEvery - 1)
+      && (context.reason == .manual || probeChanged
+        || (checkpoint.readsSinceOpenBatch ?? Self.openVolatileEvery) >= Self.openVolatileEvery - 1)
     if admit() {
       do {
         let latest = try await inventory(
@@ -551,6 +592,12 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
     if floor != nil, latestSucceeded, checkpoint.outerFinished, checkpoint.pending.isEmpty,
       checkpoint.teamComplete, !membershipFailed, !providerFailed, !checkpoint.traversalPartial
     {
+      // A sweep started under a shorter interval (daily, before it became weekly) stops once the last full
+      // pass is recent enough again; its completed rows stay committed.
+      if checkpoint.sweeping == true, let pass = checkpoint.fullPassAt, now.timeIntervalSince(pass) <= fullPassInterval {
+        checkpoint.sweeping = nil
+        checkpoint.sweepCursor = nil
+      }
       if checkpoint.sweeping != true,
         checkpoint.fullPassAt.map({ now.timeIntervalSince($0) > fullPassInterval }) ?? true
       {
@@ -559,7 +606,7 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
         checkpoint.sweepStartedAt = now
       }
       var swept = Set<String>()
-      while checkpoint.sweeping == true, checkpoint.pending.isEmpty, admit() {
+      while checkpoint.sweeping == true, checkpoint.pending.isEmpty, swept.count < Self.sweepPagesPerFetch, admit() {
         do {
           let page = try await inventory(
             checkpoint.sweepCursor, query: Payload.inventoryQuery, rejectPartial: true, sweep: true)
@@ -765,6 +812,8 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
       // Every PR older than this walk's first-page top is committed at its current revision, so the
       // next walk can stop there. A completed full walk is also the latest full pass.
       checkpoint.watermark = Self.later(checkpoint.walkTop, checkpoint.watermark)
+      checkpoint.probeSignature = probed
+      checkpoint.fullReadAt = now
       if checkpoint.walkFull == true {
         checkpoint.fullPassAt = checkpoint.walkStartedAt ?? now
         checkpoint.sweeping = nil
@@ -805,6 +854,9 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
   static let evidenceRenewal: TimeInterval = 600
   /// A by-node read that failed or returned partial data twice waits this long before its next retry.
   static let nodeRetry: TimeInterval = 600
+  /// An unchanged probe skips reads for at most this long after the last complete read; then the repository is
+  /// read in full again (team membership, merge evidence and open PRs beyond the probe stay current).
+  static let probeTrust: TimeInterval = 900
   /// Scheduled incremental head reads carry the open-PR volatile batch once per this many reads.
   static let openVolatileEvery = 3
   /// Not draft, no outstanding review requirement or requested changes, checks passing (or none), no
@@ -814,6 +866,9 @@ public struct GitHubPRInventoryFetcher: PollFeatureFetcher {
     return (m.reviewDecision == nil || m.reviewDecision == "APPROVED")
       && (m.checks == nil || m.checks == "SUCCESS") && m.mergeable != "CONFLICTING"
   }
+  /// Sweep pages per fetch: the sweep trickles through history one page per read instead of taking a whole
+  /// request chunk (about 30 s for 8 full pages), which held up every other repository in the cycle.
+  static let sweepPagesPerFetch = 1
   /// Inventory requests per fetch: a bounded chunk leaves transaction time before the coordinator's deadline.
   static let requestChunk = 8
   /// The incremental walk re-reads this far below its committed watermark.

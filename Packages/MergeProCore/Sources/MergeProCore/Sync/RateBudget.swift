@@ -5,7 +5,8 @@ public actor RateBudget {
     public enum Resource: String, Sendable { case rest, graphql }
     public enum Priority: Sendable { case background, interactive }
     private struct Key: Hashable { let account: AccountScope; let resource: Resource }
-    private struct Quota { var remaining: Int; var reset: Date }
+    /// `limit` is the hourly allowance when the provider reports it (REST headers); GraphQL assumes GitHub's 5,000.
+    private struct Quota { var remaining: Int; var reset: Date; var limit: Int? = nil }
     private var quotas: [Key:Quota] = [:]
     private var notBefore: [AccountScope:Date] = [:]
     private var nextRequest: [AccountScope:ContinuousClock.Instant] = [:]
@@ -22,13 +23,18 @@ public actor RateBudget {
     private struct PollKey: Hashable { let account: AccountScope; let feature: String }
     private var lastPoll: [PollKey:ContinuousClock.Instant] = [:]
     private var nextProviderPoll: [PollKey:ContinuousClock.Instant] = [:]
-    private struct RequestWaiter { let id: UUID; let priority:Priority;let continuation: CheckedContinuation<Bool,Error> }
-    private var requesting: Set<AccountScope> = []
+    private struct RequestWaiter { let id: UUID; let priority:Priority;let resource:Resource;let continuation: CheckedContinuation<Bool,Error> }
+    /// Requests in flight per account, and how many of them are GraphQL.
+    private struct InFlight { var total = 0; var graphQL = 0 }
+    private var inFlight: [AccountScope:InFlight] = [:]
     private var requestWaiters: [AccountScope:[RequestWaiter]] = [:]
     /// Tasks sleeping off pacing, per account; see `waiters(account:)`.
     private var pacing: [AccountScope:Int] = [:]
     private var waiterObservers: [(account: AccountScope, minimum: Waiters, continuation: CheckedContinuation<Void,Never>)] = []
     private var secondaryFailures: [AccountScope:Int] = [:]
+    /// Background pacing waits since the last `drainPacingStats()`, by the constraint that set each start.
+    public struct PacingStats: Sendable { public var requests = 0, spacing = Duration.zero, quota = Duration.zero, rest = Duration.zero }
+    private var pacingStats = PacingStats()
     /// Gap between user writes (mutations).
     private let minimumSpacing: Duration
     /// Gap between background (polling) request starts. Background requests are reads; they still go out
@@ -42,28 +48,35 @@ public actor RateBudget {
     /// fit its deadline, while writes keep the full `minimumSpacing`.
     /// Whether background reads are spread over the remaining hourly quota (`quotaSpacing`).
     private let pacesQuota: Bool
-    public init(minimumSpacing: Duration = .seconds(1), backgroundReadSpacing: Duration? = nil, interactiveReserve: Int = 100, interactiveGrace: Duration? = nil, pacesQuota: Bool = true) {
+    /// Requests an account may have in flight at once. Background GraphQL stays one at a time whatever this is:
+    /// GitHub's secondary limit counts GraphQL server time, and REST reads (most of them conditional) do not
+    /// add to it. With more than one slot, an interactive request may use one more, so it never queues behind
+    /// a full set of background reads.
+    public nonisolated let concurrency: Int
+    public init(minimumSpacing: Duration = .seconds(1), backgroundReadSpacing: Duration? = nil, interactiveReserve: Int = 100, interactiveGrace: Duration? = nil, pacesQuota: Bool = true, concurrency: Int = 1) {
         self.minimumSpacing = max(.zero,minimumSpacing); self.interactiveReserve = max(0,interactiveReserve); self.pacesQuota = pacesQuota
+        self.concurrency = max(1,concurrency)
         backgroundSpacing = max(.zero,backgroundReadSpacing ?? min(max(.zero,minimumSpacing),.milliseconds(250)))
         self.interactiveGrace = max(.zero,interactiveGrace ?? min(max(.zero,minimumSpacing),.milliseconds(200)))
     }
-    /// One provider request in flight per account. Interactive waiters take the next free slot ahead of
-    /// queued background work; background pacing is slept off before this call, never while holding the slot.
-    public func beginRequest(account: AccountScope, priority:Priority = .background) async throws {
+    /// Up to `concurrency` provider requests in flight per account (one background GraphQL read among them).
+    /// Interactive waiters take the next free slot ahead of queued background work; background pacing is slept
+    /// off before this call, never while holding a slot.
+    public func beginRequest(account: AccountScope, priority:Priority = .background, resource: Resource = .rest) async throws {
         var waited = false
         while true {
             try Task.checkCancellation()
             if priority == .background, let due = backgroundDue(account) {
                 waited = true; try await pace(account:account, until:due); continue
             }
-            if requesting.insert(account).inserted { started(account,priority:priority,waited:waited); return }
+            if admits(account,priority:priority,resource:resource) { take(account,resource:resource);started(account,priority:priority,waited:waited); return }
             waited = true
             let id = UUID()
             let granted = try await withTaskCancellationHandler {
                 try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Bool,Error>) in
                     if Task.isCancelled { continuation.resume(throwing:CancellationError()) }
                     else {
-                        let waiter=RequestWaiter(id:id,priority:priority,continuation:continuation)
+                        let waiter=RequestWaiter(id:id,priority:priority,resource:resource,continuation:continuation)
                         if priority == .interactive {
                             let index=requestWaiters[account,default:[]].firstIndex { $0.priority == .background } ?? requestWaiters[account,default:[]].count
                             requestWaiters[account,default:[]].insert(waiter,at:index)
@@ -74,6 +87,16 @@ public actor RateBudget {
             } onCancel: { Task { await self.cancelWaitingRequest(account:account,id:id) } }
             if granted { started(account,priority:priority,waited:waited); return }
         }
+    }
+    private func admits(_ account: AccountScope, priority: Priority, resource: Resource) -> Bool {
+        let current = inFlight[account] ?? InFlight()
+        let capacity = priority == .interactive && concurrency > 1 ? concurrency + 1 : concurrency
+        guard current.total < capacity else { return false }
+        return !(priority == .background && resource == .graphql && current.graphQL > 0)
+    }
+    private func take(_ account: AccountScope, resource: Resource) {
+        inFlight[account, default:InFlight()].total += 1
+        if resource == .graphql { inFlight[account, default:InFlight()].graphQL += 1 }
     }
     /// Actual starts constrain subsequent admission; a delayed request also advances future reservations.
     private func started(_ account: AccountScope, priority: Priority, waited: Bool) {
@@ -92,18 +115,25 @@ public actor RateBudget {
         guard let index = requestWaiters[account]?.firstIndex(where:{ $0.id == id }) else { return }
         requestWaiters[account]?.remove(at:index).continuation.resume(throwing:CancellationError())
     }
-    public func endRequest(account: AccountScope, priority:Priority = .background) {
+    public func endRequest(account: AccountScope, priority:Priority = .background, resource: Resource = .rest) {
         if priority == .interactive, interactiveGrace > .zero { interactiveHold[account] = ContinuousClock.now.advanced(by:interactiveGrace) }
-        guard var waiters = requestWaiters[account], !waiters.isEmpty else { requesting.remove(account); requestWaiters[account] = nil; return }
-        if waiters[0].priority == .background, backgroundDue(account) != nil {
-            // Interactive waiters always sort first, so all of these are background: free the slot and
-            // let them re-admit after pacing/grace (an interactive arrival can take it immediately).
-            requesting.remove(account); requestWaiters[account] = nil
-            for waiter in waiters { waiter.continuation.resume(returning:false) }
-            return
+        if var current = inFlight[account] {
+            current.total = max(0,current.total - 1)
+            if resource == .graphql { current.graphQL = max(0,current.graphQL - 1) }
+            inFlight[account] = current.total == 0 ? nil : current
         }
-        let first = waiters.removeFirst(); requestWaiters[account] = waiters.isEmpty ? nil : waiters
-        first.continuation.resume(returning:true)
+        guard let waiters = requestWaiters[account], !waiters.isEmpty else { requestWaiters[account] = nil; return }
+        // Hand free slots to waiters in order (interactive ones sort first). Background waiters that are not yet
+        // due go back to pacing and re-admit afterwards (an interactive arrival can take a slot meanwhile).
+        let due = backgroundDue(account) != nil
+        var remaining: [RequestWaiter] = []
+        for waiter in waiters {
+            if waiter.priority == .background && due { waiter.continuation.resume(returning:false) }
+            else if admits(account,priority:waiter.priority,resource:waiter.resource) {
+                take(account,resource:waiter.resource); waiter.continuation.resume(returning:true)
+            } else { remaining.append(waiter) }
+        }
+        requestWaiters[account] = remaining.isEmpty ? nil : remaining
     }
     public func acquire(account: AccountScope, resource: Resource, priority: Priority, cost: Int = 1, interactiveRead:Bool = false, reservingQuota:Bool = true) async throws {
         try Task.checkCancellation()
@@ -121,13 +151,23 @@ public actor RateBudget {
             let key = Key(account:account,resource:resource)
             let quotaDue = lastQuotaStart[key].map { $0.advanced(by:quotaSpacing(key)) } ?? instant
             let paced = max(instant,nextRequest[account] ?? instant); nextRequest[account] = paced.advanced(by:backgroundSpacing)
-            start = max(paced,quotaDue,resource == .graphql ? graphQLRest[account] ?? instant : instant)
+            let rest = resource == .graphql ? graphQLRest[account] ?? instant : instant
+            start = max(paced,quotaDue,rest)
+            pacingStats.requests += 1
+            let waited = instant.duration(to:start)
+            if waited > .zero {
+                if start == rest && rest > max(paced,quotaDue) { pacingStats.rest += waited }
+                else if start == quotaDue && quotaDue > paced { pacingStats.quota += waited }
+                else { pacingStats.spacing += waited }
+            }
         }
         if start > instant { try await pace(account:account, until:start) }
         try Task.checkCancellation()
         try checkBackoff(account:account)
         if priority == .background && !interactiveRead { lastQuotaStart[Key(account:account,resource:resource)] = .now }
     }
+    /// Returns and resets the background pacing totals (diagnostics only).
+    public func drainPacingStats() -> PacingStats { defer { pacingStats = PacingStats() };return pacingStats }
     /// Queued requests only check quota during pacing; charge the newest observed quota at the send.
     func checkQuota(account:AccountScope,resource:Resource,priority:Priority,cost:Int,reserve:Bool) throws {
         let now = Date(); let key = Key(account:account,resource:resource)
@@ -149,15 +189,20 @@ public actor RateBudget {
         guard pacesQuota, let quota = quotas[key] else { return .zero }
         let window = quota.reset.timeIntervalSinceNow, spendable = quota.remaining - interactiveReserve
         guard window > 0, window <= 3700, spendable > 0 else { return .zero }
+        // Spending at or below an even pace for the hour (as large a share of the allowance left as of the hour):
+        // no pacing. Spacing every read by the last read's cost held a mostly unspent quota to a crawl.
+        let allowance = Double(max(1, (quota.limit ?? 5000) - interactiveReserve))
+        if Double(spendable) / allowance >= window / 3600 { return .zero }
         let seconds = window * Double(max(1,lastCost[key] ?? 1)) / Double(spendable)
         return .milliseconds(Int(min(60,seconds) * 1000))
     }
     /// GitHub's secondary limit allows about a minute of GraphQL server time per minute. History pages take
-    /// seconds each, so back-to-back background reads hit it and pause the account; resting as long as each read
-    /// took keeps background GraphQL to about half of wall time. Interactive reads never wait for it.
+    /// seconds each, so back-to-back background reads hit it and pause the account; resting half as long as each
+    /// read took keeps background GraphQL to about two thirds of wall time, leaving room for interactive reads,
+    /// which never wait for it.
     func recordBackgroundGraphQL(account: AccountScope, took duration: Duration) {
         guard pacesQuota else { return }
-        graphQLRest[account] = ContinuousClock.now.advanced(by:min(duration,.seconds(30)))
+        graphQLRest[account] = ContinuousClock.now.advanced(by:min(duration / 2,.seconds(15)))
     }
     func checkBackoff(account: AccountScope) throws {
         if let until = notBefore[account], until > Date() { throw GitHubFailure.rateLimited(until:until) }
@@ -173,7 +218,7 @@ public actor RateBudget {
     public func observe(_ response: GitHubResponse, account: AccountScope, resource: Resource = .rest) {
         let now = Date()
         if let remaining = response.header("X-RateLimit-Remaining").flatMap(Int.init), let epoch = response.header("X-RateLimit-Reset").flatMap(Double.init) {
-            quotas[Key(account:account,resource:resource)] = Quota(remaining:max(0,remaining),reset:Date(timeIntervalSince1970:epoch))
+            quotas[Key(account:account,resource:resource)] = Quota(remaining:max(0,remaining),reset:Date(timeIntervalSince1970:epoch),limit:response.header("X-RateLimit-Limit").flatMap(Int.init))
         }
         if let seconds = response.header("X-Poll-Interval").flatMap(Double.init) {
             pollIntervals[account] = max(0,seconds)
@@ -212,6 +257,15 @@ public actor RateBudget {
     public func completePoll(account: AccountScope, feature: String, interval: TimeInterval) {
         let key = PollKey(account:account,feature:feature)
         lastPoll[key] = interval <= 0 ? nil : ContinuousClock.now
+    }
+    /// Whether this run has a due time for the poll (completed, or seeded from storage).
+    public func hasPolled(account: AccountScope, feature: String) -> Bool { lastPoll[PollKey(account:account,feature:feature)] != nil }
+    /// Restores a poll completed before this run (a stored wall-clock time) as its due-time basis.
+    public func seedPoll(account: AccountScope, feature: String, completedAt: Date) {
+        let key = PollKey(account:account,feature:feature)
+        guard lastPoll[key] == nil else { return }
+        let age = max(0, Date().timeIntervalSince(completedAt))
+        lastPoll[key] = ContinuousClock.now.advanced(by:.milliseconds(-Int(min(age, 86_400) * 1000)))
     }
     public func pollInterval(account: AccountScope) -> TimeInterval { pollIntervals[account] ?? 0 }
     public func retryAt(account: AccountScope) -> Date? { notBefore[account] }
@@ -268,16 +322,16 @@ public struct BudgetedGitHubTransport: GitHubTransport {
         let resource: RateBudget.Resource = graphQL ? .graphql : .rest
         // Quota check and pacing before the slot: a sleeping background request never blocks the account.
         try await budget.acquire(account:account,resource:resource,priority:priority,cost:resource == .graphql ? 100 : 1,interactiveRead:userInitiated && readMethod,reservingQuota:false)
-        if ownsRequestSlot { try await budget.beginRequest(account:account,priority:priority) }
+        if ownsRequestSlot { try await budget.beginRequest(account:account,priority:priority,resource:resource) }
         var holding = ownsRequestSlot
         do {
             // `acquire` checked the write gap before the slot; another write may have been sent since. Re-check
             // inside the slot, and wait with the slot released (no interactive hold) so reads are unaffected.
             if holding && userInitiated && !readMethod {
                 while let due = await budget.writeDue(account:account) {
-                    holding = false; await budget.endRequest(account:account)
+                    holding = false; await budget.endRequest(account:account,resource:resource)
                     try await budget.pace(account:account, until:due)
-                    try await budget.beginRequest(account:account,priority:priority); holding = true
+                    try await budget.beginRequest(account:account,priority:priority,resource:resource); holding = true
                 }
             }
             // Backoff may have begun, or the caller been cancelled, while waiting for the slot.
@@ -296,10 +350,10 @@ public struct BudgetedGitHubTransport: GitHubTransport {
             // Pass a raw positive 401 to the authenticated client's origin validation;
             // this transport must never classify an anonymous/foreign response as revocation.
             if response.status != 401 && beforeSend == nil { try Task.checkCancellation() }
-            if holding { await budget.endRequest(account:account,priority:priority) }
+            if holding { await budget.endRequest(account:account,priority:priority,resource:resource) }
             return response
         } catch {
-            if holding { await budget.endRequest(account:account,priority:priority) }
+            if holding { await budget.endRequest(account:account,priority:priority,resource:resource) }
             throw error
         }
     }

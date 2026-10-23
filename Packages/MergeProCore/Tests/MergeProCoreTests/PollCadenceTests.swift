@@ -45,8 +45,12 @@ final class PollCadenceTests: XCTestCase {
         XCTAssertEqual(PollCadence.interval(60, repositories: 168, focused: true), 60)
         // Active-run cadences are already short-lived and on purpose; they are never stretched.
         XCTAssertEqual(PollCadence.interval(15, repositories: 168, focused: false), 15)
+        // PR inventory checks unchanged repositories in batches, so it stretches far less than per-repository reads.
+        XCTAssertEqual(PollCadence.interval(60, repositories: 168, focused: false, perRepository: PollCadence.probedSecondsPerRepository), 84, accuracy: 0.001)
+        XCTAssertEqual(PollCadence.interval(60, repositories: 50, focused: false, perRepository: PollCadence.probedSecondsPerRepository), 60)
         XCTAssertEqual(PollCadence.staleAfter(repositories: 10), 300)
-        XCTAssertEqual(PollCadence.staleAfter(repositories: 168), 3 * 168 * PollCadence.secondsPerRepository, accuracy: 0.001)
+        XCTAssertEqual(PollCadence.staleAfter(repositories: 168), 300)
+        XCTAssertEqual(PollCadence.staleAfter(repositories: 400), 3 * 400 * PollCadence.probedSecondsPerRepository, accuracy: 0.001)
     }
 
     func testRepositoriesAreNotStaleWhileTheirStretchedCadenceIsOnTime() {
@@ -54,7 +58,7 @@ final class PollCadenceTests: XCTestCase {
         let read = Date().addingTimeInterval(-600)
         let status = PRInventoryStatus(complete: true, fetchedCount: 1, fetchedAt: read, message: nil, lastSuccessAt: read)
         let few = PRRepositoryFreshness(repository: key, name: "o/r", status: status, revoked: false, now: Date(), staleAfter: PollCadence.staleAfter(repositories: 10))
-        let many = PRRepositoryFreshness(repository: key, name: "o/r", status: status, revoked: false, now: Date(), staleAfter: PollCadence.staleAfter(repositories: 168))
+        let many = PRRepositoryFreshness(repository: key, name: "o/r", status: status, revoked: false, now: Date(), staleAfter: PollCadence.staleAfter(repositories: 500))
         XCTAssertEqual(few.state, .stale)
         XCTAssertTrue(few.isSyncing)
         XCTAssertFalse(few.needsAttention, "a late read is sync catching up, not something to act on")
@@ -106,6 +110,40 @@ final class PollCadenceTests: XCTestCase {
     }
 }
 
+final class PollSeedTests: XCTestCase {
+    func testAPollCompletedBeforeARelaunchStaysNotDueUntilItsIntervalPasses() async {
+        let account = AccountScope(host: "github.com", accountID: "1")
+        let budget = RateBudget(minimumSpacing: .zero)
+        var known = await budget.hasPolled(account: account, feature: "f:1")
+        XCTAssertFalse(known)
+        await budget.seedPoll(account: account, feature: "f:1", completedAt: Date().addingTimeInterval(-10))
+        known = await budget.hasPolled(account: account, feature: "f:1")
+        XCTAssertTrue(known)
+        var due = await budget.beginPoll(account: account, feature: "f:1", interval: 60)
+        XCTAssertFalse(due, "Read 10 s ago: not due for another 50 s")
+        await budget.seedPoll(account: account, feature: "f:2", completedAt: Date().addingTimeInterval(-120))
+        due = await budget.beginPoll(account: account, feature: "f:2", interval: 60)
+        XCTAssertTrue(due)
+        due = await budget.beginPoll(account: account, feature: "f:1", interval: 60, force: true)
+        XCTAssertTrue(due, "A manual refresh is always due")
+    }
+}
+
+final class InventoryProbeSignatureTests: XCTestCase {
+    func testSignatureCoversNewestUpdateOpenCountHeadsAndChecks() throws {
+        func node(checks: String, head: String = "a") -> [String: Any] {
+            ["databaseId": 1, "latest": ["nodes": [["updatedAt": "2026-10-01T00:00:00Z"]]],
+             "open": ["totalCount": 1, "pageInfo": ["hasNextPage": false],
+                      "nodes": [["id": "PR1", "headRefOid": head, "commits": ["nodes": [["commit": ["statusCheckRollup": ["state": checks]]]]]]]]]
+        }
+        let pending = try XCTUnwrap(InventoryProbe.signature(node(checks: "PENDING")))
+        XCTAssertEqual(InventoryProbe.signature(node(checks: "PENDING")), pending)
+        XCTAssertNotEqual(InventoryProbe.signature(node(checks: "SUCCESS")), pending)
+        XCTAssertNotEqual(InventoryProbe.signature(node(checks: "PENDING", head: "b")), pending)
+        XCTAssertNil(InventoryProbe.signature(["databaseId": 1]), "An unreadable repository gets no signature and is read in full")
+    }
+}
+
 final class QuotaPacingTests: XCTestCase {
     private let account = AccountScope(host: "github.com", accountID: "1")
     private func graphQL(remaining: Int, cost: Int, resetIn: TimeInterval) -> GitHubResponse {
@@ -125,6 +163,10 @@ final class QuotaPacingTests: XCTestCase {
         await budget.observeGraphQL(graphQL(remaining: 4000, cost: 1, resetIn: 60), account: account)
         let relaxed = await budget.quotaSpacing(account: account, resource: .graphql)
         XCTAssertLessThan(relaxed, .milliseconds(50))
+        // Well under an even pace (92% left with 40 minutes to go): no pacing, even after a costly query.
+        await budget.observeGraphQL(graphQL(remaining: 4595, cost: 50, resetIn: 2400), account: account)
+        let underPace = await budget.quotaSpacing(account: account, resource: .graphql)
+        XCTAssertEqual(underPace, .zero)
         // A reset beyond GitHub's hourly window is not a real quota; it never stalls reads.
         await budget.observeGraphQL(graphQL(remaining: 5000, cost: 1, resetIn: 86_400), account: account)
         let ignored = await budget.quotaSpacing(account: account, resource: .graphql)
@@ -159,10 +201,10 @@ final class QuotaPacingCancellationTests: XCTestCase {
 }
 
 final class GraphQLRestTests: XCTestCase {
-    func testBackgroundGraphQLRestsAsLongAsTheLastReadTookButInteractiveDoesNot() async throws {
+    func testBackgroundGraphQLRestsHalfAsLongAsTheLastReadTookButInteractiveDoesNot() async throws {
         let account = AccountScope(host: "github.com", accountID: "1")
         let budget = RateBudget(minimumSpacing: .zero)
-        await budget.recordBackgroundGraphQL(account: account, took: .milliseconds(400))
+        await budget.recordBackgroundGraphQL(account: account, took: .milliseconds(800))
         var started = ContinuousClock.now
         try await budget.acquire(account: account, resource: .graphql, priority: .interactive, interactiveRead: true)
         XCTAssertLessThan(started.duration(to: .now), .milliseconds(150), "interactive reads never wait for the rest")
@@ -171,5 +213,40 @@ final class GraphQLRestTests: XCTestCase {
         started = ContinuousClock.now
         try await budget.acquire(account: account, resource: .graphql, priority: .background)
         XCTAssertGreaterThanOrEqual(started.duration(to: .now), .milliseconds(250))
+    }
+}
+
+final class ConcurrentSlotTests: XCTestCase {
+    func testThreeSlotsAdmitParallelRESTButKeepBackgroundGraphQLSerialAndLeaveRoomForInteractive() async throws {
+        let account = AccountScope(host: "github.com", accountID: "1")
+        let budget = RateBudget(minimumSpacing: .zero, concurrency: 3)
+        let started = ContinuousClock.now
+        try await budget.beginRequest(account: account, priority: .background, resource: .graphql)
+        try await budget.beginRequest(account: account, priority: .background, resource: .rest)
+        // A second background GraphQL read waits for the first, though a slot is free.
+        let second = Task { try await budget.beginRequest(account: account, priority: .background, resource: .graphql) }
+        try await Task.sleep(for: .milliseconds(100))
+        var waiting = await budget.waiters(account: account).slot
+        XCTAssertEqual(waiting, 1)
+        // The third slot still takes a REST read, and an interactive request gets one beyond the three.
+        try await budget.beginRequest(account: account, priority: .background, resource: .rest)
+        try await budget.beginRequest(account: account, priority: .interactive, resource: .rest)
+        XCTAssertLessThan(started.duration(to: .now), .milliseconds(500))
+        await budget.endRequest(account: account, priority: .interactive)
+        await budget.endRequest(account: account, resource: .graphql)
+        try await second.value
+        waiting = await budget.waiters(account: account).slot
+        XCTAssertEqual(waiting, 0, "The finished GraphQL read hands its slot to the waiting one")
+    }
+    func testOneSlotStillSerializesEverything() async throws {
+        let account = AccountScope(host: "github.com", accountID: "1")
+        let budget = RateBudget(minimumSpacing: .zero)
+        try await budget.beginRequest(account: account, priority: .background, resource: .rest)
+        let next = Task { try await budget.beginRequest(account: account, priority: .interactive, resource: .rest) }
+        try await Task.sleep(for: .milliseconds(100))
+        let waiting = await budget.waiters(account: account).slot
+        XCTAssertEqual(waiting, 1)
+        await budget.endRequest(account: account)
+        try await next.value
     }
 }
