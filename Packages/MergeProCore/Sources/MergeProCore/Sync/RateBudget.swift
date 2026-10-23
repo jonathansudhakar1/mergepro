@@ -50,8 +50,8 @@ public actor RateBudget {
     private let pacesQuota: Bool
     /// Requests an account may have in flight at once. Background GraphQL stays one at a time whatever this is:
     /// GitHub's secondary limit counts GraphQL server time, and REST reads (most of them conditional) do not
-    /// add to it. With more than one slot, an interactive request may use one more, so it never queues behind
-    /// a full set of background reads.
+    /// add to it. With more than one slot, interactive requests may use `interactiveSlots` more, so they never
+    /// queue behind a full set of background reads.
     public nonisolated let concurrency: Int
     public init(minimumSpacing: Duration = .seconds(1), backgroundReadSpacing: Duration? = nil, interactiveReserve: Int = 100, interactiveGrace: Duration? = nil, pacesQuota: Bool = true, concurrency: Int = 1) {
         self.minimumSpacing = max(.zero,minimumSpacing); self.interactiveReserve = max(0,interactiveReserve); self.pacesQuota = pacesQuota
@@ -90,10 +90,13 @@ public actor RateBudget {
     }
     private func admits(_ account: AccountScope, priority: Priority, resource: Resource) -> Bool {
         let current = inFlight[account] ?? InFlight()
-        let capacity = priority == .interactive && concurrency > 1 ? concurrency + 1 : concurrency
+        let capacity = priority == .interactive && concurrency > 1 ? concurrency + Self.interactiveSlots : concurrency
         guard current.total < capacity else { return false }
         return !(priority == .background && resource == .graphql && current.graphQL > 0)
     }
+    /// Extra slots user-initiated requests may use beyond `concurrency`: a review or merge check reads several
+    /// things in parallel and never queues behind a full set of background reads.
+    static let interactiveSlots = 4
     private func take(_ account: AccountScope, resource: Resource) {
         inFlight[account, default:InFlight()].total += 1
         if resource == .graphql { inFlight[account, default:InFlight()].graphQL += 1 }

@@ -68,7 +68,8 @@ public struct PRWriteCoordinator:Sendable {
         // Reserve before network work. If persistence fails, there is no uncertain provider outcome.
         try store.prepare(operation)
         do {
-            let truth=try await adapter.read(command,operation:nil,client:await session.featureClient(account:ticket.account,budget:budget),credential:ticket.credential)
+            // The pre-write read is part of the user's submit: interactive, not queued behind background sync.
+            let truth=try await adapter.read(command,operation:nil,client:await session.interactiveReadClient(account:ticket.account,budget:budget),credential:ticket.credential)
             try command.validate(truth:truth)
             // Risk only gates approval; other writes (e.g. a label toggle) skip the account snapshot.
             let risk:Bool
@@ -228,7 +229,7 @@ public struct PRWriteCoordinator:Sendable {
         let expected=operation.state
         let ticket=try await session.authenticatedOperation(for:operation.command.key.account,clientID:clientID)
         do {
-            let truth=try await adapter.read(operation.command,operation:operation,client:await session.featureClient(account:ticket.account,budget:budget),credential:ticket.credential)
+            let truth=try await adapter.read(operation.command,operation:operation,client:await session.interactiveReadClient(account:ticket.account,budget:budget),credential:ticket.credential)
             operation.state=operation.command.reconciliation(truth:truth)
             operation.providerIDs=truth.matchingOperationIDs
             if operation.command.intent.isRevisionIndependent {

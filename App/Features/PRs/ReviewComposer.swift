@@ -203,15 +203,19 @@ struct ReviewComposer:View {
             else { detail=try await storage.detail(chosen) }
             let saved=try await storage.reviewDraft(chosen.key) ?? ReviewDraft(key:chosen.key,revision:PRWriteRevision(detail))
             guard let m=chosen.metadata else { throw PRWriteFailure.unavailable }
-            let value=try await storage.inspectWrite(.init(key:chosen.key,repository:m.repositoryName,number:m.number,revision:saved.revision,intent:.review(.comment,saved.summary)))
-            if PRWriteRevision(detail) != value.revision { detail=try await storage.detail(chosen) }
-            guard PRWriteRevision(detail) == value.revision else { throw PRWriteFailure.revisionChanged }
             // The action account's row can be at a push the window hasn't applied; no draft is presented for it.
             try refuseUnshown(detail.headSHA)
             let accountLogin=try await storage.actionLogin(chosen.key),policy=try await storage.requireAllFilesViewed()
-            guard loadState.accepts(chosen.key,request:request,available:actionAvailable) else { return }
+            // Open on the cached detail and saved draft at once; GitHub's review state (which gates submitting) is
+            // checked while the user writes. Waiting for it first held the sheet on a spinner for seconds.
             guard loadState.present(chosen.key,request:request,available:actionAvailable) else { return }
-            pr=chosen;snapshot=detail;draft=saved;summary=saved.summary;commentBody=saved.texts["selection"] ?? "";login=accountLogin;requireViewed=policy;truth=value;references=["#\(String(m.number))"];saveConflict=false;status=nil;presented=true;busy=false
+            pr=chosen;snapshot=detail;draft=saved;summary=saved.summary;commentBody=saved.texts["selection"] ?? "";login=accountLogin;requireViewed=policy;truth=nil;references=["#\(String(m.number))"];saveConflict=false;status="Checking the review state with GitHub…";presented=true;busy=false
+            let value=try await storage.inspectWrite(.init(key:chosen.key,repository:m.repositoryName,number:m.number,revision:saved.revision,intent:.review(.comment,saved.summary)))
+            if PRWriteRevision(detail) != value.revision { detail=try await storage.detail(chosen) }
+            guard PRWriteRevision(detail) == value.revision else { throw PRWriteFailure.revisionChanged }
+            try refuseUnshown(detail.headSHA)
+            guard loadState.accepts(chosen.key,request:request,available:actionAvailable) else { return }
+            snapshot=detail;truth=value;status=nil
             if let context=try? await storage.detailSection(chosen,tab:.overview).overview,
                loadState.accepts(chosen.key,request:request,available:actionAvailable) {
                 references=Array(Set(references+context.issues.map { "#\(String($0.number))" })).sorted()

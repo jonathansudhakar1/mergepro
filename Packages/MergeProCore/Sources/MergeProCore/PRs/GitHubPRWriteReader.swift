@@ -55,6 +55,23 @@ struct GitHubPRWriteReader {
       node(id:$id) { ... on PullRequest { id headRefOid baseRefOid } }
     }
     """
+    /// The effective-rules CODEOWNERS note for the base branch ("" without a branch); a failed read is noted, not thrown.
+    private func effectiveCodeOwnerRules(repository:String,branch:String?) async throws -> String {
+        guard let branch else { return "" }
+        do {
+            let url=client.origin.appendingPathComponent("repos/\(repository)/rules/branches").appendingPathComponent(branch).appending(queryItems:[.init(name:"per_page",value:"100")])
+            let response=try await client.get(url,token:credential.accessToken)
+            let rules=try JSONDecoder().decode([Payload.BranchRule].self,from:response.data)
+            let values=rules.filter { $0.type == "pull_request" }.map { $0.parameters?.require_code_owner_review.map(String.init(describing:)) ?? "unknown" }
+            var note="; effective rules CODEOWNERS: " + (values.isEmpty ? "none returned" : values.joined(separator:", "))
+            if GitHubPagination.hasNext(response.header("Link")) { note += " (partial; more rules unavailable)" }
+            return note
+        } catch {
+            if error as? GitHubFailure == .invalidAuthentication { throw error }
+            Log.writes.info("Effective branch rules unavailable for write admission: \(Log.kind(error), privacy: .public)")
+            return "; effective rules unavailable"
+        }
+    }
     private func query(_ query:String,_ variables:[String:String?]) async throws -> (data:Payload.QueryData,bytes:Int) {
         let response=try await client.readQuery(query,variables:variables,token:credential.accessToken)
         return (try GitHubGraphQLResponse.data(Payload.QueryData.self,from:response),response.data.count)
@@ -87,13 +104,20 @@ struct GitHubPRWriteReader {
               pr.id == c.gitHubNodeID,pr.number == c.number,
               repo.databaseId?.text == c.key.repositoryID,
               repo.nameWithOwner?.lowercased() == c.repository.lowercased(),let head=pr.headRefOid,let target=pr.baseRefOid,let login=viewer.login else { throw PRWriteFailure.accountChanged }
-        let detail=try await GitHubPRDetailFetcher(client:client).detail(repository:c.repository,number:c.number,headSHA:head,token:credential.accessToken,maxPages:30)
+        // Once the identity is proven, the independent reads run in parallel (interactive reads have their own
+        // request slots): one after another they took most of the 5–15 s the review sheet waited on.
+        async let detailRead=GitHubPRDetailFetcher(client:client).detail(repository:c.repository,number:c.number,headSHA:head,token:credential.accessToken,maxPages:30)
+        async let reviewsRead=connection("reviews",Self.reviewSelection,c,\.reviews)
+        async let threadsRead=connection("reviewThreads",Self.threadSelection,c,\.reviewThreads)
+        async let conversationRead=connection("comments",Self.commentFields,c,\.comments)
+        async let viewedRead=connection("files",Self.fileSelection,c,\.files)
+        async let requestsRead=connection("reviewRequests",Self.requestSelection,c,\.reviewRequests)
+        let baseBranch=pr.baseRefName
+        async let rulesRead=effectiveCodeOwnerRules(repository:c.repository,branch:baseBranch)
+        let detail=try await detailRead
         guard detail.baseBranchSHA == target else { throw PRWriteFailure.revisionChanged }
-        let reviews=try await connection("reviews",Self.reviewSelection,c,\.reviews)
-        let threads=try await connection("reviewThreads",Self.threadSelection,c,\.reviewThreads)
-        let conversation=try await connection("comments",Self.commentFields,c,\.comments)
-        let viewed=try await connection("files",Self.fileSelection,c,\.files)
-        let requests=try await connection("reviewRequests",Self.requestSelection,c,\.reviewRequests)
+        let reviews=try await reviewsRead,threads=try await threadsRead,conversation=try await conversationRead
+        let viewed=try await viewedRead,requests=try await requestsRead
         let pending=reviews.nodes.filter { $0.state == "PENDING" && $0.author?.login == login }
         guard pending.count <= 1 else { throw PRWriteFailure.pendingExists }
         let revision=PRWriteRevision(detail)
@@ -138,22 +162,8 @@ struct GitHubPRWriteReader {
         default:break
         }
         let protection=pr.baseRef?.branchProtectionRule
-        var codeOwner=protection?.requiresCodeOwnerReviews.map { "Classic protection requires CODEOWNERS: \($0)" } ?? "Classic CODEOWNERS requirement unavailable"
-        if let branch=pr.baseRefName {
-            do {
-                let url=client.origin.appendingPathComponent("repos/\(c.repository)/rules/branches").appendingPathComponent(branch).appending(queryItems:[.init(name:"per_page",value:"100")])
-                let response=try await client.get(url,token:credential.accessToken)
-                let rules=try JSONDecoder().decode([Payload.BranchRule].self,from:response.data)
-                let values=rules.filter { $0.type == "pull_request" }.map { $0.parameters?.require_code_owner_review.map(String.init(describing:)) ?? "unknown" }
-                codeOwner += "; effective rules CODEOWNERS: " + (values.isEmpty ? "none returned" : values.joined(separator:", "))
-                if GitHubPagination.hasNext(response.header("Link")) { codeOwner += " (partial; more rules unavailable)" }
-            } catch {
-                if error as? GitHubFailure == .invalidAuthentication { throw error }
-                Log.writes.info("Effective branch rules unavailable for write admission: \(Log.kind(error), privacy: .public)")
-                codeOwner += "; effective rules unavailable"
-            }
-        }
-        truth.codeOwnerRequirements=codeOwner
+        let codeOwner=protection?.requiresCodeOwnerReviews.map { "Classic protection requires CODEOWNERS: \($0)" } ?? "Classic CODEOWNERS requirement unavailable"
+        truth.codeOwnerRequirements=codeOwner + (try await rulesRead)
         var metadata=PRMetadata(number:c.number,webURL:URL(string:pr.url ?? "https://github.com/\(c.repository)/pull/\(c.number)")!,repositoryName:c.repository)
         metadata.viewerID=viewer.id;metadata.viewerIsAuthor=truth.viewerIsAuthor;metadata.authorLogin=pr.author?.login
         metadata.headBranch=pr.headRefName ?? "";metadata.baseBranch=pr.baseRefName ?? "";metadata.baseRevision=target

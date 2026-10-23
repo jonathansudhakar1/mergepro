@@ -14,7 +14,8 @@ public struct MergeCoordinator:Sendable {
         let ticket=try await session.authenticatedOperation(for:pr.key.account,clientID:clientID)
         let fence=try database.observationFence(for:pr.key)
         do {
-            var value=try await adapter.inspect(MergeTarget(pr),client:await session.featureClient(account:ticket.account,budget:budget),credential:ticket.credential)
+            // User-initiated (the merge sheet): interactive, never queued behind background sync.
+            var value=try await adapter.inspect(MergeTarget(pr),client:await session.interactiveReadClient(account:ticket.account,budget:budget),credential:ticket.credential)
             guard try await activeAccount() == pr.key.account else { throw PRWriteFailure.accountChanged }
             value.evidence.operationInProgress=try (value.evidence.nativeAffected ?? [pr.key]).contains { try hasActiveIntent($0) }
             let enriched=try enriched(value)
@@ -30,7 +31,7 @@ public struct MergeCoordinator:Sendable {
         guard try await activeAccount() == pr.key.account else { throw PRWriteFailure.accountChanged }
         let ticket=try await session.authenticatedOperation(for:pr.key.account,clientID:clientID)
         do {
-            let value=try await adapter.messageDefaults(MergeTarget(pr),client:await session.featureClient(account:ticket.account,budget:budget),credential:ticket.credential)
+            let value=try await adapter.messageDefaults(MergeTarget(pr),client:await session.interactiveReadClient(account:ticket.account,budget:budget),credential:ticket.credential)
             guard try await activeAccount() == pr.key.account,try await session.withCurrentOperation(ticket,body:{ _ in }) else { throw PRWriteFailure.accountChanged }
             let head=pr.metadata?.mergeEvidence?.head ?? pr.headRevision.rawValue
             guard let value,value.head == head,value.head == pr.headRevision.rawValue else { return nil }
@@ -161,7 +162,8 @@ public struct MergeCoordinator:Sendable {
         }
         try store.update(operation, expectedState:previousState)
         let ticket = try await session.authenticatedOperation(for:command.pr.account,clientID:clientID)
-        let reader = await session.featureClient(account:ticket.account,budget:budget)
+        // The user waits on this outcome read after merging.
+        let reader = await session.interactiveReadClient(account:ticket.account,budget:budget)
         var failure: String?
         var readError: (any Error)?
         var optionMismatch: String?
