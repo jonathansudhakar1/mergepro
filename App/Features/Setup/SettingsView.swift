@@ -78,7 +78,7 @@ private struct GeneralSettingsPane: View {
 private struct AccountSettingsPane: View {
     @Bindable var model: SetupModel
     @State private var removing: Account?
-    /// Removal deletes local credentials only; GitHub keeps the grant until the user revokes it there.
+    /// Disconnecting deletes local credentials only; GitHub keeps the grant until the user revokes it there.
     @State private var revocation: GitHubGrantLink?
     var body: some View {
         SettingsPane(model:model) {
@@ -92,7 +92,7 @@ private struct AccountSettingsPane: View {
                             Button(model.activeAccount == account.scope ? "Active account" : "Use account") { Task { await model.selectAccount(account.scope) } }
                                 .disabled(model.activeAccount == account.scope)
                             Button("Reconnect") { model.connect(replacing:account.scope) }.disabled(model.isConnecting)
-                            Button("Remove…",role:.destructive) { removing = account }
+                            Button("Disconnect…",role:.destructive) { removing = account }
                         }
                         if let problem = model.accountProblems[account.scope] { Text(problem).foregroundStyle(.orange) }
                     }
@@ -100,32 +100,45 @@ private struct AccountSettingsPane: View {
                 Button("Connect GitHub account") { model.connect() }.disabled(model.clientID.isEmpty || model.isConnecting || model.isLoading)
                 AuthorizationPrompt(model:model)
             }
-            if let revocation {
-                Section("Revoke access on GitHub") {
-                    Text("\(revocation.login) was removed from this Mac. GitHub still lists MergePro as an authorized app for that account until you revoke it there.")
-                    HStack {
-                        Link("Open authorized apps on \(revocation.host)",destination:revocation.url)
-                        Spacer()
-                        Button("Done") { self.revocation = nil }
+            if let revocation { Section("Revoke access on GitHub") { GitHubRevocationNotice(revocation:$revocation) } }
+        }
+        .disconnectAccountConfirmation(model:model,account:$removing,revocation:$revocation)
+    }
+}
+
+extension View {
+    /// Confirms disconnecting `account`, then sets `revocation` to the GitHub page where its grant can be revoked.
+    func disconnectAccountConfirmation(model: SetupModel, account: Binding<Account?>, revocation: Binding<GitHubGrantLink?>) -> some View {
+        alert("Disconnect \(account.wrappedValue?.login ?? "account")?",isPresented:Binding(get:{ account.wrappedValue != nil },set:{ if !$0 { account.wrappedValue = nil } })) {
+            Button("Disconnect",role:.destructive) {
+                if let removed = account.wrappedValue {
+                    let link = GitHubGrantLink(login:removed.login,host:removed.scope.host,clientID:model.clientID)
+                    Task {
+                        await model.remove(removed.scope)
+                        guard !model.snapshots.contains(where:{ $0.account?.scope == removed.scope }) else { return }
+                        revocation.wrappedValue = link
+                        AccessibilityNotification.Announcement("\(removed.login) disconnected. Revoke MergePro on GitHub to end its access.").post()
                     }
                 }
+                account.wrappedValue = nil
+            }
+            Button("Cancel",role:.cancel) { account.wrappedValue = nil }
+        } message: { Text("Signs this account out of MergePro: its token is deleted from the Keychain and its cached data from this Mac. Unsent drafts remain private locally. GitHub keeps MergePro listed as authorized until you revoke it there; a link appears next.") }
+    }
+}
+
+/// After a disconnect: GitHub still lists the grant until the user revokes it on GitHub.
+struct GitHubRevocationNotice: View {
+    @Binding var revocation: GitHubGrantLink?
+    var body: some View {
+        if let link = revocation {
+            Text("\(link.login) was disconnected from this Mac. GitHub still lists MergePro as an authorized app for that account until you revoke it there.")
+            HStack {
+                Link("Open authorized apps on \(link.host)",destination:link.url)
+                Spacer()
+                Button("Done") { revocation = nil }
             }
         }
-        .alert("Remove \(removing?.login ?? "account")?",isPresented:Binding(get:{ removing != nil },set:{ if !$0 { removing = nil } })) {
-            Button("Remove account",role:.destructive) {
-                if let account = removing {
-                    let link = GitHubGrantLink(login:account.login,host:account.scope.host,clientID:model.clientID)
-                    Task {
-                        await model.remove(account.scope)
-                        guard !model.snapshots.contains(where:{ $0.account?.scope == account.scope }) else { return }
-                        revocation = link
-                        AccessibilityNotification.Announcement("\(account.login) removed. Revoke MergePro on GitHub to end its access.").post()
-                    }
-                }
-                removing = nil
-            }
-            Button("Cancel",role:.cancel) { removing = nil }
-        } message: { Text("Remove its Keychain credentials and private cached data from this Mac. Unsent drafts remain private locally. This does not revoke MergePro’s access on GitHub; a link to do that appears afterwards.") }
     }
 }
 

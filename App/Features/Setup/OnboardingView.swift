@@ -3,6 +3,8 @@ import MergeProCore
 
 struct OnboardingView: View {
     @Bindable var model: SetupModel
+    @State private var disconnecting: Account?
+    @State private var revocation: GitHubGrantLink?
     var body: some View {
         VStack(spacing:0) {
             WorkspaceSectionHeader(title: "Set up your workspace",
@@ -36,6 +38,7 @@ struct OnboardingView: View {
                                         Spacer()
                                         if model.activeAccount != account.scope { Button("Use account") { Task { await model.selectAccount(account.scope) } } }
                                         Button("Reconnect") { model.connect(replacing:account.scope) }.disabled(model.isConnecting || SampleMode.isActive)
+                                        Button("Disconnect…",role:.destructive) { disconnecting = account }.disabled(SampleMode.isActive)
                                     }
                                 }
                             }
@@ -44,6 +47,7 @@ struct OnboardingView: View {
                             Text("Configure your GitHub OAuth App client ID in Settings and enable device flow in the app’s GitHub settings.").foregroundStyle(.secondary)
                             SettingsLink { Text("Configure GitHub") }
                         }
+                        if revocation != nil { Divider();GitHubRevocationNotice(revocation:$revocation) }
                         if model.isConnecting { Divider() }
                         AuthorizationPrompt(model:model)
                     }.padding(16).frame(maxWidth:.infinity,alignment:.leading).workspacePanel()
@@ -57,6 +61,7 @@ struct OnboardingView: View {
         }
         .background { WorkspaceCanvas() }
         .navigationTitle("MergePro").navigationSubtitle("Setup")
+        .disconnectAccountConfirmation(model:model,account:$disconnecting,revocation:$revocation)
         .onDisappear { model.cancelAuthorization() }
     }
     /// Try the app without a GitHub account, or leave the sample data again.
