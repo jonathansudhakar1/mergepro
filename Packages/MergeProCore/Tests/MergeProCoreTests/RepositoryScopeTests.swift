@@ -20,6 +20,32 @@ final class RepositoryScopeTests: XCTestCase {
     private func result(_ repositories:[Repository],complete:Bool = true,organizations:[GitHubOrganization] = []) -> GitHubDiscoveryResult {
         GitHubDiscoveryResult(repositories:repositories,organizations:organizations,teams:[],issues:complete ? [] : ["partial"],isComplete:complete,retryAt:nil)
     }
+    func testGitHubDiscoveryStartsNewOwnersWithTheirRecentlyActiveRepositoriesOnly() async throws {
+        let (database,session) = try fixture()
+        let operation = try await session.operation(for:account,now:Date())
+        var first = result([repository("1"),repository("2"),repository("3",owner:"quiet")],organizations:[GitHubOrganization(id:"9",login:"empty")])
+        first.newOwnerMode = .selectedRepositories;first.recentlyActive = [repository("1").key]
+        _ = try await session.saveDiscovery(first,operation:operation)
+        XCTAssertEqual(try database.trackedRepositories(account:account),[repository("1").key])
+        var snapshot = try database.snapshot(for:account)
+        var configuration = try RepositoryScopeConfiguration(settings:snapshot.settings,repositories:snapshot.repositories)
+        XCTAssertEqual(configuration.mode(for:"org"),.selectedRepositories)
+        XCTAssertEqual(configuration.mode(for:"quiet"),.selectedRepositories,"An owner with nothing recent starts empty, not with everything")
+        XCTAssertEqual(configuration.mode(for:"empty"),.selectedRepositories)
+        // Later discoveries never re-apply the initial selection: what the user chose stays.
+        try database.setRepositorySelection([repository("1").key],enabled:false,owner:"org",account:account)
+        var later = result([repository("1"),repository("2"),repository("4")])
+        later.newOwnerMode = .selectedRepositories;later.recentlyActive = [repository("1").key,repository("4").key]
+        _ = try await session.saveDiscovery(later,operation:operation)
+        XCTAssertTrue(try database.trackedRepositories(account:account).isEmpty)
+        // Existing owners in all-repositories mode keep it.
+        try database.setRepositoryScope(.allAccessible,owner:"org",account:account)
+        _ = try await session.saveDiscovery(later,operation:operation)
+        snapshot = try database.snapshot(for:account)
+        configuration = try RepositoryScopeConfiguration(settings:snapshot.settings,repositories:snapshot.repositories)
+        XCTAssertEqual(configuration.mode(for:"org"),.allAccessible)
+        XCTAssertEqual(try database.trackedRepositories(account:account).count,3)
+    }
     func testNewOwnerDefaultsToAllAndLaterDiscoveryTracksNewRepositories() async throws {
         let (database,session) = try fixture()
         let operation = try await session.operation(for:account,now:Date())

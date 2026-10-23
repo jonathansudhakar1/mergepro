@@ -63,6 +63,17 @@ struct PRWorkspaceView: View {
         }
         Button("Mark all seen") { workspace.markSeen() }.controlSize(.small)
       }.padding(.horizontal, 24).padding(.bottom, 12)
+      if firstSyncCount > 0 && !freshnessNeedsAttention && !embedded {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+          Image(systemName: "clock.arrow.circlepath").foregroundStyle(DesignTokens.cobalt).accessibilityHidden(true)
+          Text("First sync in progress. Pull requests appear as each repository is read; with many repositories this can take a few minutes. Fewer tracked repositories sync faster.")
+            .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+          Spacer(minLength: 8)
+          Button("Choose repositories") { setup.destination = .setup }.controlSize(.small)
+        }
+        .padding(.horizontal, 24).padding(.bottom, 12)
+        .accessibilityElement(children: .combine)
+      }
       ZStack {
         if workspace.state.current.mode == .board {
           PRBoardView(workspace: workspace, open: open)
@@ -165,6 +176,8 @@ struct PRWorkspaceView: View {
   }
   /// Repositories still catching up (first sync, a history walk, a queued read): progress, not a problem.
   private var syncingCount: Int { workspace.repositoryFreshness.filter(\.isSyncing).count }
+  /// Tracked repositories never read yet: the first sync after connecting or tracking more of them.
+  private var firstSyncCount: Int { workspace.repositoryFreshness.filter { $0.state == .notFetched }.count }
   private var freshnessSummary: String {
     if scopedRevokedCount > 0 { return "Reconnect \(scopedRevokedCount) \(scopedRevokedCount == 1 ? "account" : "accounts")" }
     let repositories = workspace.repositoryFreshness

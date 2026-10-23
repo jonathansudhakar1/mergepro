@@ -46,19 +46,26 @@ extension DatabaseStore {
             let known = Set(try String.fetchAll(db,sql:"SELECT repositoryID FROM repositories WHERE host=? AND accountID=?",arguments:[account.host,account.accountID]))
             var configuration = try RepositoryScopeConfiguration(settings:settings,repositories:Self.scopeRepositories(account,in:db))
             var retained = Self.retainedTracking(settings[.retainedTrackedRepositories])
+            // An owner seen for the first time starts in the result's `newOwnerMode`; with specific repositories, its
+            // recently active ones are selected. Tracking everything an account can reach (often hundreds of
+            // repositories) made the first sync slow and noisy.
+            var newOwners = Set<String>()
             for repository in result.repositories {
                 guard repository.key.account == account else { throw RepositoryScopeFailure.invalidRepositories }
                 let owner = RepositoryScopeConfiguration.owner(of:repository)
-                if configuration.owners[RepositoryScopeConfiguration.canonicalOwner(owner)] == nil { configuration.set(.allAccessible,for:owner) }
+                if configuration.owners[RepositoryScopeConfiguration.canonicalOwner(owner)] == nil {
+                    configuration.set(result.newOwnerMode,for:owner);newOwners.insert(RepositoryScopeConfiguration.canonicalOwner(owner))
+                }
                 try db.execute(sql:"INSERT INTO repositories VALUES (?,?,?,?) ON CONFLICT(host,accountID,repositoryID) DO UPDATE SET json=excluded.json WHERE json IS NOT excluded.json",arguments:[account.host,account.accountID,repository.key.repositoryID,try Self.canonicalJSON(repository)])
                 // A selection kept through a credential purge is restored once its repository is listed again.
                 let restored = retained.remove(repository.key.repositoryID) != nil
-                if configuration.mode(for:owner) == .allAccessible || restored { try Self.trackScopeKey(repository.key,enabled:true,in:db) }
+                let initial = newOwners.contains(RepositoryScopeConfiguration.canonicalOwner(owner)) && result.recentlyActive.contains(repository.key)
+                if configuration.mode(for:owner) == .allAccessible || restored || initial { try Self.trackScopeKey(repository.key,enabled:true,in:db) }
             }
             if result.isComplete { retained = [] }
             if retained != Self.retainedTracking(settings[.retainedTrackedRepositories]) { try Self.writeRetainedTracking(retained,account:account,in:db) }
             for organization in result.organizations where configuration.owners[RepositoryScopeConfiguration.canonicalOwner(organization.login)] == nil {
-                configuration.set(.allAccessible,for:organization.login)
+                configuration.set(result.newOwnerMode,for:organization.login)
             }
             try Self.saveScope(configuration,account:account,in:db)
             try Self.writeScopeSetting(result.isComplete ? "true" : "false",key:.discoveryComplete,account:account,in:db)

@@ -99,6 +99,8 @@ struct OnboardingView: View {
                 }
             }
             Text("\(snapshot.trackedRepositories.count) tracked · \(snapshot.repositories.count) known for \(account.login)").foregroundStyle(.secondary)
+            Text("Only tracked repositories sync. New accounts start with the repositories pushed to in the last 30 days; add or remove any below. Fewer repositories sync faster, and the first sync of many can take a few minutes.")
+                .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal:false,vertical:true)
             if let until = model.retryDeadlines[account.scope] {
                 TimelineView(.periodic(from:.now,by:1)) { context in
                     if until > context.date { Text("GitHub rate limited this account. Retry after \(until.formatted(date:.omitted,time:.standard)).").foregroundStyle(.secondary) }

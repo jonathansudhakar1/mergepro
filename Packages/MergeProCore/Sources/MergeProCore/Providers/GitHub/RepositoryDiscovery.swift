@@ -9,8 +9,14 @@ public struct GitHubDiscoveryResult: Sendable {
     public let issues: [String]
     public let isComplete: Bool
     public let retryAt: Date?
+    /// How an owner seen for the first time starts. GitHub discovery starts it with `.selectedRepositories` and
+    /// selects `recentlyActive`, so a new account tracks what it works on rather than everything it can reach.
+    public var newOwnerMode: RepositoryScopeMode = .allAccessible
+    /// Unarchived repositories pushed to within `RepositoryDiscovery.activeWindow`.
+    public var recentlyActive: Set<RepositoryKey> = []
 }
 public struct RepositoryDiscovery: Sendable {
+    public static let activeWindow: TimeInterval = 30 * 86_400
     private let client: GitHubHTTPClient
     public init(client: GitHubHTTPClient) { self.client = client }
     public func discover(account: AccountScope, credential: GitHubCredential) async throws -> GitHubDiscoveryResult {
@@ -26,8 +32,11 @@ public struct RepositoryDiscovery: Sendable {
             if repo.permissions?.push == true && credential.scopes.contains("repo") { capabilities.formUnion([.review, .merge, .runWorkflows]) }
             return Repository(key:RepositoryKey(account:account, repositoryID:String(repo.id)), name:repo.full_name, isPrivate:repo.private, capabilities:capabilities)
         }
+        let activeSince = Date().addingTimeInterval(-Self.activeWindow)
+        let active = repos.filter { $0.archived != true && ($0.pushed_at.flatMap(GitHubDate.parse).map { $0 >= activeSince } ?? false) }
         return GitHubDiscoveryResult(repositories:repositories, organizations:orgs.map { GitHubOrganization(id:String($0.id), login:$0.login) },
-                                     teams:teams.map { GitHubTeam(id:String($0.id), name:$0.name, organizationID:String($0.organization.id)) }, issues:issues, isComplete:issues.isEmpty, retryAt:retryAt)
+                                     teams:teams.map { GitHubTeam(id:String($0.id), name:$0.name, organizationID:String($0.organization.id)) }, issues:issues, isComplete:issues.isEmpty, retryAt:retryAt,
+                                     newOwnerMode:.selectedRepositories, recentlyActive:Set(active.map { RepositoryKey(account:account, repositoryID:String($0.id)) }))
     }
     private func pages<T: Decodable>(_ path: String, token: String, issues: inout [String], retryAt: inout Date?) async throws -> [T] {
         guard retryAt == nil, let requested = URL(string:path, relativeTo:client.origin)?.absoluteURL else { return [] }
@@ -59,6 +68,7 @@ public struct RepositoryDiscovery: Sendable {
 }
 private struct RepoPayload: Decodable {
     let id: Int64; let full_name: String; let `private`: Bool; let permissions: Permissions?
+    let pushed_at: String?; let archived: Bool?
     struct Permissions: Decodable { let pull: Bool?; let push: Bool?; let admin: Bool? }
 }
 private struct OrgPayload: Decodable { let id: Int64; let login: String }
