@@ -33,13 +33,20 @@ struct ReviewComposer:View {
     @State private var busy=false
     @State private var truth:PRWriteTruth?
     @State private var requireViewed=false
+    /// A new draft opened before the PR detail arrived carries the board row's revision; the detail replaces it
+    /// (not a stale draft) and the draft is saved only from then on.
+    @State private var provisional=false
+    @State private var provisionalSavePending=false
     @State private var references:[String]=[]
     /// A pending review the user asked to discard; confirmed in a dialog before anything is sent.
     @State private var discardTarget:String?
     /// Return in the summary or selection comment inserts text; it never reaches the submit button. ⌘Return submits.
     @FocusState private var focus:Field?
     private enum Field:Hashable { case summary,selection }
-    private var stale:Bool { draft?.revision != snapshot.map(PRWriteRevision.init) || draft?.comments.contains(where:{ $0.revision != draft?.revision }) == true }
+    private var stale:Bool {
+        guard let snapshot,!provisional else { return false }
+        return draft?.revision != PRWriteRevision(snapshot) || draft?.comments.contains(where:{ $0.revision != draft?.revision }) == true
+    }
     var body:some View {
         Group {
             if actionAvailable {
@@ -128,7 +135,7 @@ struct ReviewComposer:View {
         .onChange(of:summary) { if var d=draft { d.summary=summary;draft=d;persist() } }
         .onChange(of:commentBody) { if var d=draft { d.texts["selection"]=commentBody;draft=d;persist() } }
     }
-    private func canSubmit(_ draft:ReviewDraft) -> Bool { !(busy || saveConflict || draftSaveBusy || stale || pr == nil || truth == nil || decision == .approve && truth?.viewerIsAuthor == true || needsSummary(draft) || blockedByPending(draft) || headRefusal(draft) != nil) }
+    private func canSubmit(_ draft:ReviewDraft) -> Bool { !(busy || saveConflict || draftSaveBusy || stale || provisional || pr == nil || snapshot == nil || truth == nil || decision == .approve && truth?.viewerIsAuthor == true || needsSummary(draft) || blockedByPending(draft) || headRefusal(draft) != nil) }
     /// The window applied Update while this sheet was open: the draft's head is no longer the one on screen.
     private func headRefusal(_ draft:ReviewDraft) -> String? { PRDisplayedHead.refusal(shown:displayedHead,actual:draft.revision.head,acting:"submitting this review") }
     /// Another (or a stale) pending review makes GitHub reject a new review; the notice offers Discard instead.
@@ -189,7 +196,7 @@ struct ReviewComposer:View {
         return []
     }
     private func complete(_ value:String) { summary.removeLast(completionToken.count);summary += value+" " }
-    private func invalidateAction() { loadState.invalidate();busy=false;draftSaveBusy=false;draftSavePending=false;pr=nil;snapshot=nil;draft=nil;truth=nil;summary="";commentBody="";login="";references=[];status="Action account unavailable. Drafts retained on disk." }
+    private func invalidateAction() { loadState.invalidate();busy=false;provisional=false;provisionalSavePending=false;draftSaveBusy=false;draftSavePending=false;pr=nil;snapshot=nil;draft=nil;truth=nil;summary="";commentBody="";login="";references=[];status="Action account unavailable. Drafts retained on disk." }
     private func load() async {
         guard !draftSaveBusy else { return }
         let request=loadState.begin();loadError=nil;busy=true
@@ -205,17 +212,33 @@ struct ReviewComposer:View {
                 try await storage.inspectWrite(.init(key:chosen.key,repository:m.repositoryName,number:m.number,revision:.init(head:chosen.headRevision.rawValue,origin:m.baseRevision ?? "",target:m.baseRevision ?? ""),intent:.review(.comment,"")))
             }
             defer { checking.cancel() }
-            var detail:PRDetailSnapshot
-            if let cached=try await storage.cachedDetail(chosen) { detail=cached }
-            else { detail=try await storage.detail(chosen) }
-            let saved=try await storage.reviewDraft(chosen.key) ?? ReviewDraft(key:chosen.key,revision:PRWriteRevision(detail))
+            // Everything below up to presenting is local: the sheet opens at once, also for a card whose detail was
+            // never read (most of the board). The detail and GitHub's review-state check fill in behind it; the
+            // spinner this replaced showed for 2–4 s on every card move.
+            let cached=try await storage.cachedDetail(chosen)
+            let stored=try await storage.reviewDraft(chosen.key)
+            let rowRevision=PRWriteRevision(head:chosen.headRevision.rawValue,origin:m.baseRevision ?? "",target:m.baseRevision ?? "")
+            let saved=stored ?? ReviewDraft(key:chosen.key,revision:cached.map(PRWriteRevision.init) ?? rowRevision)
             // The action account's row can be at a push the window hasn't applied; no draft is presented for it.
-            try refuseUnshown(detail.headSHA)
+            try refuseUnshown(cached?.headSHA ?? chosen.headRevision.rawValue)
             let accountLogin=try await storage.actionLogin(chosen.key),policy=try await storage.requireAllFilesViewed()
-            // Open on the cached detail and saved draft at once; GitHub's review state (which gates submitting) is
-            // checked while the user writes. Waiting for it first held the sheet on a spinner for seconds.
             guard loadState.present(chosen.key,request:request,available:actionAvailable) else { return }
-            pr=chosen;snapshot=detail;draft=saved;summary=saved.summary;commentBody=saved.texts["selection"] ?? "";login=accountLogin;requireViewed=policy;truth=nil;references=["#\(String(m.number))"];saveConflict=false;status="Checking the review state with GitHub…";presented=true;busy=false
+            pr=chosen;snapshot=cached;draft=saved;summary=saved.summary;commentBody=saved.texts["selection"] ?? "";login=accountLogin;requireViewed=policy;truth=nil;references=["#\(String(m.number))"];saveConflict=false
+            provisional=stored == nil && cached == nil;provisionalSavePending=false
+            status=cached == nil ? "Loading the pull request…" : "Checking the review state with GitHub…";presented=true;busy=false
+            var detail:PRDetailSnapshot
+            if let cached { detail=cached } else {
+                detail=try await storage.detail(chosen)
+                try refuseUnshown(detail.headSHA)
+                guard loadState.accepts(chosen.key,request:request,available:actionAvailable) else { return }
+                snapshot=detail
+                if provisional {
+                    if var current=draft,current.comments.isEmpty,current.pendingReviewID == nil { current.revision=PRWriteRevision(detail);draft=current }
+                    provisional=false
+                    if provisionalSavePending { provisionalSavePending=false;persist() }
+                }
+                status="Checking the review state with GitHub…"
+            }
             let value=try await checking.value
             if PRWriteRevision(detail) != value.revision { detail=try await storage.detail(chosen) }
             guard PRWriteRevision(detail) == value.revision else { throw PRWriteFailure.revisionChanged }
@@ -248,6 +271,7 @@ struct ReviewComposer:View {
     private func persist() { persistDraft() }
     private func persistDraft() {
         guard !saveConflict else { return }
+        guard !provisional else { provisionalSavePending=true;return }
         guard !draftSaveBusy else { draftSavePending=true;return }
         guard var value=draft,let request=loadState.presentationRequest(for:value.key,available:actionAvailable) else { return };let expected=value.editVersion;value.editVersion=expected+1;draft=value;draftSaveBusy=true
         Task {
