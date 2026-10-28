@@ -198,11 +198,17 @@ struct ReviewComposer:View {
         do {
             let chosen=try await storage.detailActionPR(readPR);loadState.select(chosen.key,request:request)
             guard loadState.accepts(chosen.key,request:request,available:actionAvailable) else { return }
+            guard let m=chosen.metadata else { throw PRWriteFailure.unavailable }
+            // GitHub's review-state check starts now, alongside the detail read: a read-only inspection does not use
+            // the command's revision (only reconciling a sent write does), so it need not wait for the detail.
+            let checking=Task { [storage] in
+                try await storage.inspectWrite(.init(key:chosen.key,repository:m.repositoryName,number:m.number,revision:.init(head:chosen.headRevision.rawValue,origin:m.baseRevision ?? "",target:m.baseRevision ?? ""),intent:.review(.comment,"")))
+            }
+            defer { checking.cancel() }
             var detail:PRDetailSnapshot
             if let cached=try await storage.cachedDetail(chosen) { detail=cached }
             else { detail=try await storage.detail(chosen) }
             let saved=try await storage.reviewDraft(chosen.key) ?? ReviewDraft(key:chosen.key,revision:PRWriteRevision(detail))
-            guard let m=chosen.metadata else { throw PRWriteFailure.unavailable }
             // The action account's row can be at a push the window hasn't applied; no draft is presented for it.
             try refuseUnshown(detail.headSHA)
             let accountLogin=try await storage.actionLogin(chosen.key),policy=try await storage.requireAllFilesViewed()
@@ -210,7 +216,7 @@ struct ReviewComposer:View {
             // checked while the user writes. Waiting for it first held the sheet on a spinner for seconds.
             guard loadState.present(chosen.key,request:request,available:actionAvailable) else { return }
             pr=chosen;snapshot=detail;draft=saved;summary=saved.summary;commentBody=saved.texts["selection"] ?? "";login=accountLogin;requireViewed=policy;truth=nil;references=["#\(String(m.number))"];saveConflict=false;status="Checking the review state with GitHub…";presented=true;busy=false
-            let value=try await storage.inspectWrite(.init(key:chosen.key,repository:m.repositoryName,number:m.number,revision:saved.revision,intent:.review(.comment,saved.summary)))
+            let value=try await checking.value
             if PRWriteRevision(detail) != value.revision { detail=try await storage.detail(chosen) }
             guard PRWriteRevision(detail) == value.revision else { throw PRWriteFailure.revisionChanged }
             try refuseUnshown(detail.headSHA)

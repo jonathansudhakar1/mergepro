@@ -55,8 +55,11 @@ struct GitHubMergeReader:Sendable {
         e.rulesComplete=ref.keys.contains("branchProtectionRule")
         var configured:[Object]=[],rulesetNames:[Int:String]=[:]
         do {
-            configured=try await restList(client.origin.appendingPathComponent("repos/\(t.repository)/rules/branches").appendingPathComponent(branch).appending(queryItems:[.init(name:"per_page",value:"100")]),repositoryID:t.key.repositoryID)
-            let scopes=try await restList(client.origin.appendingPathComponent("repos/\(t.repository)/rulesets").appending(queryItems:[.init(name:"per_page",value:"100"),.init(name:"includes_parents",value:"true")]),repositoryID:t.key.repositoryID)
+            // Independent reads: in parallel, so the merge sheet waits for one round trip, not two.
+            async let configuredRead=restList(client.origin.appendingPathComponent("repos/\(t.repository)/rules/branches").appendingPathComponent(branch).appending(queryItems:[.init(name:"per_page",value:"100")]),repositoryID:t.key.repositoryID)
+            async let scopesRead=restList(client.origin.appendingPathComponent("repos/\(t.repository)/rulesets").appending(queryItems:[.init(name:"per_page",value:"100"),.init(name:"includes_parents",value:"true")]),repositoryID:t.key.repositoryID)
+            configured=try await configuredRead
+            let scopes=try await scopesRead
             if scopes.contains(where:{ $0["enforcement"] as? String == "active" && !["branch","tag"].contains($0["target"] as? String ?? "") }) { e.requirements.append(.init(name:"Push or repository-wide rule evaluation",state:.unknown)) }
             for scope in scopes { if let id=scope["id"] as? Int,let name=scope["name"] as? String { rulesetNames[id]=name } }
         } catch { if error as? GitHubFailure == .invalidAuthentication || error as? GitHubFailure == .scopeRequired || error as? GitHubFailure == .organizationRestricted { throw error };Log.merge.info("Branch rules unavailable; evidence stays incomplete: \(Log.kind(error), privacy: .public)");e.rulesComplete=false;e.limitations.append("Applicable branch and inherited push rules could not be read completely.") }
